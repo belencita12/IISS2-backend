@@ -1,0 +1,28 @@
+import { Module } from '@nestjs/common';
+import { EnvModule } from './env/env.module';
+import { ConfigModule } from '@nestjs/config';
+import { validate } from './config/env.config';
+import { UserModule } from './user/user.module';
+import { AuthService } from './auth/auth.service';
+import { AuthModule } from './auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
+import { RoleService } from './role/role.service';
+import { RoleModule } from './role/role.module';
+import { PrismaService } from './prisma.service';
+
+@Module({
+	imports: [
+		ConfigModule.forRoot({
+			validate: validate,
+			isGlobal: true,
+		}),
+		EnvModule,
+		UserModule,
+		AuthModule,
+		JwtModule,
+		RoleModule,
+	],
+	controllers: [],
+	providers: [AuthService, RoleService, PrismaService],
+})
+export class AppModule {}
