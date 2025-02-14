@@ -13,9 +13,10 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
+    "test": "jest --config jest-unit.json",
+    "test:unit": "jest --config jest-unit.json",
+    "test:watch": "jest --watch --config jest-unit.json",
+    "test:cov": "jest --coverage --config jest-unit.json",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config jest-e2e.json",
     "data:seed": "ts-node ./src/scripts/seed/seeder.ts",
@@ -63,29 +64,5 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node",
-    "moduleNameMapper": {
-      "@/(.*)": "<rootDir>/$1",
-      "@lib/(.*)": "<rootDir>/lib/$1",
-      "@config/(.*)": "<rootDir>/config/$1",
-      "@decorators/(.*)": "<rootDir>/lib/decorators/$1",
-      "@commons/(.*)": "<rootDir>/lib/commons/$1"
-      }
   }
 }

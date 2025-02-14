@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { RoleService } from './role.service';
 import { PrismaService } from '@/prisma.service';
+import { RoleService } from '@/role/role.service';
 
 describe('RoleService', () => {
 	let roleService: RoleService;
