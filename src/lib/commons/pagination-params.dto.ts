@@ -20,7 +20,7 @@ export class PaginationQueryDto {
 	@IsInt()
 	@Min(1)
 	@ApiPropertyOptional()
-	size: number;
+	size?: number;
 
 	@IsOptional()
 	@IsDateString()
@@ -36,5 +36,5 @@ export class PaginationQueryDto {
 	@IsBoolean()
 	@IsOptional()
 	@ApiProperty({ required: false })
-	includeDeleted: boolean = false;
+	includeDeleted?: boolean = false;
 }
