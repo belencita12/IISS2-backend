@@ -3,24 +3,24 @@ import {
 	IsDateString,
 	IsInt,
 	IsOptional,
-	IsPositive,
 	Min,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PaginationQueryDto {
 	@Type(() => Number)
 	@IsInt()
-	@Min(0)
+	@Min(1)
 	@ApiProperty()
-	skip: number;
+	page: number;
 
+	@IsOptional()
 	@Type(() => Number)
 	@IsInt()
-	@IsPositive()
-	@ApiProperty()
-	take: number;
+	@Min(1)
+	@ApiPropertyOptional()
+	size: number;
 
 	@IsOptional()
 	@IsDateString()

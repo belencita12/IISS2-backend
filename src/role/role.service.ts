@@ -15,16 +15,21 @@ export class RoleService {
 	}
 
 	async findAll(dto: RoleQueryDto) {
-		const { pagination, baseWhere, orderBy } = this.db.getBaseQuery(dto);
+		const { baseWhere } = this.db.getBaseWhere(dto);
 		const where: Prisma.RoleWhereInput = {
 			...baseWhere,
 			name: { contains: dto.name },
 		};
-		const [data, total] = await this.db.$transaction([
-			this.db.role.findMany({ ...pagination, orderBy, where }),
+		const [data, total] = await Promise.all([
+			this.db.role.findMany({ ...this.db.paginate(dto), where }),
 			this.db.role.count({ where }),
 		]);
-		return this.db.getPaginatedResponse(pagination, total, data);
+		return this.db.getPagOutput({
+			page: dto.page,
+			size: dto.size,
+			total,
+			data,
+		});
 	}
 
 	async findOne(id: number) {

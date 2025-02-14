@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsInt } from 'class-validator';
+import { IsArray, IsBoolean, IsInt } from 'class-validator';
 
 export class PaginationResponseDto<T> {
 	@IsArray()
@@ -12,9 +12,21 @@ export class PaginationResponseDto<T> {
 
 	@IsInt()
 	@ApiProperty()
-	take: number;
+	size: number;
+
+	@IsBoolean()
+	@ApiProperty()
+	prev: boolean;
+
+	@IsBoolean()
+	@ApiProperty()
+	next: boolean;
 
 	@IsInt()
 	@ApiProperty()
-	skip: number;
+	currentPage: number;
+
+	@IsInt()
+	@ApiProperty()
+	totalPages: number;
 }

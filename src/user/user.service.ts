@@ -39,28 +39,28 @@ export class UserService {
 
 	async findAll(dto: UserQueryDto) {
 		const { email } = dto;
-		const { pagination, baseWhere, orderBy } = this.db.getBaseQuery(dto);
+		const { baseWhere } = this.db.getBaseWhere(dto);
 
 		const where: Prisma.UserWhereInput = {
 			...baseWhere,
 			email: { contains: email },
 		};
 
-		const [users, total] = await this.db.$transaction([
+		const [users, total] = await Promise.all([
 			this.db.user.findMany({
-				...pagination,
-				orderBy,
+				...this.db.paginate(dto),
 				where,
 				include: { roles: true },
 			}),
 			this.db.user.count({ where }),
 		]);
 
-		return this.db.getPaginatedResponse(
-			pagination,
+		return this.db.getPagOutput({
+			page: dto.page,
+			size: dto.size,
 			total,
-			users.map((user) => this.toDto(user)),
-		);
+			data: users.map((user) => this.toDto(user)),
+		});
 	}
 
 	async findOne(id: number) {

@@ -52,6 +52,10 @@ class EnvironmentVariables {
 	@Transform(({ value }) => value.split(','))
 	@IsOptional()
 	PRISMA_LOG_LEVEL: PrismaLogLevels[] = [];
+
+	@IsNumber()
+	@IsOptional()
+	DEFAULT_PAGE_SIZE: number = 10;
 }
 
 export type EnvType = InstanceType<typeof EnvironmentVariables>;
