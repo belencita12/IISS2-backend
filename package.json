@@ -17,7 +17,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e": "jest --config jest-e2e.json",
     "data:seed": "ts-node ./src/scripts/seed/seeder.ts",
     "data:clear": "ts-node ./src/scripts/clear/clear.ts"
   },
@@ -79,6 +79,13 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "@/(.*)": "<rootDir>/$1",
+      "@lib/(.*)": "<rootDir>/lib/$1",
+      "@config/(.*)": "<rootDir>/config/$1",
+      "@decorators/(.*)": "<rootDir>/lib/decorators/$1",
+      "@commons/(.*)": "<rootDir>/lib/commons/$1"
+      }
   }
 }
