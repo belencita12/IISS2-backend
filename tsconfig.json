@@ -15,7 +15,8 @@
 			"@lib/*": ["src/lib/*"],
 			"@config/*": ["src/config/*"],
 			"@decorators/*": ["src/lib/decorators/*"],
-			"@commons/*": ["src/lib/commons/*"]
+			"@commons/*": ["src/lib/commons/*"],
+			"@test-lib/*": ["test/lib/*"]
 		},
 		"incremental": true,
 		"skipLibCheck": true,

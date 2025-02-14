@@ -4,24 +4,12 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { RoleService } from '@/role/role.service';
 import { RoleController } from '@/role/role.controller';
 import { RoleDto } from '@/role/dto/role.dto';
-
-const roleMock = {
-	id: 1,
-	name: 'ADMIN',
-	createdAt: new Date(),
-	updatedAt: new Date(),
-	deletedAt: null,
-};
-
-const paginatedResultMock = {
-	data: [roleMock],
-	currentPage: 1,
-	size: 10,
-	totalPages: 100,
-	total: 1000,
-	next: false,
-	prev: false,
-};
+import {
+	roleMock,
+	paginatedResultMock,
+	expRole,
+	expPagMock,
+} from '@test-lib/mock/role';
 
 const roleService = {
 	update: jest.fn().mockResolvedValue(roleMock),
@@ -70,13 +58,9 @@ describe('RoleController (e2e)', () => {
 		});
 
 		assertResponse(response, {
-			data: expect.any(Array),
+			...expPagMock,
 			currentPage: 1,
 			size: 20,
-			totalPages: expect.any(Number),
-			total: expect.any(Number),
-			next: expect.any(Boolean),
-			prev: expect.any(Boolean),
 		});
 	});
 
@@ -88,13 +72,14 @@ describe('RoleController (e2e)', () => {
 			.send(body)
 			.expect(201);
 
-		assertResponse(response, {
-			id: expect.any(Number),
-			name: 'ADMIN',
-			createdAt: expect.any(String),
-			updatedAt: expect.any(String),
-			deletedAt: null,
-		});
+		expect(response.body).toEqual(
+			expect.objectContaining({
+				...expRole,
+				name: 'ADMIN',
+				createdAt: expect.any(String),
+				updatedAt: expect.any(String),
+			}),
+		);
 	});
 
 	it('/DELETE role/:id', async () => {
