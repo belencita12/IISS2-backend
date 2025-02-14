@@ -19,6 +19,7 @@
       "@lib/(.*)": "<rootDir>/src/lib/$1",
       "@config/(.*)": "<rootDir>/src/config/$1",
       "@decorators/(.*)": "<rootDir>/src/lib/decorators/$1",
-      "@commons/(.*)": "<rootDir>/src/lib/commons/$1"
+      "@commons/(.*)": "<rootDir>/src/lib/commons/$1",
+      "@test-lib/(.*)": "<rootDir>/test/lib/$1"
     }
 }

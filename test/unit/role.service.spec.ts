@@ -1,47 +1,17 @@
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '@/prisma.service';
 import { RoleService } from '@/role/role.service';
+import {
+	paginateMock,
+	paginatedResultMock,
+	roleListMock,
+	roleMock,
+	queryMock,
+	expRole,
+} from '@test-lib/mock/role';
 
 describe('RoleService', () => {
 	let roleService: RoleService;
-
-	const expRole = {
-		id: expect.any(Number),
-		name: expect.any(String),
-		createdAt: expect.any(Date),
-		updatedAt: expect.any(Date),
-		deletedAt: null,
-	};
-
-	const roleMock = {
-		id: 1,
-		name: 'ADMIN',
-		createdAt: new Date(),
-		updatedAt: new Date(),
-		deletedAt: null,
-	};
-
-	const roleListMock = [roleMock, { ...roleMock, id: 2, name: 'USER' }];
-
-	const queryMock = {
-		page: 1,
-	};
-
-	const paginatedResultMock = {
-		data: roleListMock,
-		total: 2,
-		size: 10,
-		prev: false,
-		next: false,
-		currentPage: 1,
-		totalPages: 1,
-	};
-
-	const paginateMock = {
-		skip: 0,
-		take: 10,
-		orderBy: { createdAt: 'desc' },
-	};
 
 	const prismaServiceMock = {
 		paginate: jest.fn().mockResolvedValue(paginateMock),
