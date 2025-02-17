@@ -2,51 +2,20 @@ import * as request from 'supertest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from '@/auth/auth.controller';
 import { AuthService } from '@/auth/auth.service';
-import { SignUpDto } from '@/auth/dto/sign-up.dto';
-import { SignInDto } from '@/auth/dto/sign-in.dto';
 import { UserService } from '@/user/user.service';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { INestApplication } from '@nestjs/common';
 import { EnvService } from '@/env/env.service';
+import {
+	authServiceMock,
+	userServiceMock,
+	envServiceMock,
+	signInBodyMock,
+	signUpBodyMock,
+	signInResMock,
+} from '@test-lib/mock/auth';
 
 let authToken: string = '';
-
-const signInBodyMock: SignInDto = {
-	email: 'test@example.com',
-	password: 'securepassword123',
-};
-
-const signInResMock = {
-	token: 'testtoken',
-	username: 'testuser',
-	roles: ['ADMIN'],
-};
-
-const signUpBodyMock: SignUpDto = {
-	username: 'testuser',
-	email: 'test@example.com',
-	password: 'securepassword123',
-};
-
-const authServiceMock = {
-	signUp: jest.fn(),
-	signIn: jest.fn().mockResolvedValue(signInResMock),
-	me: jest.fn().mockResolvedValue(signInResMock),
-};
-
-const userServiceMock = {
-	create: jest.fn().mockResolvedValue({ id: 1, ...signUpBodyMock }),
-	findOne: jest.fn().mockResolvedValue({ id: 1, ...signUpBodyMock }),
-	findByEmail: jest.fn().mockResolvedValue({ id: 1, ...signUpBodyMock }),
-};
-
-const envServiceMock = {
-	get: jest.fn((key: string) => {
-		if (key === 'JWT_SECRET') return 'test-secret';
-		if (key === 'JWT_EXP') return '1h';
-		return null;
-	}),
-};
 
 describe('AuthController (e2e)', () => {
 	let app: INestApplication;
