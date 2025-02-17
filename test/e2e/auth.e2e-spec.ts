@@ -13,7 +13,9 @@ import {
 	signInBodyMock,
 	signUpBodyMock,
 	signInResMock,
+	tokenPayloadMock,
 } from '@test-lib/mock/auth';
+import { expUser } from '@test-lib/mock/user';
 
 let authToken: string = '';
 
@@ -39,10 +41,7 @@ describe('AuthController (e2e)', () => {
 		await app.init();
 
 		const jwtService = moduleFixture.get<JwtService>(JwtService);
-		authToken = jwtService.sign(
-			{ email: signInBodyMock.email, roles: ['ADMIN'] },
-			{ secret: 'test-secret' },
-		);
+		authToken = jwtService.sign(tokenPayloadMock, { secret: 'test-secret' });
 	});
 	afterAll(async () => await app.close());
 
@@ -72,7 +71,23 @@ describe('AuthController (e2e)', () => {
 			.get(url)
 			.set('Authorization', bearer)
 			.expect(200);
-		expect(response.body).toMatchObject(signInResMock);
+
+		expect(authServiceMock.me).toHaveBeenCalledWith({
+			...tokenPayloadMock,
+			iat: expect.any(Number),
+			exp: expect.any(Number),
+		});
+
+		expect(userServiceMock.findOne).toHaveBeenCalledWith(1);
+
+		console.log(response.body);
+
+		expect(response.body).toEqual({
+			...expUser,
+			password: expect.any(String),
+			createdAt: expect.any(String),
+			updatedAt: expect.any(String),
+		});
 	});
 
 	it('/GET me [invalid token]', async () => {
