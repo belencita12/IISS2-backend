@@ -13,15 +13,11 @@ import {
 	signInBodyMock,
 	signUpBodyMock,
 	signInResMock,
+	tokenPayloadMock,
 } from '@test-lib/mock/auth';
 import { expUser } from '@test-lib/mock/user';
 
 let authToken: string = '';
-const tokenPayload = {
-	id: 1,
-	username: 'testuser',
-	email: signInBodyMock.email,
-};
 
 describe('AuthController (e2e)', () => {
 	let app: INestApplication;
@@ -45,7 +41,7 @@ describe('AuthController (e2e)', () => {
 		await app.init();
 
 		const jwtService = moduleFixture.get<JwtService>(JwtService);
-		authToken = jwtService.sign(tokenPayload, { secret: 'test-secret' });
+		authToken = jwtService.sign(tokenPayloadMock, { secret: 'test-secret' });
 	});
 	afterAll(async () => await app.close());
 
@@ -77,7 +73,7 @@ describe('AuthController (e2e)', () => {
 			.expect(200);
 
 		expect(authServiceMock.me).toHaveBeenCalledWith({
-			...tokenPayload,
+			...tokenPayloadMock,
 			iat: expect.any(Number),
 			exp: expect.any(Number),
 		});

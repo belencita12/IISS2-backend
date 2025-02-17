@@ -10,6 +10,12 @@ export const signInBodyMock: SignInDto = {
 	password: 'securepassword123',
 };
 
+export const tokenPayloadMock = {
+	id: 1,
+	username: 'testuser',
+	email: 'test@example.com',
+};
+
 export const getUserHashed = async () => {
 	const hash = await bcrypt.hash(signInBodyMock.password, 10);
 	return {

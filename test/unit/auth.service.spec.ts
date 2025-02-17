@@ -7,6 +7,7 @@ import {
 	envServiceMock,
 	signInBodyMock,
 	signUpBodyMock,
+	tokenPayloadMock,
 	userServiceMock,
 } from '@test-lib/mock/auth';
 import { expUser } from '@test-lib/mock/user';
@@ -45,7 +46,7 @@ describe('AuthService', () => {
 	});
 
 	describe('signup', () => {
-		it('Should create the new user', async () => {
+		it('The userService.create should be called with the same params as the authService', async () => {
 			await authService.signUp(signUpBodyMock);
 			expect(userServiceMock.create).toHaveBeenCalledWith(signUpBodyMock);
 		});
@@ -53,19 +54,8 @@ describe('AuthService', () => {
 
 	describe('me', () => {
 		it('Should return the user with their credentials from the payload token', async () => {
-			const tokenPayloadMock = {
-				id: 1,
-				username: 'testuser',
-				email: 'test@example.com',
-			};
-
-			//
 			const res = await authService.me(tokenPayloadMock);
-
-			// Verify if the fn return the user
 			expect(res).toEqual(expUser);
-
-			// Verify if the fn use the same id of the payload
 			expect(userServiceMock.findOne).toHaveBeenCalledWith(1);
 		});
 	});
