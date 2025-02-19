@@ -21,16 +21,15 @@ export const getPassResetTemplate = ({ link, username }: PassResetParams) =>
     body {
       background-color: #f0f0f0;
       font-family: Arial, sans-serif;
-      text-align: center; /* Centra todo el contenido dentro de body */
+      text-align: center;
     }
 
     .card-wrapper {
       display: table;
       width: 100%;
-      height: 100vh;
-      background-color: #f0f0f0; /* Fondo gris claro */
+      background-color: #f0f0f0; 
       padding: 20px;
-      text-align: center; /* Asegura que el contenido de la tarjeta esté centrado */
+      text-align: center; 
     }
 
     .card {
