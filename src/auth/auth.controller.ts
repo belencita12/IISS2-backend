@@ -34,7 +34,7 @@ export class AuthController {
 	}
 
 	@Post('/token/reset-password')
-	@ApiResponse({ status: 200 })
+	@ApiResponse({ status: 201 })
 	@ApiBody({ type: ResetPassowrdDto })
 	async resetPassword(@Body() dto: ResetPassowrdDto) {
 		return await this.authService.generateResetPasswordToken(dto.email);
