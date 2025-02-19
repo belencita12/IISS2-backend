@@ -3,3 +3,5 @@ export class TokenPayload {
 	username: string;
 	email: string;
 }
+
+export type ResetPassTokenPayload = Pick<TokenPayload, 'id'>;
