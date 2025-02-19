@@ -68,6 +68,15 @@ class EnvironmentVariables {
 
 	@IsString()
 	EMAIL_PASS: string;
+
+	@IsString()
+	@IsOptional()
+	JWT_RESET_PASS_SECRET: string = 'reset_password_secret';
+
+	@IsNumber()
+	@Min(0)
+	@IsOptional()
+	JWT_RESET_PASS_EXP: number = 1800000;
 }
 
 export type EnvType = InstanceType<typeof EnvironmentVariables>;
