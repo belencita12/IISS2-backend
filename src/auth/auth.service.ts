@@ -71,6 +71,7 @@ export class AuthService {
 		const payload: ResetPassTokenPayload = this.jwt.verify(token, {
 			secret: this.env.get('JWT_RESET_PASS_SECRET'),
 		});
+		await this.jwtBlackListService.addJwtToBlackList(token);
 		await this.usersService.update(payload.id, { password });
 	}
 }

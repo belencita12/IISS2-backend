@@ -9,7 +9,13 @@ import {
 	Query,
 	Put,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiBody,
+	ApiQuery,
+	ApiResponse,
+	ApiTags,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
@@ -46,7 +52,11 @@ export class AuthController {
 
 	@Put('/reset-password')
 	@ApiBody({ type: ResetPasswordDto })
-	async resetPassword(@Query() token: string, @Body() dto: ResetPasswordDto) {
+	@ApiQuery({ name: 'token', type: String })
+	async resetPassword(
+		@Query('token') token: string,
+		@Body() dto: ResetPasswordDto,
+	) {
 		return await this.authService.resetPassword(token, dto.password);
 	}
 

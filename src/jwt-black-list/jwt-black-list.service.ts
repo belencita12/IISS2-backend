@@ -6,6 +6,7 @@ export class JwtBlackListService {
 	constructor(private readonly db: PrismaService) {}
 
 	isJwtBanned = async (token: string) => {
+		console.log(token);
 		const tokenVef = await this.db.jwtBlackList.findUnique({
 			where: {
 				token,
