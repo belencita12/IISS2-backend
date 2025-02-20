@@ -56,6 +56,18 @@ class EnvironmentVariables {
 	@IsNumber()
 	@IsOptional()
 	DEFAULT_PAGE_SIZE: number = 10;
+
+	@IsString()
+	EMAIL_HOST: string;
+
+	@IsNumber()
+	EMAIL_PORT: number;
+
+	@IsString()
+	EMAIL_USER: string;
+
+	@IsString()
+	EMAIL_PASS: string;
 }
 
 export type EnvType = InstanceType<typeof EnvironmentVariables>;
