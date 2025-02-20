@@ -34,6 +34,8 @@ export class AllExceptionFilter implements ExceptionFilter {
 				: response['message'];
 		}
 
+		if (ex instanceof HttpException) message = ex.message;
+
 		const responseBody = {
 			statusCode: httpStatus,
 			timestamp: new Date().toISOString(),

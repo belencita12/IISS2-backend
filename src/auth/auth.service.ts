@@ -4,11 +4,18 @@ import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { compare } from '@/lib/utils/encrypt';
-import { TokenPayload } from './types/auth.types';
+import { ResetPassTokenPayload, TokenPayload } from './types/auth.types';
+import { EmailService } from '@/email/email.service';
+import { EnvService } from '@/env/env.service';
+import { JwtBlackListService } from '@/jwt-black-list/jwt-black-list.service';
+import { getPassResetTemplate } from '@/email/templates/pass-reset';
 
 @Injectable()
 export class AuthService {
 	constructor(
+		private env: EnvService,
+		private emailService: EmailService,
+		private jwtBlackListService: JwtBlackListService,
 		private usersService: UserService,
 		private jwt: JwtService,
 	) {}
@@ -35,5 +42,36 @@ export class AuthService {
 		const userDB = await this.usersService.findOne(user.id);
 		if (!userDB) throw new HttpException('User not found', 404);
 		return userDB;
+	}
+
+	async getResetPassToken(email: string) {
+		const user = await this.usersService.findByEmail(email);
+		if (!user) throw new HttpException('Email is incorrect', 401);
+		const payload: ResetPassTokenPayload = { id: user.id };
+		const token = this.jwt.sign(payload, {
+			secret: this.env.get('JWT_RESET_PASS_SECRET'),
+			expiresIn: this.env.get('JWT_RESET_PASS_EXP'),
+		});
+		const host = this.env.get('FE_HOST');
+		const link = `${host}/reset-password?token=${token}`;
+		const message = getPassResetTemplate({
+			link,
+			username: user.username,
+		});
+		this.emailService.sendEmail({
+			to: user.email,
+			subject: 'Password reset',
+			content: message,
+			type: 'html',
+		});
+	}
+
+	async resetPassword(token: string, password: string) {
+		await this.jwtBlackListService.isJwtBanned(token);
+		const payload: ResetPassTokenPayload = this.jwt.verify(token, {
+			secret: this.env.get('JWT_RESET_PASS_SECRET'),
+		});
+		await this.jwtBlackListService.addJwtToBlackList(token);
+		await this.usersService.update(payload.id, { password });
 	}
 }

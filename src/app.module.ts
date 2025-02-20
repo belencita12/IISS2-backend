@@ -10,6 +10,7 @@ import { RoleService } from './role/role.service';
 import { RoleModule } from './role/role.module';
 import { PrismaService } from './prisma.service';
 import { EmailModule } from './email/email.module';
+import { JwtBlackListModule } from './jwt-black-list/jwt-black-list.module';
 
 @Module({
 	imports: [
@@ -23,6 +24,7 @@ import { EmailModule } from './email/email.module';
 		JwtModule,
 		RoleModule,
 		EmailModule,
+		JwtBlackListModule,
 	],
 	controllers: [],
 	providers: [AuthService, RoleService, PrismaService],

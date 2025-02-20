@@ -1,5 +1,6 @@
 export class SendEmailDto {
 	to: string;
 	subject: string;
-	text: string;
+	content: string;
+	type: 'html' | 'text';
 }

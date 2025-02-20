@@ -20,12 +20,12 @@ export class EmailService {
 		});
 	}
 
-	async sendEmail({ to, subject, text }: SendEmailDto) {
+	async sendEmail({ to, subject, content, type }: SendEmailDto) {
 		await this.transport.sendMail({
 			from: this.env.get('EMAIL_USER'),
 			to,
 			subject,
-			text,
+			[type]: content,
 		});
 	}
 }

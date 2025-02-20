@@ -5,6 +5,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { EnvService } from '@/env/env.service';
 import { UserModule } from '@/user/user.module';
 import { EnvModule } from '@/env/env.module';
+import { EmailModule } from '@/email/email.module';
+import { JwtBlackListModule } from '@/jwt-black-list/jwt-black-list.module';
 
 @Module({
 	imports: [
@@ -18,6 +20,8 @@ import { EnvModule } from '@/env/env.module';
 			}),
 		}),
 		UserModule,
+		EmailModule,
+		JwtBlackListModule,
 	],
 	controllers: [AuthController],
 	providers: [AuthService],

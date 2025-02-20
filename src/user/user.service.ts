@@ -73,12 +73,13 @@ export class UserService {
 	}
 
 	async update(id: number, updateDto: UpdateUserDto) {
-		const { roles: newRoles, ...dto } = updateDto;
+		const { roles: newRoles, password, ...dto } = updateDto;
 		const user = await this.db.user.update({
 			where: { id },
 			include: { roles: true },
 			data: {
 				...dto,
+				password: password ? await hash(password) : undefined,
 				roles: newRoles
 					? { set: newRoles?.map((role) => ({ name: role })) }
 					: undefined,
