@@ -5,6 +5,9 @@ import {
 	UseGuards,
 	Request,
 	Get,
+	HttpCode,
+	Query,
+	Put,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -15,7 +18,7 @@ import { UserDto } from '@/user/dto/user.dto';
 import { AuthGuard } from './guard/auth.guard';
 import { Request as Req } from 'express';
 import { TokenPayload } from './types/auth.types';
-import { ResetPassowrdDto } from './dto/reset-password.dto';
+import { ResetPassTokenDto, ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -34,10 +37,17 @@ export class AuthController {
 	}
 
 	@Post('/token/reset-password')
-	@ApiResponse({ status: 201 })
-	@ApiBody({ type: ResetPassowrdDto })
-	async resetPassword(@Body() dto: ResetPassowrdDto) {
-		return await this.authService.generateResetPasswordToken(dto.email);
+	@HttpCode(200)
+	@ApiResponse({ status: 200 })
+	@ApiBody({ type: ResetPassTokenDto })
+	async getResetPassToken(@Body() dto: ResetPassTokenDto) {
+		return await this.authService.getResetPassToken(dto.email);
+	}
+
+	@Put('/reset-password')
+	@ApiBody({ type: ResetPasswordDto })
+	async resetPassword(@Query() token: string, @Body() dto: ResetPasswordDto) {
+		return await this.authService.resetPassword(token, dto.password);
 	}
 
 	@ApiBearerAuth()

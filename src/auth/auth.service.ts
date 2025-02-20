@@ -44,7 +44,7 @@ export class AuthService {
 		return userDB;
 	}
 
-	async generateResetPasswordToken(email: string) {
+	async getResetPassToken(email: string) {
 		const user = await this.usersService.findByEmail(email);
 		if (!user) throw new HttpException('Email is incorrect', 401);
 		const payload: ResetPassTokenPayload = { id: user.id };
