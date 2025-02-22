@@ -1,6 +1,0 @@
-model race{
-    id  Int @id @default(autoincrement())
-    name    String
-    species species @relation(fields:[speciesId], references:[id])
-    speciesId int
-}

@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { PetService } from './pet.service';
 import { PetController } from './pet.controller';
-import { MascotaService } from './mascota/mascota.service';
+import { PrismaService } from '@/prisma.service';
 
 @Module({
   controllers: [PetController],
-  providers: [PetService, MascotaService],
+  providers: [PetService, PrismaService],
 })
 export class PetModule {}

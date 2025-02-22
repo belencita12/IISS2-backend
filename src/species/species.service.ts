@@ -1,26 +1,49 @@
 import { Injectable } from '@nestjs/common';
 import { CreateSpeciesDto } from './dto/create-species.dto';
 import { UpdateSpeciesDto } from './dto/update-species.dto';
+import { PrismaService } from '@/prisma.service';
 
 @Injectable()
 export class SpeciesService {
-  create(createSpeciesDto: CreateSpeciesDto) {
-    return 'This action adds a new species';
+
+  constructor(private prisma: PrismaService){}
+
+  async create(createSpeciesDto: CreateSpeciesDto) {
+    return this.prisma.species.create({
+      data: createSpeciesDto,
+    });
   }
 
-  findAll() {
-    return `This action returns all species`;
+  async findAll() {
+    return this.prisma.species.findMany({
+      include:{
+        races: true,
+        pets: true,
+      }
+
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} species`;
+  async findOne(id: number) {
+    return this.prisma.species.findUnique({
+      where: {id},
+      include:{
+        races: true,
+        pets: true,
+      }
+    });
   }
 
-  update(id: number, updateSpeciesDto: UpdateSpeciesDto) {
-    return `This action updates a #${id} species`;
+  async update(id: number, updateSpeciesDto: UpdateSpeciesDto) {
+    return this.prisma.species.update({
+      where: {id},
+      data: updateSpeciesDto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} species`;
+  async remove(id: number) {
+    return this.prisma.species.delete({
+      where: {id},
+    });
   }
 }
