@@ -1,0 +1,5 @@
+model species{
+    id  Int @id @default(autoincrement())
+    name    String
+    race race[]
+}

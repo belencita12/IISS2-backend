@@ -1,0 +1,12 @@
+model pet {
+  id        Int       @id @default(autoincrement())
+  name      String   
+  species   species @references(fields: [speciesId], references: [id]])
+  speciesId Int
+  race      race @relation(fields: [raceId], references: [id])
+  raceId    Int
+  weight    Float
+  profileImg    Int?
+  dateOfBirth   DateTime
+  vaccinationBookletId Int
+}
