@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateRaceDto } from './dto/create-race.dto';
 import { UpdateRaceDto } from './dto/update-race.dto';
 import { PrismaService } from '@/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RaceService {
@@ -9,40 +10,66 @@ export class RaceService {
   constructor(private prisma: PrismaService){}
 
   async create(createRaceDto: CreateRaceDto) {
-    return this.prisma.race.create({
-      data: createRaceDto,
-    });
+    try{
+      const race = await this.prisma.race.create({
+        data: createRaceDto,
+      });
+      return race;
+    }catch(error){
+      throw new Error(`Error creando raza ${error.menssaje}`)
+    }
   }
 
   async findAll() {
-    return this.prisma.race.findMany({
+    const race = await this.prisma.race.findMany({
       include: {
         species: true,
         pets: true,
       }
     });
+    return race;
   }
 
   async findOne(id: number) {
-    return this.prisma.race.findUnique({
+    const race = await this.prisma.race.findUnique({
       where: {id},
       include:{
         species: true,
         pets: true,
       }
     });
+    if (!race) {
+      throw new NotFoundException(`Race with ID ${id} not found`);
+    }
+    return race;
   }
 
   async update(id: number, updateRaceDto: UpdateRaceDto) {
-    return this.prisma.race.update({
-      where: {id},
-      data: updateRaceDto,
-    });
+    try{
+      const race = await this.prisma.race.update({
+        where: { id },
+        data: updateRaceDto,
+      });
+      return race;
+    }catch(error){
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException(`Raza con id ${id} no encontrada`);
+      }
+       throw new Error(`Error actualizando raza con id ${id}: ${error.message}`);  
+    }
   }
 
   async remove(id: number) {
-    return this.prisma.race.delete({
-      where:{id},
-    });
+    try{
+      const race = await this.prisma.race.delete({
+        where:{id},
+      });
+      return race;
+    }catch(error){
+     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException(`Raza con id ${id} no encontrada`);
+      }
+      throw new Error(`Error actualizando raza con id ${id}: ${error.message}`);
+    }
   }
 }

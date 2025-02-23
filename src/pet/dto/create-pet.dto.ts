@@ -13,9 +13,12 @@ export class CreatePetDto {
     @IsNumber()
     weight: number;
 
+    @IsString()
+    sex: string;
+
     @IsOptional()
-    @IsNumber()
-    profileImg?: number;
+    @IsString()
+    profileImg?: string;
 
     @IsDateString()
     dateOfBirth: Date;

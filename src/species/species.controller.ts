@@ -1,34 +1,49 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { SpeciesService } from './species.service';
 import { CreateSpeciesDto } from './dto/create-species.dto';
 import { UpdateSpeciesDto } from './dto/update-species.dto';
+import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { SpeciesDto } from './dto/species.dto';
+import { SpeciesQueryDto } from './dto/species-query.dto';
 
 @Controller('species')
+@ApiTags('Species')
 export class SpeciesController {
   constructor(private readonly speciesService: SpeciesService) {}
 
   @Post()
-  create(@Body() createSpeciesDto: CreateSpeciesDto) {
-    return this.speciesService.create(createSpeciesDto);
+  @ApiResponse({type: SpeciesDto})
+  @ApiBody({type: CreateSpeciesDto})
+  async create(@Body() createSpeciesDto: CreateSpeciesDto) {
+    const species = await this.speciesService.create(createSpeciesDto);
+    return new SpeciesDto(species);
   }
 
   @Get()
-  findAll() {
-    return this.speciesService.findAll();
+  @ApiResponse({type: [SpeciesDto]})
+  async findAll(@Query() query: SpeciesQueryDto) {
+    const speciesList= await this.speciesService.findAll();
+    return speciesList.map((species)=> new SpeciesDto(species));
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.speciesService.findOne(+id);
+  @ApiResponse({type: SpeciesDto})
+  async findOne(@Param('id') id: string) {
+    const species = await this.speciesService.findOne(+id);
+    return new SpeciesDto(species);  
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSpeciesDto: UpdateSpeciesDto) {
-    return this.speciesService.update(+id, updateSpeciesDto);
+  @ApiResponse({ type: SpeciesDto })
+  async update(@Param('id') id: string, @Body() updateSpeciesDto: UpdateSpeciesDto) {
+    const updatedSpecies = await this.speciesService.update(+id, updateSpeciesDto);
+    return new SpeciesDto(updatedSpecies);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.speciesService.remove(+id);
+  @ApiResponse({ type: SpeciesDto })
+  async remove(@Param('id') id: string) {
+    const deletedSpecies = await this.speciesService.remove(+id);
+    return new SpeciesDto(deletedSpecies);
   }
 }

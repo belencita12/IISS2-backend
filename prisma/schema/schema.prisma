@@ -9,18 +9,24 @@ datasource db {
 }
 
 
+
 model Pet {
-  id                  Int      @id @default(autoincrement())
-  name                String
-  speciesId           Int
-  species             Species  @relation(fields: [speciesId], references: [id])
-  raceId              Int
-  race                Race     @relation(fields: [raceId], references: [id])
-  weight              Float
-  profileImg          Int?
-  dateOfBirth         DateTime
+  id                   Int      @id @default(autoincrement())
+  name                 String
+  speciesId            Int
+  species              Species  @relation(fields: [speciesId], references: [id])
+  raceId               Int
+  race                 Race     @relation(fields: [raceId], references: [id])
+  weight               Float
+  sex                  String
+  profileImg           String?
+  dateOfBirth          DateTime
   vaccinationBookletId Int
+  deletedAt            DateTime? 
+  createdAt            DateTime @default(now())  
+  updatedAt            DateTime @updatedAt       
 }
+
 
 
 model Race{
