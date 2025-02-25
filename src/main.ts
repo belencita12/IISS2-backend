@@ -40,7 +40,9 @@ async function bootstrap() {
 	const ORIGIN = env.get('CORS_ORIGIN');
 
 	// Config Cors
-	app.enableCors(getCorsConfig(ORIGIN));
+	const corsConfig = getCorsConfig(ORIGIN);
+	console.log(corsConfig);
+	app.enableCors(corsConfig);
 
 	await app.listen(PORT);
 }
