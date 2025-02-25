@@ -44,9 +44,9 @@ class EnvironmentVariables {
 	JWT_SECRET: string = 'secret';
 
 	@IsString({ each: true })
-	@Transform(({ value }) => value.split(','))
+	@Transform(({ value }) => (value ? value.split(',') : '*'))
 	@IsOptional()
-	CORS_ORIGIN: string[] = ['*'];
+	CORS_ORIGIN: string[] | string = '*';
 
 	@IsEnum(PrismaLogLevels, { each: true })
 	@Transform(({ value }) => value.split(','))
