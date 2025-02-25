@@ -11,6 +11,9 @@ import { RoleModule } from './role/role.module';
 import { PrismaService } from './prisma.service';
 import { EmailModule } from './email/email.module';
 import { JwtBlackListModule } from './jwt-black-list/jwt-black-list.module';
+import { PetModule } from './pet/pet.module';
+import { RaceModule } from './race/race.module';
+import { SpeciesModule } from './species/species.module';
 
 @Module({
 	imports: [
@@ -25,6 +28,9 @@ import { JwtBlackListModule } from './jwt-black-list/jwt-black-list.module';
 		RoleModule,
 		EmailModule,
 		JwtBlackListModule,
+		PetModule,
+		RaceModule,
+		SpeciesModule,
 	],
 	controllers: [],
 	providers: [AuthService, RoleService, PrismaService],
