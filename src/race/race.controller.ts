@@ -5,6 +5,7 @@ import { UpdateRaceDto } from './dto/update-race.dto';
 import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';;
 import { RaceQueryDto } from './dto/race-query.dto';
 import { RaceDto } from './dto/race.dto';
+import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
 
 @Controller('race')
 @ApiTags('Race')
@@ -15,36 +16,30 @@ export class RaceController {
     @ApiResponse({type: RaceDto })
     @ApiBody({type: CreateRaceDto})
   async create(@Body() createRaceDto: CreateRaceDto) {
-    const race = await this.raceService.create(createRaceDto);
-    return new RaceDto(race);
+    return this.raceService.create(createRaceDto);
   }
 
   @Get()
-  @ApiResponse({type: [RaceDto]})
+  @ApiPaginatedResponse(RaceDto)
   async findAll(@Query() query: RaceQueryDto) {
- const raceList= await this.raceService.findAll(query);
-    return raceList.map((race)=> new RaceDto(race));
-
+    return this.raceService.findAll(query);
   }
 
   @Get(':id')
   @ApiResponse({type: RaceDto })
   async findOne(@Param('id') id: string) {
-    const race = await this.raceService.findOne(+id);
-    return new RaceDto(race); 
+    return this.raceService.findOne(+id);
   }
 
   @Patch(':id')
   @ApiResponse({type: RaceDto })
-  async update(@Param('id') id: number, @Body() updateRaceDto: UpdateRaceDto) {
-    const updatedRace = await this.raceService.update(+id, updateRaceDto);
-    return new RaceDto(updatedRace); 
+  async update(@Param('id') id: string, @Body() updateRaceDto: UpdateRaceDto) {
+    return this.raceService.update(+id, updateRaceDto);
   }
 
   @Delete(':id')
   @ApiResponse({type: RaceDto })
-  async remove(@Param('id') id: number) {
-      const deletedRace = await this.raceService.remove(+id);
-      return new RaceDto(deletedRace);
+  async remove(@Param('id') id: string) {
+    return this.raceService.remove(+id);
   }
 }

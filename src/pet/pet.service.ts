@@ -2,8 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { PrismaService } from '@/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Pet, Prisma } from '@prisma/client';
 import { PetQueryDto } from './dto/pet-query.dto';
+import { PaginationResponseDto } from '@/lib/commons/pagination-response.dto';
 
 @Injectable()
 export class PetService {
@@ -29,34 +30,32 @@ export class PetService {
     });
   }
   
-
-  async findAll(query: PetQueryDto) {
-    const { speciesId, raceId, page = 1, limit = 10 } = query;
-    const where: Prisma.PetWhereInput = { 
-      deletedAt: null
+  async findAll(dto: PetQueryDto) {
+    const { baseWhere } = this.prisma.getBaseWhere(dto);
+  
+    const where: Prisma.PetWhereInput = {
+      ...baseWhere,
+      speciesId: dto.speciesId,
+      raceId: dto.raceId,
     };
-    if (speciesId) {
-      where.speciesId = speciesId;
-    }
-    if (raceId) {
-      where.raceId = raceId;
-    }
-    const pets= await this.prisma.pet.findMany({
-      where,
-      take: limit,
-      skip: (page - 1) * limit,
-      include: {
-        species: true, 
-        race: true,
-      },
+  
+    const [data, total] = await Promise.all([
+      this.prisma.pet.findMany({
+        ...this.prisma.paginate(dto),
+        where,
+        include: { species: true, race: true },
+      }),
+      this.prisma.pet.count({ where }),
+    ]);
+  
+    return this.prisma.getPagOutput({
+      page: dto.page,
+      size: dto.size,
+      total,
+      data,
     });
-    const filteredPets = pets.map(pet => ({
-      ...pet,
-      species: pet.species?.deletedAt ? null : pet.species,
-      race: pet.race?.deletedAt ? null : pet.race
-    }));
-    return filteredPets;
   }
+  
   
 
   async findOne(id: number) {

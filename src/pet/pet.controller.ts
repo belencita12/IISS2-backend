@@ -5,6 +5,7 @@ import { UpdatePetDto } from './dto/update-pet.dto';
 import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PetDto } from './dto/pet.dto';
 import { PetQueryDto } from './dto/pet-query.dto';
+import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
 
 @Controller('pet')
 @ApiTags('Pet')
@@ -15,35 +16,30 @@ export class PetController {
   @ApiResponse({type: PetDto})
   @ApiBody({type: CreatePetDto})
   async create(@Body() createPetDto: CreatePetDto) {
-    const pet = await this.petService.create(createPetDto);
-    return new PetDto(pet);
+    return this.petService.create(createPetDto);
   }
 
   @Get()
-  @ApiResponse({type: [PetDto]})
+  @ApiPaginatedResponse(PetDto)
   async findAll(@Query() query: PetQueryDto) {
-    const petList = await this.petService.findAll(query);
-    return petList.map((pet)=> new PetDto(pet));
+    return this.petService.findAll(query);
   }
 
   @Get(':id')
   @ApiResponse({type: PetDto})
   async findOne(@Param('id') id: string) {
-    const pet = await this.petService.findOne(+id);
-    return new PetDto(pet);
+    return this.petService.findOne(+id);
   }
 
 @Patch(':id')
   @ApiResponse({ type: PetDto })
   async update(@Param('id') id: string, @Body() updatePetDto: UpdatePetDto) {
-    const updatedPet = await this.petService.update(+id, updatePetDto);
-    return new PetDto(updatedPet);
+    return this.petService.update(+id, updatePetDto);
   }
 
   @Delete(':id')
   @ApiResponse({ type: PetDto })
   async remove(@Param('id') id: string) {
-    const deletedPet = await this.petService.remove(+id);
-    return new PetDto(deletedPet);
+    return this.petService.remove(+id);
   }
 }

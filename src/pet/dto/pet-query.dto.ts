@@ -1,12 +1,14 @@
 import { IsOptional, IsInt, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { PaginationQueryDto } from '@/lib/commons/pagination-params.dto';
 
-export class PetQueryDto {
+
+export class PetQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  name?: string; 
+  name?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -19,16 +21,4 @@ export class PetQueryDto {
   @Type(() => Number)
   @IsInt()
   raceId?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  page?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  limit?: number;
 }

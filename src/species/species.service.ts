@@ -16,21 +16,27 @@ export class SpeciesService {
     });
   }
 
-  async findAll(query: SpeciesQueryDto) {
-    const { name, page = 1, limit = 10 } = query;
+  async findAll(dto: SpeciesQueryDto) {
+    const { baseWhere } = this.prisma.getBaseWhere(dto);
+  
     const where: Prisma.SpeciesWhereInput = {
-      deletedAt: null, 
-      ...(name ? { name: { contains: name, mode: 'insensitive' } } : {}),
+      ...baseWhere,
+      name: { contains: dto.name },
     };
-    return this.prisma.species.findMany({
-        where,
-        take: limit,
-        skip: (page - 1) * limit,
-        include: {
-            races: { where: { deletedAt: null } },
-            pets: { where: { deletedAt: null } },
-        },
-    });
+  
+    const [data, total] = await Promise.all([
+      this.prisma.species.findMany({
+        ...this.prisma.paginate(dto),
+      }),
+      this.prisma.species.count({ where }),
+    ]);
+  
+    return this.prisma.getPagOutput({
+      page: dto.page,
+      size: dto.size,
+      total,
+      data,
+    }); 
   }
 
   async findOne(id: number) {

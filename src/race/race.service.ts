@@ -24,26 +24,27 @@ export class RaceService {
     });
   }
 
-  async findAll(query: RaceQueryDto) {
-    const { name, speciesId, page = 1, limit = 10 } = query;
-    const where: Prisma.RaceWhereInput = {};
-
-    if (name) {
-        where.name = { contains: name, mode: 'insensitive' };
-    }
-
-    if (speciesId) {
-        where.speciesId = speciesId;
-    }
-
-    return this.prisma.race.findMany({
+  async findAll(dto: RaceQueryDto) {
+    const { baseWhere } = this.prisma.getBaseWhere(dto);
+    const where: Prisma.RaceWhereInput ={
+      ...baseWhere,
+      speciesId: dto.speciesId,
+    };
+    
+    const [data, total] = await Promise.all([
+      this.prisma.race.findMany({
+        ...this.prisma.paginate(dto),
         where,
-        take: limit,
-        skip: (page - 1) * limit,
-        include: {
-            species: true,
-            pets: { where: { deletedAt: null } },
-        },
+        include: { species: true},
+      }),
+      this.prisma.race.count({ where }),
+    ]);
+  
+    return this.prisma.getPagOutput({
+      page: dto.page,
+      size: dto.size,
+      total,
+      data,
     });
   }
 

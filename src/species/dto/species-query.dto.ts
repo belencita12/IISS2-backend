@@ -1,21 +1,10 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsInt, IsNumber, IsOptional, Min } from 'class-validator';
+import { PaginationQueryDto } from '@/lib/commons/pagination-params.dto';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 
-export class SpeciesQueryDto {
-  @ApiPropertyOptional()
+export class SpeciesQueryDto extends PaginationQueryDto {
+  @IsString()
   @IsOptional()
+  @ApiPropertyOptional()
   name?: string;
-  
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  page?: number; 
-    
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  limit?: number; 
 }
