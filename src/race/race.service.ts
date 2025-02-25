@@ -3,6 +3,7 @@ import { CreateRaceDto } from './dto/create-race.dto';
 import { UpdateRaceDto } from './dto/update-race.dto';
 import { PrismaService } from '@/prisma.service';
 import { Prisma } from '@prisma/client';
+import { RaceQueryDto } from './dto/race-query.dto';
 
 @Injectable()
 export class RaceService {
@@ -10,29 +11,45 @@ export class RaceService {
   constructor(private prisma: PrismaService){}
 
   async create(createRaceDto: CreateRaceDto) {
-    try{
-      const race = await this.prisma.race.create({
-        data: createRaceDto,
-      });
-      return race;
-    }catch(error){
-      throw new Error(`Error creando raza ${error.menssaje}`)
+    const speciesExists = await this.prisma.species.findUnique({
+      where: { id: createRaceDto.speciesId, deletedAt: null }, 
+    });
+
+    if (!speciesExists) {
+        throw new NotFoundException(`Especie con ID ${createRaceDto.speciesId} no existe o fue eliminada`);
     }
+
+    return this.prisma.race.create({
+        data: createRaceDto,
+    });
   }
 
-  async findAll() {
-    const race = await this.prisma.race.findMany({
-      include: {
-        species: true,
-        pets: true,
-      }
+  async findAll(query: RaceQueryDto) {
+    const { name, speciesId, page = 1, limit = 10 } = query;
+    const where: Prisma.RaceWhereInput = {};
+
+    if (name) {
+        where.name = { contains: name, mode: 'insensitive' };
+    }
+
+    if (speciesId) {
+        where.speciesId = speciesId;
+    }
+
+    return this.prisma.race.findMany({
+        where,
+        take: limit,
+        skip: (page - 1) * limit,
+        include: {
+            species: true,
+            pets: { where: { deletedAt: null } },
+        },
     });
-    return race;
   }
 
   async findOne(id: number) {
     const race = await this.prisma.race.findUnique({
-      where: {id},
+      where: {id, deletedAt: null},
       include:{
         species: true,
         pets: true,
@@ -47,7 +64,7 @@ export class RaceService {
   async update(id: number, updateRaceDto: UpdateRaceDto) {
     try{
       const race = await this.prisma.race.update({
-        where: { id },
+        where: { id , deletedAt: null},
         data: updateRaceDto,
       });
       return race;
@@ -60,16 +77,13 @@ export class RaceService {
   }
 
   async remove(id: number) {
-    try{
-      const race = await this.prisma.race.delete({
-        where:{id},
-      });
-      return race;
-    }catch(error){
-     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        throw new NotFoundException(`Raza con id ${id} no encontrada`);
-      }
-      throw new Error(`Error actualizando raza con id ${id}: ${error.message}`);
+    const race = await this.prisma.race.findFirst({ where: { id, deletedAt: null } });
+    if (!race) {
+        throw new NotFoundException(`Especie con id ${id} no encontrada o ya eliminada`);
     }
+    return this.prisma.race.update({
+        where: { id },
+        data: { deletedAt: new Date() }, 
+    });
   }
 }

@@ -38,7 +38,7 @@ async function bootstrap() {
 	const env = app.get(EnvService);
 	const PORT = env.get('PORT');
 	const ORIGIN = env.get('CORS_ORIGIN');
-
+	console.log('El puerco es',PORT);
 	// Config Cors
 	app.enableCors(getCorsConfig(ORIGIN));
 

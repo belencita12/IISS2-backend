@@ -1,37 +1,32 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PetDto {
-  @ApiProperty()
+  @ApiProperty({example: 1})
   id: number;
 
-  @ApiProperty()
+  @ApiProperty({example: 'Bruce'})
   name: string;
 
-  @ApiProperty()
+  @ApiProperty({example: 1})
   speciesId: number;
 
-  @ApiProperty()
+  @ApiProperty({example: 1})
   raceId: number;
 
-  @ApiProperty()
+  @ApiProperty({example: 12})
   weight: number;
 
-  @ApiProperty()
+  @ApiProperty({example: 'Macho'})
+   sex: string;
+
+  @ApiProperty({ example: "https://image.url/profile.jpg" })
   profileImg?: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: "2020-05-15T00:00:00.000Z" })
   dateOfBirth: Date;
 
-  @ApiProperty()
+  @ApiProperty({example: 1})
   vaccinationBookletId?: number;
-  @ApiProperty()
-  deletedAt?: Date;
-
-  @ApiProperty()
-  createdAt: Date;
-
-  @ApiProperty()
-  updatedAt: Date;
 
   constructor(pet: any) {
     Object.assign(this, pet);

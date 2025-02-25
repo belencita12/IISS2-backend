@@ -22,7 +22,7 @@ export class SpeciesController {
   @Get()
   @ApiResponse({type: [SpeciesDto]})
   async findAll(@Query() query: SpeciesQueryDto) {
-    const speciesList= await this.speciesService.findAll();
+    const speciesList= await this.speciesService.findAll(query);
     return speciesList.map((species)=> new SpeciesDto(species));
   }
 

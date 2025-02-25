@@ -1,29 +1,40 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreatePetDto } from './create-pet.dto';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty} from '@nestjs/swagger';
+import { IsDateString, IsIn, IsNumber, IsPositive, IsString } from 'class-validator';
 
 export class UpdatePetDto extends PartialType(CreatePetDto) {
-  @ApiPropertyOptional({ example: "Luna" })
+  @ApiProperty({ example: 'Luna' })
+  @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ example: 1 })
+  @ApiProperty({ example: 1 })
+  @IsNumber()
   speciesId?: number;
 
-  @ApiPropertyOptional({ example: 2 })
+  @ApiProperty({ example: 2 })
+  @IsNumber()
   raceId?: number;
 
-  @ApiPropertyOptional({ example: 4.5 })
+  @ApiProperty({ example: 4.5 })
+  @IsNumber()
+  @IsPositive({ message: 'El peso debe ser un número positivo' })
   weight?: number;
 
-  @ApiPropertyOptional({ example: 4.5 })
+  @ApiProperty({ example: 'Macho' })
+  @IsString()
+  @IsIn(['Macho', 'Hembra'], { message: 'El sexo debe ser Male, Female o Other' })
   sex?: string;
 
-  @ApiPropertyOptional({ example: "https://image.url/profile.jpg" })
+  @ApiProperty({ example: "https://image.url/profile.jpg" })
+  @IsString()
   profileImg?: string;
 
-  @ApiPropertyOptional({ example: "2020-05-15T00:00:00.000Z" })
+  @ApiProperty({ example: "2020-05-15T00:00:00.000Z" })
+  @IsDateString()
   dateOfBirth?: Date;
 
-  @ApiPropertyOptional({ example: 10 })
+  @ApiProperty({ example: 10 })
+  @IsNumber()
   vaccinationBookletId?: number;
 }

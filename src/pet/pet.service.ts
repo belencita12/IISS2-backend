@@ -9,44 +9,59 @@ import { PetQueryDto } from './dto/pet-query.dto';
 export class PetService {
 
   constructor(private prisma: PrismaService){}
-
   async create(createPetDto: CreatePetDto) {
-    try{
-      const pet = await this.prisma.pet.create({
-        data: createPetDto
+    const speciesExists = await this.prisma.species.findUnique({
+      where: { id: createPetDto.speciesId, deletedAt: null }, 
+    });
+    if (!speciesExists) {
+      throw new NotFoundException(`Especie con ID ${createPetDto.speciesId} no existe o fue eliminada`);
+    }
+    if (createPetDto.raceId) {
+      const raceExists = await this.prisma.race.findUnique({
+        where: { id: createPetDto.raceId, deletedAt: null }, 
       });
-      return pet;
-    }catch(error){
-      throw new Error(`Error creando mascota ${error.menssaje}`);
+      if (!raceExists) {
+        throw new NotFoundException(`Raza con ID ${createPetDto.raceId} no existe o fue eliminada`);
+      }
     }
-  }
-
-  async findAll(query: PetQueryDto) {
-    const { species, race, page = 1, limit = 10 } = query;
-    const where: Prisma.PetWhereInput = {};
-  
-    if (species) {
-      where.species = { name: { contains: species, mode: 'insensitive' } };
-    }
-    if (race) {
-      where.race = { name: { contains: race, mode: 'insensitive' } };
-    }
-  
-    return this.prisma.pet.findMany({
-      where,
-      take: limit,
-      skip: (page - 1) * limit,
-      include: {
-        species: true,
-        race: true,
-      },
+    return this.prisma.pet.create({
+      data: createPetDto,
     });
   }
   
 
+  async findAll(query: PetQueryDto) {
+    const { speciesId, raceId, page = 1, limit = 10 } = query;
+    const where: Prisma.PetWhereInput = { 
+      deletedAt: null
+    };
+    if (speciesId) {
+      where.speciesId = speciesId;
+    }
+    if (raceId) {
+      where.raceId = raceId;
+    }
+    const pets= await this.prisma.pet.findMany({
+      where,
+      take: limit,
+      skip: (page - 1) * limit,
+      include: {
+        species: true, 
+        race: true,
+      },
+    });
+    const filteredPets = pets.map(pet => ({
+      ...pet,
+      species: pet.species?.deletedAt ? null : pet.species,
+      race: pet.race?.deletedAt ? null : pet.race
+    }));
+    return filteredPets;
+  }
+  
+
   async findOne(id: number) {
-    const pet = await this.prisma.pet.findUnique({
-      where: {id},
+    const pet = await this.prisma.pet.findFirst({
+      where: {id, deletedAt: null},
       include: {
         species: true,
         race: true,
@@ -57,10 +72,11 @@ export class PetService {
     }
     return pet;
   }
+
   async update(id: number, updatePetDto: UpdatePetDto) {
     try {
       const pet = await this.prisma.pet.update({
-        where: { id },
+        where: { id, deletedAt: null },
         data: { ...updatePetDto, updatedAt: new Date() },
       });
       return pet;
@@ -73,17 +89,13 @@ export class PetService {
   }
 
   async remove(id: number) {
-    try {
-      const pet = await this.prisma.pet.update({
-        where: { id },
-        data: { deletedAt: new Date() },
-      });
-      return pet;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        throw new NotFoundException(`Mascota con id ${id} no encontrada`);
-      }
-      throw new Error(`Error eliminando mascota con id ${id}: ${error.message}`);
+    const pet = await this.prisma.pet.findFirst({ where: { id, deletedAt: null } });
+    if (!pet) {
+        throw new NotFoundException(`Mascota con id ${id} no encontrada o ya eliminada`);
     }
+    return this.prisma.pet.update({
+        where: { id },
+        data: { deletedAt: new Date() }, 
+    });
   }
 }

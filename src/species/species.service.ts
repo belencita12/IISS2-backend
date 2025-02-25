@@ -3,6 +3,7 @@ import { CreateSpeciesDto } from './dto/create-species.dto';
 import { UpdateSpeciesDto } from './dto/update-species.dto';
 import { PrismaService } from '@/prisma.service';
 import { Prisma } from '@prisma/client';
+import { SpeciesQueryDto } from './dto/species-query.dto';
 
 @Injectable()
 export class SpeciesService {
@@ -10,29 +11,31 @@ export class SpeciesService {
   constructor(private prisma: PrismaService){}
 
   async create(createSpeciesDto: CreateSpeciesDto) {
-    try {
-      const species = await this.prisma.species.create({
-        data: createSpeciesDto,
-      });
-      return species;
-    } catch(error){
-      throw new Error(`Error creando especie ${error.menssaje}`);
-    }
+    return this.prisma.species.create({
+      data: createSpeciesDto,
+    });
   }
 
-  async findAll() {
-    const species = await this.prisma.species.findMany({
-      include:{
-        races: true,
-        pets: true,
-      }
+  async findAll(query: SpeciesQueryDto) {
+    const { name, page = 1, limit = 10 } = query;
+    const where: Prisma.SpeciesWhereInput = {
+      deletedAt: null, 
+      ...(name ? { name: { contains: name, mode: 'insensitive' } } : {}),
+    };
+    return this.prisma.species.findMany({
+        where,
+        take: limit,
+        skip: (page - 1) * limit,
+        include: {
+            races: { where: { deletedAt: null } },
+            pets: { where: { deletedAt: null } },
+        },
     });
-    return species;
   }
 
   async findOne(id: number) {
     const species = await this.prisma.species.findUnique({
-      where: {id},
+      where: {id, deletedAt: null},
       include:{
         races: true,
         pets: true,
@@ -47,7 +50,7 @@ export class SpeciesService {
   async update(id: number, updateSpeciesDto: UpdateSpeciesDto) {
     try{
       const species= await this.prisma.species.update({
-        where: {id},
+        where: {id, deletedAt: null },
         data: updateSpeciesDto,
       });
       return species;
@@ -60,17 +63,13 @@ export class SpeciesService {
   }
 
   async remove(id: number) {
-    try{
-      const species = this.prisma.species.delete({
-        where: {id},
-      });
-
-      return species;
-    }catch(error){
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        throw new NotFoundException(`Especie con id ${id} no encontrada`);
-      }
-      throw new Error(`Error actualizando especie con id ${id}: ${error.message}`);
+    const species = await this.prisma.species.findFirst({ where: { id, deletedAt: null } });
+    if (!species) {
+        throw new NotFoundException(`Especie con id ${id} no encontrada o ya eliminada`);
     }
+    return this.prisma.species.update({
+        where: { id },
+        data: { deletedAt: new Date() }, 
+    });
   }
 }

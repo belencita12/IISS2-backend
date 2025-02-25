@@ -1,13 +1,17 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 
 export class RaceDto{
-    @ApiProperty()
+    @ApiPropertyOptional()
     id: number; 
 
-    @ApiProperty()
+    @ApiProperty({example: 'Labrador'})
     name: string;
 
-    @ApiProperty()
+    @ApiProperty({example: 1})
     speciesId: number;
+
+    constructor(partial: Partial<RaceDto>) {
+        Object.assign(this, partial);
+    }
 }
