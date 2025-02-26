@@ -38,9 +38,9 @@ async function bootstrap() {
 	const env = app.get(EnvService);
 	const PORT = env.get('PORT');
 	const ORIGIN = env.get('CORS_ORIGIN');
+
 	// Config Cors
 	const corsConfig = getCorsConfig(ORIGIN);
-	console.log(corsConfig);
 	app.enableCors(corsConfig);
 
 	await app.listen(PORT);
