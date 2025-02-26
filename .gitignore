@@ -15,9 +15,6 @@ lerna-debug.log*
 # OS
 .DS_Store
 
-#prisma
-migrations
-
 # Tests
 /coverage
 /.nyc_output

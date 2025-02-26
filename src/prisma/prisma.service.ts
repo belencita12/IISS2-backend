@@ -1,9 +1,9 @@
-import { HttpException, Injectable, OnModuleInit } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
-import { PaginationQueryDto } from './lib/commons/pagination-params.dto';
-import { EnvService } from './env/env.service';
-import { PagOutputParams } from './lib/types/pagination';
-import { PaginationResponseDto } from './lib/commons/pagination-response.dto';
+import { EnvService } from '@/env/env.service';
+import { PaginationQueryDto } from '@/lib/commons/pagination-params.dto';
+import { PaginationResponseDto } from '@/lib/commons/pagination-response.dto';
+import { PagOutputParams } from '@/lib/types/pagination';
+import { Injectable, OnModuleInit, HttpException } from '@nestjs/common';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
