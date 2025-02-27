@@ -73,7 +73,7 @@ describe('UserController (e2e)', () => {
 		const body = {
 			username: 'testuser',
 			email: 'test@example.com',
-			password: 'securepassword123'
+			password: 'securepassword123',
 		};
 		const url = '/user';
 		const response = await request(app.getHttpServer())
@@ -96,20 +96,15 @@ describe('UserController (e2e)', () => {
 		const invalidBody = {
 			username: 'testuser',
 			email: 'invalid-email',
-			password: '123'
+			password: '123',
 		};
 		const url = '/user';
-		await request(app.getHttpServer())
-			.post(url)
-			.send(invalidBody)
-			.expect(400);
+		await request(app.getHttpServer()).post(url).send(invalidBody).expect(400);
 	});
 
 	it('/GET user/:id', async () => {
 		const url = '/user/1';
-		const response = await request(app.getHttpServer())
-			.get(url)
-			.expect(200);
+		const response = await request(app.getHttpServer()).get(url).expect(200);
 
 		expect(userService.findOne).toHaveBeenCalledWith(1);
 		assertResponse(response, {
@@ -134,8 +129,8 @@ describe('UserController (e2e)', () => {
 			.expect(200);
 
 		expect(userService.update).toHaveBeenCalledWith(1, body);
-		assertResponse(response, { 
-			id: 1, 
+		assertResponse(response, {
+			id: 1,
 			username: 'updateduser',
 		});
 	});
