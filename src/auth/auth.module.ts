@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
@@ -7,6 +7,8 @@ import { UserModule } from '@/user/user.module';
 import { EnvModule } from '@/env/env.module';
 import { EmailModule } from '@/email/email.module';
 import { JwtBlackListModule } from '@/jwt-black-list/jwt-black-list.module';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './guard/auth.guard';
 
 @Module({
 	imports: [
@@ -24,7 +26,12 @@ import { JwtBlackListModule } from '@/jwt-black-list/jwt-black-list.module';
 		JwtBlackListModule,
 	],
 	controllers: [AuthController],
-	providers: [AuthService],
-	exports: [AuthService],
+	providers: [
+		AuthService ,   
+		{
+			provide: APP_GUARD,
+			useClass: AuthGuard,
+	  	}],
+	exports: [AuthService, JwtModule, UserModule],
 })
 export class AuthModule {}
