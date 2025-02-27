@@ -2,8 +2,8 @@ export const expRace = {
 	id: expect.any(Number),
 	name: expect.any(String),
 	speciesId: expect.any(Number),
-	createdAt: expect.any(Date),
-	updatedAt: expect.any(Date),
+	createdAt: expect.any(String),
+	updatedAt: expect.any(String),
 	deletedAt: null,
 };
 
