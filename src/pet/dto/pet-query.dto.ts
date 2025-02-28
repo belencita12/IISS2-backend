@@ -21,4 +21,9 @@ export class PetQueryDto extends PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   raceId?: number;
+  
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  username?: string;
 }
