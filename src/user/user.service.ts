@@ -3,7 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { Prisma, Role, User } from '@prisma/client';
-import { hash } from '@/lib/utils/encrypt';
+import { genUsername, hash } from '@/lib/utils/encrypt';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
@@ -11,12 +11,14 @@ export class UserService {
 	constructor(private readonly db: PrismaService) {}
 
 	async create(dto: CreateUserDto) {
+		const username = genUsername(dto.fullName);
 		const roles = dto.roles || ['USER'];
 		const hashPsw = await hash(dto.password);
 		const user = await this.db.user.create({
 			data: {
 				...dto,
 				password: hashPsw,
+				username,
 				roles: {
 					connectOrCreate: roles?.map((role) => ({
 						where: { name: role },
@@ -74,12 +76,12 @@ export class UserService {
 
 	async update(id: number, updateDto: UpdateUserDto) {
 		const { roles: newRoles, password, ...dto } = updateDto;
-
 		const user = await this.db.user.update({
 			where: { id },
 			include: { roles: true },
 			data: {
 				...dto,
+				username: dto.fullName ? genUsername(dto.fullName) : undefined,
 				password: password ? await hash(password) : undefined,
 				roles: newRoles
 					? { set: newRoles.map((role) => ({ name: role })) }

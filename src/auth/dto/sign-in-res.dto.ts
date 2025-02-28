@@ -8,6 +8,10 @@ export class SignInResponseDto {
 
 	@ApiProperty()
 	@IsString()
+	fullName: string;
+
+	@ApiProperty()
+	@IsString()
 	username: string;
 
 	@IsString()

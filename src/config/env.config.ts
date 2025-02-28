@@ -71,6 +71,15 @@ class EnvironmentVariables {
 
 	@IsString()
 	@IsOptional()
+	NANOID_ALPHABET: string =
+		'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz-';
+
+	@IsNumber()
+	@IsOptional()
+	NANOID_LENGTH: number = 16;
+
+	@IsString()
+	@IsOptional()
 	JWT_RESET_PASS_SECRET: string = 'reset_password_secret';
 
 	@IsNumber()

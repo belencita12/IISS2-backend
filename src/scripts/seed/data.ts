@@ -4,7 +4,8 @@ import { hash } from '../../lib/utils/encrypt';
 const SEED_USERS: Prisma.UserCreateArgs[] = [
 	{
 		data: {
-			username: 'admin',
+			fullName: 'Juan Gimenez',
+			username: 'admin@abc123',
 			email: 'admin@gmail.com',
 			password: 'admin123',
 			roles: {
@@ -17,7 +18,8 @@ const SEED_USERS: Prisma.UserCreateArgs[] = [
 	},
 	{
 		data: {
-			username: 'user',
+			fullName: 'Arturo Gonzalez',
+			username: 'user@abc123',
 			email: 'user@gmail.com',
 			password: 'user1234',
 			roles: {
