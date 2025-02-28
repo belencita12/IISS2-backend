@@ -23,21 +23,8 @@ export class UserService {
 						create: { name: role },
 					})),
 				},
-				pets: dto.pets?.length
-        		? {
-           			create: dto.pets.map((pet) => ({
-              		name: pet.name,
-              		species: { connect: { id: pet.speciesId } },
-             		race: { connect: { id: pet.raceId } },
-              		weight: pet.weight,
-              		sex: pet.sex,
-              		profileImg: pet.profileImg,
-              		dateOfBirth: pet.dateOfBirth,
-            	})),
-         	}
-        	: undefined,
 			},
-			include: { roles: true, pets: true },
+			include: { roles: true },
 		});
 		return this.toDto(user);
 	}
@@ -45,7 +32,7 @@ export class UserService {
 	async findByEmail(email: string) {
 		const user = await this.db.user.findUnique({
 			where: { email },
-			include: { roles: true},
+			include: { roles: true },
 		});
 		return user;
 	}
@@ -85,23 +72,22 @@ export class UserService {
 		return this.toDto(user);
 	}
 
-	
 	async update(id: number, updateDto: UpdateUserDto) {
-		const { roles: newRoles, password, pets, ...dto } = updateDto;
+		const { roles: newRoles, password, ...dto } = updateDto;
 
 		const user = await this.db.user.update({
 			where: { id },
-			include: { roles: true, pets: true },
+			include: { roles: true },
 			data: {
 				...dto,
 				password: password ? await hash(password) : undefined,
 				roles: newRoles
 					? { set: newRoles.map((role) => ({ name: role })) }
 					: undefined,
-				},
+			},
 		});
 		return this.toDto(user);
-	}	  
+	}
 	async remove(id: number) {
 		const user = await this.db.user.update({
 			where: { id },
