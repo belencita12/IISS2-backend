@@ -35,10 +35,20 @@ export class PetService {
 	async findAll(dto: PetQueryDto) {
 		const { baseWhere } = this.prisma.getBaseWhere(dto);
 
+		let userId: number | undefined;
+		if (dto.username) {
+			const user = await this.prisma.user.findUnique({
+				where: { username: dto.username },
+			});
+			if (!user) throw new NotFoundException(`Usuario "${dto.username}" no encontrado`);
+			userId = user.id;
+		}
+
 		const where: Prisma.PetWhereInput = {
 			...baseWhere,
 			speciesId: dto.speciesId,
 			raceId: dto.raceId,
+			userId,
 		};
 
 		const [data, total] = await Promise.all([

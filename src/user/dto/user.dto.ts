@@ -1,5 +1,6 @@
+import { PetDto } from '@/pet/dto/pet.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Role, User } from '@prisma/client';
+import { Pet, Role, User } from '@prisma/client';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import {
 	IsDateString,
@@ -36,6 +37,14 @@ export class UserDto implements User {
 	})
 	@ApiProperty({ type: [String] })
 	roles: string[];
+
+	@Expose()
+	@IsOptional()
+	@Transform(({ value }) => value?.map((pet: Pet) => new PetDto(pet)) ?? [], {
+		toClassOnly: true,
+	})
+	@ApiPropertyOptional({ type: [PetDto] })
+	pets?: PetDto[];
 
 	@Expose()
 	@IsDateString()

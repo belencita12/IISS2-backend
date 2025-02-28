@@ -1,7 +1,8 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreatePetDto } from './create-pet.dto';
 import { ApiProperty} from '@nestjs/swagger';
-import { IsDateString, IsIn, IsNumber, IsPositive, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsNumber, IsPositive, IsString } from 'class-validator';
+import { Sex } from '@prisma/client';
 
 export class UpdatePetDto extends PartialType(CreatePetDto) {
   @ApiProperty({ example: 'Luna' })
@@ -16,15 +17,19 @@ export class UpdatePetDto extends PartialType(CreatePetDto) {
   @IsNumber()
   raceId?: number;
 
+  @IsNumber()
+  @ApiProperty({ example: 1 })
+  userId: number;
+
   @ApiProperty({ example: 4.5 })
   @IsNumber()
   @IsPositive({ message: 'El peso debe ser un número positivo' })
   weight?: number;
 
-  @ApiProperty({ example: 'Macho' })
-  @IsString()
-  @IsIn(['Macho', 'Hembra'], { message: 'El sexo debe ser Male, Female o Other' })
-  sex?: string;
+
+  @IsEnum(Sex, { message: 'El sexo debe ser M o F' }) 
+  @ApiProperty({ example: 'M', enum: Sex })
+  sex?: Sex;
 
   @ApiProperty({ example: "https://image.url/profile.jpg" })
   @IsString()
@@ -33,8 +38,4 @@ export class UpdatePetDto extends PartialType(CreatePetDto) {
   @ApiProperty({ example: "2020-05-15T00:00:00.000Z" })
   @IsDateString()
   dateOfBirth?: Date;
-
-  @ApiProperty({ example: 10 })
-  @IsNumber()
-  vaccinationBookletId?: number;
 }

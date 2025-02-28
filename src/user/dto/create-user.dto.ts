@@ -1,5 +1,7 @@
+import { CreatePetDto } from '@/pet/dto/create-pet.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsEmail, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
 
 export class CreateUserDto {
 	@IsString()
@@ -20,4 +22,11 @@ export class CreateUserDto {
 	@MinLength(8)
 	@ApiProperty()
 	password: string;
+
+
+	@IsArray()
+	@IsOptional()
+	@ValidateNested({ each: true })
+	@Type(() => CreatePetDto) 
+	pets?: CreatePetDto[]; 
 }
