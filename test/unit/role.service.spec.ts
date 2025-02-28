@@ -3,7 +3,7 @@ import { PrismaService } from '@/prisma.service';
 import { RoleService } from '@/role/role.service';
 import {
 	paginateMock,
-	paginatedResultMock,
+	pagRolesResultMock,
 	roleListMock,
 	roleMock,
 	queryMock,
@@ -15,7 +15,7 @@ describe('RoleService', () => {
 
 	const prismaServiceMock = {
 		paginate: jest.fn().mockResolvedValue(paginateMock),
-		getPagOutput: jest.fn().mockResolvedValue(paginatedResultMock),
+		getPagOutput: jest.fn().mockResolvedValue(pagRolesResultMock),
 		getBaseWhere: jest.fn().mockResolvedValue({ baseWhere: {} }),
 		role: {
 			count: jest.fn().mockResolvedValue(2),
@@ -51,7 +51,7 @@ describe('RoleService', () => {
 					page: queryMock.page,
 					includeDeleted: false,
 				}),
-			).toEqual(paginatedResultMock);
+			).toEqual(pagRolesResultMock);
 		});
 	});
 

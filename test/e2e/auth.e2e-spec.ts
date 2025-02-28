@@ -80,8 +80,6 @@ describe('AuthController (e2e)', () => {
 
 		expect(userServiceMock.findOne).toHaveBeenCalledWith(1);
 
-		console.log(response.body);
-
 		expect(response.body).toEqual({
 			...expUser,
 			password: expect.any(String),

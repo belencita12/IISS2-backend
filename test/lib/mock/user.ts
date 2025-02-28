@@ -1,4 +1,5 @@
-//mock/user.ts
+import { genPagMock } from './commons';
+
 export const expUser = {
 	id: expect.any(Number),
 	username: expect.any(String),
@@ -28,25 +29,7 @@ export const queryMock = {
 	page: 1,
 };
 
-export const paginatedResultMock = {
-	data: userListMock,
-	total: 2,
-	size: 10,
-	prev: false,
-	next: false,
-	currentPage: 1,
-	totalPages: 1,
-};
-
-export const expPagMock = {
-	data: expect.any(Array),
-	currentPage: expect.any(Number),
-	size: expect.any(Number),
-	totalPages: expect.any(Number),
-	total: expect.any(Number),
-	next: expect.any(Boolean),
-	prev: expect.any(Boolean),
-};
+export const paginatedResultMock = genPagMock(userListMock);
 
 export const paginateMock = {
 	skip: 0,

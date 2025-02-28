@@ -1,3 +1,5 @@
+import { genPagMock } from './commons';
+
 export const expRole = {
 	id: expect.any(Number),
 	name: expect.any(String),
@@ -20,25 +22,7 @@ export const queryMock = {
 	page: 1,
 };
 
-export const paginatedResultMock = {
-	data: roleListMock,
-	total: 2,
-	size: 10,
-	prev: false,
-	next: false,
-	currentPage: 1,
-	totalPages: 1,
-};
-
-export const expPagMock = {
-	data: expect.any(Array),
-	currentPage: expect.any(Number),
-	size: expect.any(Number),
-	totalPages: expect.any(Number),
-	total: expect.any(Number),
-	next: expect.any(Boolean),
-	prev: expect.any(Boolean),
-};
+export const pagRolesResultMock = genPagMock(roleListMock);
 
 export const paginateMock = {
 	skip: 0,

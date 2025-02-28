@@ -4,19 +4,15 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { RoleService } from '@/role/role.service';
 import { RoleController } from '@/role/role.controller';
 import { RoleDto } from '@/role/dto/role.dto';
-import {
-	roleMock,
-	paginatedResultMock,
-	expRole,
-	expPagMock,
-} from '@test-lib/mock/role';
+import { roleMock, pagRolesResultMock, expRole } from '@test-lib/mock/role';
+import { expCommonPagMock } from '@test-lib/mock/commons';
 
 const roleService = {
 	update: jest.fn().mockResolvedValue(roleMock),
 	remove: jest.fn().mockResolvedValue({ id: 1, deletedAt: new Date() }),
 	create: jest.fn().mockResolvedValue(roleMock),
 	findAll: jest.fn().mockImplementation(({ page: currentPage, size }) => ({
-		...paginatedResultMock,
+		...pagRolesResultMock,
 		currentPage,
 		size,
 	})),
@@ -58,7 +54,7 @@ describe('RoleController (e2e)', () => {
 		});
 
 		assertResponse(response, {
-			...expPagMock,
+			...expCommonPagMock,
 			currentPage: 1,
 			size: 20,
 		});
