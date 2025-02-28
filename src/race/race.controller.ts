@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { RaceService } from './race.service';
 import { CreateRaceDto } from './dto/create-race.dto';
 import { UpdateRaceDto } from './dto/update-race.dto';
@@ -6,9 +6,14 @@ import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';;
 import { RaceQueryDto } from './dto/race-query.dto';
 import { RaceDto } from './dto/race.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
+import { RolesGuard } from '@/lib/guard/role.guard';
+import { Roles } from '@/lib/decorators/roles.decorators';
+import { Role } from '@/lib/constants/role.enum';
 
-@Controller('race')
+@UseGuards(RolesGuard)
+@Roles(Role.Admin)
 @ApiTags('Race')
+@Controller('race')
 export class RaceController {
   constructor(private readonly raceService: RaceService) {}
 

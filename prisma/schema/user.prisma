@@ -7,4 +7,6 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
   roles     Role[]    @relation("UserRoles")
+  pets      Pet[]
 }
+

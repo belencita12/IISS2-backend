@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { SpeciesService } from './species.service';
 import { CreateSpeciesDto } from './dto/create-species.dto';
 import { UpdateSpeciesDto } from './dto/update-species.dto';
@@ -6,7 +6,13 @@ import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { SpeciesDto } from './dto/species.dto';
 import { SpeciesQueryDto } from './dto/species-query.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
+import { RolesGuard } from '@/lib/guard/role.guard';
+import { Roles } from '@/lib/decorators/roles.decorators';
+import { Role } from '@/lib/constants/role.enum';
 
+
+@UseGuards(RolesGuard)
+@Roles(Role.Admin)
 @Controller('species')
 @ApiTags('Species')
 export class SpeciesController {
