@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "Sex" AS ENUM ('M', 'F');
+
 -- CreateTable
 CREATE TABLE "JwtBlackList" (
     "id" SERIAL NOT NULL,
@@ -10,13 +13,13 @@ CREATE TABLE "JwtBlackList" (
 CREATE TABLE "Pet" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
+    "userId" INTEGER NOT NULL,
     "speciesId" INTEGER NOT NULL,
     "raceId" INTEGER NOT NULL,
     "weight" DOUBLE PRECISION NOT NULL,
-    "sex" TEXT NOT NULL,
+    "sex" "Sex" NOT NULL,
     "profileImg" TEXT,
     "dateOfBirth" TIMESTAMP(3) NOT NULL,
-    "vaccinationBookletId" INTEGER NOT NULL,
     "deletedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -93,6 +96,9 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE INDEX "_UserRoles_B_index" ON "_UserRoles"("B");
+
+-- AddForeignKey
+ALTER TABLE "Pet" ADD CONSTRAINT "Pet_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Pet" ADD CONSTRAINT "Pet_speciesId_fkey" FOREIGN KEY ("speciesId") REFERENCES "Species"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
