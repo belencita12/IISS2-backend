@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsNumber, IsOptional, IsDateString, IsIn, IsPositive } from "class-validator";
+import { Sex } from "@prisma/client";
+import { IsString, IsNumber, IsOptional, IsDateString, IsPositive, IsEnum } from "class-validator";
 
 export class CreatePetDto {
     @IsString()
@@ -15,14 +16,17 @@ export class CreatePetDto {
     raceId: number;
 
     @IsNumber()
+    @ApiProperty({ example: 1 })
+    userId: number;
+
+    @IsNumber()
     @ApiProperty({example: 12})
     @IsPositive({message: 'El peso debe ser un número positivo'})
     weight: number;
 
-    @IsString()
-    @ApiProperty({example: 'Macho'})
-    @IsIn(['Macho','Hembra'], {message:'El sexo debe ser macho o hembra'})
-    sex: string;
+    @IsEnum(Sex, { message: 'El sexo debe ser M o F' }) 
+    @ApiProperty({ example: 'M', enum: Sex })
+    sex: Sex;
 
     @IsOptional()
     @ApiProperty({ example: "https://image.url/profile.jpg" })
@@ -33,7 +37,4 @@ export class CreatePetDto {
     @ApiProperty({ example: "2020-05-15T00:00:00.000Z" })
     dateOfBirth: Date;
 
-    @IsNumber()
-    @ApiProperty({example: 1})
-    vaccinationBookletId: number;
 }

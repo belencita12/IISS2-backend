@@ -1,9 +1,9 @@
-model Species{
-    id  Int @id @default(autoincrement())
-    name    String
-    races Race[]
-    pets Pet[]
-    createdAt   DateTime @default(now())  
-    updatedAt   DateTime @updatedAt
-    deletedAt   DateTime?
+model Species {
+  id        Int       @id @default(autoincrement())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  pets      Pet[]
+  races     Race[]
 }
