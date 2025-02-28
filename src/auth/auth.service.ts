@@ -9,6 +9,7 @@ import { EmailService } from '@/email/email.service';
 import { EnvService } from '@/env/env.service';
 import { JwtBlackListService } from '@/jwt-black-list/jwt-black-list.service';
 import { getPassResetTemplate } from '@/email/templates/pass-reset';
+import { SignInResponseDto } from './dto/sign-in-res.dto';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +25,7 @@ export class AuthService {
 		await this.usersService.create(dto);
 	}
 
-	async signIn(dto: SignInDto) {
+	async signIn(dto: SignInDto): Promise<SignInResponseDto> {
 		const user = await this.usersService.findByEmail(dto.email);
 		if (!user) throw new HttpException('Email or password is incorrect', 401);
 		const match = await compare(dto.password, user.password);
@@ -34,9 +35,14 @@ export class AuthService {
 			id: user.id,
 			username: user.username,
 			email: user.email,
-			roles: user.roles.map((role)=> role.name),
+			roles: user.roles.map((role) => role.name),
 		};
-		return { token: this.jwt.sign(payload), username: user.username, roles };
+		return {
+			id: user.id,
+			token: this.jwt.sign(payload),
+			username: user.username,
+			roles,
+		};
 	}
 
 	async me(user: TokenPayload) {
