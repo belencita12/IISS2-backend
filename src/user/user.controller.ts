@@ -7,6 +7,7 @@ import {
 	Param,
 	Delete,
 	Query,
+	UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -15,7 +16,12 @@ import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserQueryDto } from './dto/user-query.dto';
 import { UserDto } from './dto/user.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
+import { RolesGuard } from '@/lib/guard/role.guard';
+import { Roles } from '@/lib/decorators/roles.decorators';
+import { Role } from '@/lib/constants/role.enum';
 
+@UseGuards(RolesGuard)
+@Roles(Role.Admin)
 @Controller('user')
 @ApiTags('User')
 export class UserController {
@@ -45,6 +51,7 @@ export class UserController {
 	}
 
 	@Patch(':id')
+	@Roles(Role.User)
 	@ApiResponse({ type: UserDto })
 	async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
 		const updatedUser = await this.userService.update(+id, updateUserDto);
@@ -52,6 +59,7 @@ export class UserController {
 	}
 
 	@Delete(':id')
+	@Roles(Role.User)
 	@ApiResponse({ type: UserDto })
 	async remove(@Param('id') id: string) {
 		const deletedUser = await this.userService.remove(+id);
