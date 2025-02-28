@@ -1,13 +1,16 @@
-export const petMock = {
+import { PetDto } from '@/pet/dto/pet.dto';
+import { genPagMock } from './commons';
+
+export const petMock: PetDto = {
 	id: 1,
 	name: 'Bruce',
 	speciesId: 1,
 	raceId: 1,
+	userId: 1,
 	weight: 12,
-	sex: 'Macho',
+	sex: 'M',
 	profileImg: 'https://image.url/profile.jpg',
 	dateOfBirth: new Date(),
-	vaccinationBookletId: 1,
 };
 
 export const petDtoMock = {
@@ -20,13 +23,13 @@ export const petDtoMock = {
 export const expPetMock = {
 	id: expect.any(Number),
 	name: expect.any(String),
+	userId: expect.any(Number),
 	speciesId: expect.any(Number),
 	raceId: expect.any(Number),
 	weight: expect.any(Number),
 	sex: expect.any(String),
 	profileImg: expect.any(String),
 	dateOfBirth: expect.any(Date),
-	vaccinationBookletId: expect.any(Number),
 };
 
 export const expPetDtoMock = {
@@ -37,22 +40,4 @@ export const expPetDtoMock = {
 	deletedAt: null,
 };
 
-export const expPagPetMock = {
-	data: expect.any(Array),
-	currentPage: expect.any(Number),
-	size: expect.any(Number),
-	totalPages: expect.any(Number),
-	total: expect.any(Number),
-	next: expect.any(Boolean),
-	prev: expect.any(Boolean),
-};
-
-export const pagPetMock = {
-	data: [petDtoMock],
-	currentPage: 1,
-	size: 1,
-	totalPages: 1,
-	total: 1,
-	next: false,
-	prev: false,
-};
+export const pagPetMock = genPagMock([petDtoMock]);

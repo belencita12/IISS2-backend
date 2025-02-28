@@ -13,10 +13,11 @@ import { UpdatePetDto } from '@/pet/dto/update-pet.dto';
 import {
 	pagPetMock,
 	petDtoMock,
-	expPagPetMock,
 	petMock,
 	expPetDtoMock,
 } from '@test-lib/mock/pet';
+import { AuthGuard } from '@/auth/guard/auth.guard';
+import { AutoPassGuardMock, expCommonPagMock } from '@test-lib/mock/commons';
 
 const petService = {
 	findAll: jest.fn().mockImplementation(({ page: currentPage, size }) => {
@@ -49,7 +50,10 @@ describe('PetController (e2e)', () => {
 		const moduleRef = await Test.createTestingModule({
 			controllers: [PetController],
 			providers: [{ provide: PetService, useValue: petService }],
-		}).compile();
+		})
+			.overrideGuard(AuthGuard)
+			.useValue(AutoPassGuardMock)
+			.compile();
 		app = moduleRef.createNestApplication();
 		app.useGlobalPipes(new ValidationPipe({ transform: true }));
 		await app.init();
@@ -64,7 +68,8 @@ describe('PetController (e2e)', () => {
 			const page = 1;
 			const speciesId = 'abc';
 			const url = `/pet?page=${page}&size=${size}&speciesId=${speciesId}`;
-			await request(app.getHttpServer()).get(url).expect(400);
+			const result = await request(app.getHttpServer()).get(url);
+			expect(result.body.statusCode).toBe(400);
 		});
 
 		it('Debería retornar todas las mascotas utilizando page=1 y size=20 del query', async () => {
@@ -73,7 +78,7 @@ describe('PetController (e2e)', () => {
 			const url = `/pet?page=${page}&size=${size}`;
 			const response = await request(app.getHttpServer()).get(url).expect(200);
 			expect(response.body).toMatchObject({
-				...expPagPetMock,
+				...expCommonPagMock,
 				currentPage: page,
 				size,
 			});
