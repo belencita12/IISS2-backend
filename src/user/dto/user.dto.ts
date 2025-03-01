@@ -22,6 +22,11 @@ export class UserDto implements User {
 	@Expose()
 	@IsString()
 	@ApiProperty()
+	fullName: string;
+
+	@Expose()
+	@IsString()
+	@ApiProperty()
 	username: string;
 
 	@Expose()

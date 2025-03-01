@@ -2,6 +2,7 @@ import { genPagMock } from './commons';
 
 export const expUser = {
 	id: expect.any(Number),
+	fullName: expect.any(String),
 	username: expect.any(String),
 	email: expect.any(String),
 	roles: expect.any(Array),
@@ -12,7 +13,8 @@ export const expUser = {
 
 export const userMock = {
 	id: 1,
-	username: 'testuser',
+	fullName: 'testuser',
+	username: 'testuser@123',
 	email: 'test@example.com',
 	roles: [{ name: 'USER' }],
 	createdAt: new Date(),

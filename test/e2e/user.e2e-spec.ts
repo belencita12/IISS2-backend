@@ -70,7 +70,7 @@ describe('UserController (e2e)', () => {
 
 	it('/POST user', async () => {
 		const body = {
-			username: 'testuser',
+			fullName: 'testuser',
 			email: 'test@example.com',
 			password: 'securepassword123',
 		};
@@ -83,7 +83,7 @@ describe('UserController (e2e)', () => {
 		expect(response.body).toEqual(
 			expect.objectContaining({
 				...expUser,
-				username: body.username,
+				fullName: body.fullName,
 				email: body.email,
 				createdAt: expect.any(String),
 				updatedAt: expect.any(String),

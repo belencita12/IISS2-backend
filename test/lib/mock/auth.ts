@@ -20,7 +20,8 @@ export const getUserHashed = async () => {
 	const hash = await bcrypt.hash(signInBodyMock.password, 10);
 	return {
 		id: 1,
-		username: 'testuser',
+		fullName: 'testuser',
+		username: 'testuser@123',
 		email: 'test@example.com',
 		roles: [{ name: 'ADMIN' }],
 		deletedAt: null,
@@ -35,7 +36,7 @@ export const signInResMock = {
 };
 
 export const signUpBodyMock: SignUpDto = {
-	username: 'testuser',
+	fullName: 'testuser',
 	email: 'test@example.com',
 	password: 'securepassword123',
 };
