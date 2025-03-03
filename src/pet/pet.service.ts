@@ -12,20 +12,19 @@ export class PetService {
 		const speciesExists = await this.prisma.species.findUnique({
 			where: { id: createPetDto.speciesId, deletedAt: null },
 		});
-		if (!speciesExists) {
+		if (!speciesExists)
 			throw new NotFoundException(
 				`Especie con ID ${createPetDto.speciesId} no existe o fue eliminada`,
 			);
-		}
+
 		if (createPetDto.raceId) {
 			const raceExists = await this.prisma.race.findUnique({
 				where: { id: createPetDto.raceId, deletedAt: null },
 			});
-			if (!raceExists) {
+			if (!raceExists)
 				throw new NotFoundException(
 					`Raza con ID ${createPetDto.raceId} no existe o fue eliminada`,
 				);
-			}
 		}
 		return this.prisma.pet.create({
 			data: createPetDto,
@@ -34,21 +33,11 @@ export class PetService {
 
 	async findAll(dto: PetQueryDto) {
 		const { baseWhere } = this.prisma.getBaseWhere(dto);
-
-		let userId: number | undefined;
-		if (dto.username) {
-			const user = await this.prisma.user.findUnique({
-				where: { username: dto.username },
-			});
-			if (!user) throw new NotFoundException(`Usuario "${dto.username}" no encontrado`);
-			userId = user.id;
-		}
-
 		const where: Prisma.PetWhereInput = {
 			...baseWhere,
 			speciesId: dto.speciesId,
 			raceId: dto.raceId,
-			userId,
+			userId: dto.userId,
 		};
 
 		const [data, total] = await Promise.all([
@@ -106,11 +95,11 @@ export class PetService {
 		const pet = await this.prisma.pet.findFirst({
 			where: { id, deletedAt: null },
 		});
-		if (!pet) {
+		if (!pet)
 			throw new NotFoundException(
 				`Mascota con id ${id} no encontrada o ya eliminada`,
 			);
-		}
+
 		return this.prisma.pet.update({
 			where: { id },
 			data: { deletedAt: new Date() },
