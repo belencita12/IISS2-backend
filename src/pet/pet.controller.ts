@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Post,
+	Body,
+	Patch,
+	Param,
+	Delete,
+	Query,
+	UseGuards,
+} from '@nestjs/common';
 import { PetService } from './pet.service';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
@@ -15,41 +25,41 @@ import { AuthGuard } from '@/auth/guard/auth.guard';
 @Controller('pet')
 @ApiBearerAuth('access-token')
 export class PetController {
-  constructor(private readonly petService: PetService) {}
+	constructor(private readonly petService: PetService) {}
 
-  @Post()
-  @Roles(Role.Admin, Role.User)
-  @ApiResponse({type: PetDto})
-  @ApiBody({type: CreatePetDto})
-  async create(@Body() createPetDto: CreatePetDto) {
-    return this.petService.create(createPetDto);
-  }
+	@Post()
+	@Roles(Role.Admin, Role.User)
+	@ApiResponse({ type: PetDto })
+	@ApiBody({ type: CreatePetDto })
+	async create(@Body() createPetDto: CreatePetDto) {
+		return this.petService.create(createPetDto);
+	}
 
-  @Get()
-  @Roles(Role.Admin, Role.User)
-  @ApiPaginatedResponse(PetDto)
-  async findAll(@Query() query: PetQueryDto) {
-    return this.petService.findAll(query);
-  }
+	@Get()
+	@Roles(Role.Admin, Role.User)
+	@ApiPaginatedResponse(PetDto)
+	async findAll(@Query() query: PetQueryDto) {
+		return this.petService.findAll(query);
+	}
 
-  @Get(':id')
-  @Roles(Role.Admin, Role.User)
-  @ApiResponse({type: PetDto})
-  async findOne(@Param('id') id: string) {
-    return this.petService.findOne(+id);
-  }
+	@Get(':id')
+	@Roles(Role.Admin, Role.User)
+	@ApiResponse({ type: PetDto })
+	async findOne(@Param('id') id: string) {
+		return this.petService.findOne(+id);
+	}
 
-  @Patch(':id')
-  @Roles(Role.Admin, Role.User)
-  @ApiResponse({ type: PetDto })
-  async update(@Param('id') id: string, @Body() updatePetDto: UpdatePetDto) {
-    return this.petService.update(+id, updatePetDto);
-  }
+	@Patch(':id')
+	@Roles(Role.Admin, Role.User)
+	@ApiResponse({ type: PetDto })
+	async update(@Param('id') id: string, @Body() updatePetDto: UpdatePetDto) {
+		return this.petService.update(+id, updatePetDto);
+	}
 
-  @Delete(':id')
-  @Roles(Role.Admin)
-  @ApiResponse({ type: PetDto })
-  async remove(@Param('id') id: string) {
-    return this.petService.remove(+id);
-  }
+	@Delete(':id')
+	@Roles(Role.Admin)
+	@ApiResponse({ type: PetDto })
+	async remove(@Param('id') id: string) {
+		return this.petService.remove(+id);
+	}
 }
