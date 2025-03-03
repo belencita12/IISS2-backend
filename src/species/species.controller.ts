@@ -20,7 +20,6 @@ import { RolesGuard } from '@/lib/guard/role.guard';
 import { Roles } from '@/lib/decorators/roles.decorators';
 import { Role } from '@/lib/constants/role.enum';
 
-
 @Controller('species')
 @ApiTags('Species')
 @ApiBearerAuth('access-token')
