@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } f
 import { SpeciesService } from './species.service';
 import { CreateSpeciesDto } from './dto/create-species.dto';
 import { UpdateSpeciesDto } from './dto/update-species.dto';
-import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { SpeciesDto } from './dto/species.dto';
 import { SpeciesQueryDto } from './dto/species-query.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
@@ -15,6 +15,7 @@ import { Role } from '@/lib/constants/role.enum';
 @Roles(Role.Admin)
 @Controller('species')
 @ApiTags('Species')
+@ApiBearerAuth('access-token')
 export class SpeciesController {
   constructor(private readonly speciesService: SpeciesService) {}
 

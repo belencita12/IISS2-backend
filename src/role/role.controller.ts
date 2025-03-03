@@ -7,17 +7,24 @@ import {
 	Patch,
 	Post,
 	Query,
+	UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoleService } from './role.service';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { RoleQueryDto } from './dto/role-query.dto';
 import { RoleDto } from './dto/role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { Roles } from '@/lib/decorators/roles.decorators';
+import { RolesGuard } from '@/lib/guard/role.guard';
+import { Role } from '@/lib/constants/role.enum';
 
+@UseGuards(RolesGuard)
+@Roles(Role.Admin)
 @Controller('role')
 @ApiTags('Role')
+@ApiBearerAuth('access-token')
 export class RoleController {
 	constructor(private readonly roleService: RoleService) {}
 

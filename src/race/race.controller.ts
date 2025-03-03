@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } f
 import { RaceService } from './race.service';
 import { CreateRaceDto } from './dto/create-race.dto';
 import { UpdateRaceDto } from './dto/update-race.dto';
-import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';;
+import { ApiTags, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';;
 import { RaceQueryDto } from './dto/race-query.dto';
 import { RaceDto } from './dto/race.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
@@ -14,6 +14,7 @@ import { Role } from '@/lib/constants/role.enum';
 @Roles(Role.Admin)
 @ApiTags('Race')
 @Controller('race')
+@ApiBearerAuth('access-token')
 export class RaceController {
   constructor(private readonly raceService: RaceService) {}
 

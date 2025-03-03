@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } f
 import { PetService } from './pet.service';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
-import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PetDto } from './dto/pet.dto';
 import { PetQueryDto } from './dto/pet-query.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
@@ -13,6 +13,7 @@ import { AuthGuard } from '@/auth/guard/auth.guard';
 @UseGuards(AuthGuard)
 @ApiTags('Pet')
 @Controller('pet')
+@ApiBearerAuth('access-token')
 export class PetController {
   constructor(private readonly petService: PetService) {}
 
