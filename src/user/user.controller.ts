@@ -12,7 +12,7 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserQueryDto } from './dto/user-query.dto';
 import { UserDto } from './dto/user.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
@@ -24,6 +24,7 @@ import { Role } from '@/lib/constants/role.enum';
 @Roles(Role.Admin)
 @Controller('user')
 @ApiTags('User')
+@ApiBearerAuth('access-token')
 export class UserController {
 	constructor(private readonly userService: UserService) {}
 

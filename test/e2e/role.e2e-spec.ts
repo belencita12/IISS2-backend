@@ -5,7 +5,8 @@ import { RoleService } from '@/role/role.service';
 import { RoleController } from '@/role/role.controller';
 import { RoleDto } from '@/role/dto/role.dto';
 import { roleMock, pagRolesResultMock, expRole } from '@test-lib/mock/role';
-import { expCommonPagMock } from '@test-lib/mock/commons';
+import { AutoPassGuardMock, expCommonPagMock } from '@test-lib/mock/commons';
+import { RolesGuard } from '@/lib/guard/role.guard';
 
 const roleService = {
 	update: jest.fn().mockResolvedValue(roleMock),
@@ -24,7 +25,10 @@ describe('RoleController (e2e)', () => {
 		const moduleRef = await Test.createTestingModule({
 			controllers: [RoleController],
 			providers: [{ provide: RoleService, useValue: roleService }],
-		}).compile();
+		})
+			.overrideGuard(RolesGuard)
+			.useValue(AutoPassGuardMock)
+			.compile();
 		app = moduleRef.createNestApplication();
 		app.useGlobalPipes(new ValidationPipe({ transform: true }));
 		await app.init();
