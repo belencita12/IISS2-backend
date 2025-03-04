@@ -25,7 +25,8 @@ export class AllExceptionFilter implements ExceptionFilter {
 				? ex.getStatus()
 				: HttpStatus.INTERNAL_SERVER_ERROR;
 
-		let message: string = 'Internal Server Error';
+		let message: string =
+			ex instanceof HttpException ? ex.message : 'Internal Server Error';
 
 		this.logger.error(ex);
 
@@ -45,12 +46,11 @@ export class AllExceptionFilter implements ExceptionFilter {
 
 		if (ex instanceof BadRequestException) {
 			const response = ex.getResponse();
+			console.log(response['message']);
 			message = Array.isArray(response['message'])
 				? response['message'][0]
 				: response['message'];
 		}
-
-		if (ex instanceof HttpException) message = ex.message;
 
 		const responseBody = {
 			statusCode: httpStatus,
