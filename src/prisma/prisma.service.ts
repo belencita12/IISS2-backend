@@ -2,7 +2,7 @@ import { EnvService } from '@/env/env.service';
 import { PaginationQueryDto } from '@/lib/commons/pagination-params.dto';
 import { PaginationResponseDto } from '@/lib/commons/pagination-response.dto';
 import { PagOutputParams } from '@/lib/types/pagination';
-import { Injectable, OnModuleInit, HttpException } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient, Prisma } from '@prisma/client';
 
 @Injectable()
@@ -52,8 +52,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 	}: PagOutputParams<T>): PaginationResponseDto<T> {
 		const pagSize = size || this.env.get('DEFAULT_PAGE_SIZE');
 		const totalPages = Math.ceil(total / pagSize);
-		if (page > totalPages) throw new HttpException('Page not found', 404);
-		const prev = page > 1;
+		const prev = page > 1 && page <= totalPages;
 		const next = page * pagSize < total;
 		return {
 			data,
