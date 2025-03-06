@@ -8,7 +8,9 @@ import {
 	Delete,
 	Query,
 	UseGuards,
+	Request,
 } from '@nestjs/common';
+import { Request as Req } from 'express';
 import { PetService } from './pet.service';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
@@ -19,6 +21,7 @@ import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.d
 import { Roles } from '@/lib/decorators/roles.decorators';
 import { Role } from '@/lib/constants/role.enum';
 import { AuthGuard } from '@/auth/guard/auth.guard';
+import { TokenPayload } from '@/auth/types/auth.types';
 
 @UseGuards(AuthGuard)
 @ApiTags('Pet')
@@ -45,8 +48,9 @@ export class PetController {
 	@Get(':id')
 	@Roles(Role.Admin, Role.User)
 	@ApiResponse({ type: PetDto })
-	async findOne(@Param('id') id: string) {
-		return this.petService.findOne(+id);
+	async findOne(@Param('id') id: string, @Request() req: Req) {
+		const payload: TokenPayload = req['user'];
+		return this.petService.findOne(+id, payload);
 	}
 
 	@Patch(':id')

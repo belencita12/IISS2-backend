@@ -4,6 +4,8 @@ import { UpdatePetDto } from './dto/update-pet.dto';
 import { Prisma } from '@prisma/client';
 import { PetQueryDto } from './dto/pet-query.dto';
 import { PrismaService } from '@/prisma/prisma.service';
+import { TokenPayload } from '@/auth/types/auth.types';
+import { Role } from '@/lib/constants/role.enum';
 
 @Injectable()
 export class PetService {
@@ -57,17 +59,20 @@ export class PetService {
 		});
 	}
 
-	async findOne(id: number) {
+	async findOne(id: number, user: TokenPayload) {
+		const { roles, id: userId } = user;
 		const pet = await this.prisma.pet.findFirst({
-			where: { id, deletedAt: null },
+			where: {
+				id,
+				deletedAt: null,
+				userId: roles.includes(Role.User) ? userId : undefined,
+			},
 			include: {
 				species: true,
 				race: true,
 			},
 		});
-		if (!pet) {
-			throw new NotFoundException(`Mascota con id ${id} no encontrada`);
-		}
+		if (!pet) throw new NotFoundException(`Mascota con id ${id} no encontrada`);
 		return pet;
 	}
 
