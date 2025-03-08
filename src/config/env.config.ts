@@ -86,6 +86,14 @@ class EnvironmentVariables {
 
 	@IsString()
 	SUPABASE_KEY: string;
+
+	@IsNumber()
+	@IsOptional()
+	DEFAULT_PREVIEW_SIZE_PX: number = 64;
+
+	@IsString()
+	@IsOptional()
+	SUPABASE_BUCKET: string = 'images';
 }
 
 export type EnvType = InstanceType<typeof EnvironmentVariables>;
