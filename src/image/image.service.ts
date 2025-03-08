@@ -38,26 +38,34 @@ export class ImageService {
 	}
 
 	async delete(id: number) {
+		const pivote = `/${this.bucket}/`;
 		const img = await this.db.image.delete({
 			where: { id },
-			select: { path: true },
 		});
-		await this.supabase.storage.from(this.bucket).remove([img.path]);
+		const files = [
+			img.originalUrl.split(pivote)[1],
+			img.previewUrl.split(pivote)[1],
+		];
+		await this.handleImgDel(files);
 	}
 
 	async update(id: number, file: Express.Multer.File) {
 		const previewSize = this.env.get('DEFAULT_PREVIEW_SIZE_PX');
 		const type = this.getFileType(file);
 		const previewImg = await resizeImg(file, previewSize);
-		const img = await this.db.image.findUnique({
-			where: { id },
-			select: { path: true },
-		});
+		const img = await this.db.image.findUnique({ where: { id } });
 		if (!img) throw new HttpException('Imagen no encontrada', 404);
+
+		const pivote = `/${this.bucket}/`;
+		const files = [
+			img.originalUrl.split(pivote)[1],
+			img.previewUrl.split(pivote)[1],
+		];
+
+		await this.handleImgDel(files);
 		const { originalUrl, previewUrl, path } = await this.save(
 			[file.buffer, previewImg],
 			type,
-			img.path,
 		);
 		return await this.db.image.update({
 			where: { id },
@@ -70,6 +78,13 @@ export class ImageService {
 		});
 	}
 
+	private async handleImgDel(files: string[]) {
+		const { error } = await this.supabase.storage
+			.from(this.bucket)
+			.remove(files);
+		if (error) throw new HttpException('Error al eliminar una/s imagenes', 500);
+	}
+
 	private async save(files: Buffer[], type: string, currentPath?: string) {
 		const baseUrl = `${this.env.get('SUPABASE_URL')}/storage/v1/object/public/${this.bucket}/`;
 
@@ -79,14 +94,14 @@ export class ImageService {
 		const [original, preview] = files;
 		const path = currentPath || this.genFolderName();
 
-		const originalData = await this.uploadImg(
+		const originalData = await this.handleImg(
 			original,
 			this.bucket,
 			type,
 			ImgNames.ORIGINAL,
 			path,
 		);
-		const previewData = await this.uploadImg(
+		const previewData = await this.handleImg(
 			preview,
 			this.bucket,
 			type,
@@ -101,7 +116,7 @@ export class ImageService {
 		};
 	}
 
-	private async uploadImg(
+	private async handleImg(
 		file: Buffer,
 		bucket: string,
 		type: string,

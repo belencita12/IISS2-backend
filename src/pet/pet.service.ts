@@ -86,12 +86,30 @@ export class PetService {
 	}
 
 	async update(id: number, dto: UpdatePetDto) {
+		const petToUpd = await this.prisma.pet.findUnique({
+			where: { id },
+			select: { profileImg: true },
+		});
+		if (!petToUpd)
+			throw new NotFoundException(`Mascota con id ${id} no encontrada`);
+
 		const { profileImg, raceId, userId, speciesId, ...rest } = dto;
-		const newImg = profileImg
-			? await this.imgService.create(profileImg)
-			: undefined;
+		const newImg =
+			profileImg && petToUpd.profileImg !== null
+				? await this.imgService.update(petToUpd.profileImg.id, profileImg)
+				: profileImg && !petToUpd.profileImg
+					? await this.imgService.create(profileImg)
+					: undefined;
+
 		const pet = await this.prisma.pet.update({
 			where: { id, deletedAt: null },
+			include: {
+				species: { select: { name: true } },
+				race: { select: { name: true } },
+				profileImg: {
+					select: { id: true, previewUrl: true, originalUrl: true },
+				},
+			},
 			data: {
 				...rest,
 				species: speciesId ? { connect: { id: speciesId } } : undefined,
@@ -101,7 +119,7 @@ export class PetService {
 				updatedAt: new Date(),
 			},
 		});
-		return pet;
+		return new PetDto(pet);
 	}
 
 	async remove(id: number) {

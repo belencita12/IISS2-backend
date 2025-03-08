@@ -31,6 +31,7 @@ import { Role } from '@/lib/constants/role.enum';
 import { AuthGuard } from '@/auth/guard/auth.guard';
 import { TokenPayload } from '@/auth/types/auth.types';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { FileValidator } from '@/lib/pipes/file-validator.pipe';
 
 @UseGuards(AuthGuard)
 @ApiTags('Pet')
@@ -47,7 +48,7 @@ export class PetController {
 	@ApiBody({ type: CreatePetDto })
 	create(
 		@Body() createPetDto: CreatePetDto,
-		@UploadedFile() img?: Express.Multer.File,
+		@UploadedFile(FileValidator) img?: Express.Multer.File,
 	) {
 		return this.petService.create({ ...createPetDto, profileImg: img });
 	}
@@ -68,10 +69,17 @@ export class PetController {
 	}
 
 	@Patch(':id')
+	@ApiConsumes('multipart/form-data')
+	@UseInterceptors(FileInterceptor('profileImg'))
 	@Roles(Role.Admin, Role.User)
+	@ApiBody({ type: UpdatePetDto })
 	@ApiResponse({ type: PetDto })
-	async update(@Param('id') id: string, @Body() updatePetDto: UpdatePetDto) {
-		return this.petService.update(+id, updatePetDto);
+	async update(
+		@Param('id') id: string,
+		@Body() updatePetDto: UpdatePetDto,
+		@UploadedFile(FileValidator) img?: Express.Multer.File,
+	) {
+		return this.petService.update(+id, { ...updatePetDto, profileImg: img });
 	}
 
 	@Delete(':id')
