@@ -112,7 +112,7 @@ export class ImageService {
 			.from(bucket)
 			.upload(`${path}/${name}.${type}`, file, {
 				...uploadConfig,
-				contentType: type,
+				contentType: `image/${type}`,
 			});
 		if (error) {
 			this.logger.error(error);

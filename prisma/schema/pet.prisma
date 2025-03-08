@@ -1,20 +1,20 @@
 model Pet {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   name        String
   userId      Int
-  user        User     @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
   speciesId   Int
-  species     Species  @relation(fields: [speciesId], references: [id])
+  species     Species   @relation(fields: [speciesId], references: [id])
   raceId      Int
-  race        Race     @relation(fields: [raceId], references: [id])
+  race        Race      @relation(fields: [raceId], references: [id])
   weight      Float
   sex         Sex
-  profileImg  String?
   dateOfBirth DateTime
-
-  deletedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  imageId     Int?
+  profileImg  Image?    @relation(fields: [imageId], references: [id])
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 enum Sex {

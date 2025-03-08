@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ImageService } from './image.service';
-import { SupabaseService } from '@/supabase/supabase.service';
+import { SupabaseModule } from '@/supabase/supabase.module';
+import { PrismaModule } from '@/prisma/prisma.module';
 
 @Module({
-	imports: [SupabaseService],
+	imports: [SupabaseModule, PrismaModule],
 	providers: [ImageService],
+	exports: [ImageService],
 })
 export class ImageModule {}

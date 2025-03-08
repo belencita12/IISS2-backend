@@ -1,7 +1,7 @@
 -- CreateTable
 CREATE TABLE "Image" (
     "id" SERIAL NOT NULL,
-    "path" TEXT NOT NULL
+    "path" TEXT NOT NULL,
     "previewUrl" TEXT NOT NULL,
     "originalUrl" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
