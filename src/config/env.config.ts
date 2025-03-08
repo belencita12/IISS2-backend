@@ -80,6 +80,12 @@ class EnvironmentVariables {
 
 	@IsString()
 	FE_HOST: string;
+
+	@IsString()
+	SUPABASE_URL: string;
+
+	@IsString()
+	SUPABASE_KEY: string;
 }
 
 export type EnvType = InstanceType<typeof EnvironmentVariables>;
