@@ -82,7 +82,7 @@ export class PetService {
 			},
 		});
 		if (!pet) throw new NotFoundException(`Mascota con id ${id} no encontrada`);
-		return pet;
+		return new PetDto(pet);
 	}
 
 	async update(id: number, dto: UpdatePetDto) {
@@ -123,9 +123,11 @@ export class PetService {
 	}
 
 	async remove(id: number) {
-		return await this.prisma.pet.update({
+		const delPet = await this.prisma.pet.update({
 			where: { id },
+			include: { profileImg: true, species: true, race: true },
 			data: { deletedAt: new Date() },
 		});
+		return new PetDto(delPet);
 	}
 }

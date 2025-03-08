@@ -38,13 +38,12 @@ export class PetDto {
 		this.id = pet.id;
 		this.name = pet.name;
 		this.species = {
-			id: pet.species.id,
+			id: pet.speciesId,
 			name: pet.species.name,
 		};
 		this.race = {
-			id: pet.race.id,
+			id: pet.raceId,
 			name: pet.race.name,
-			speciesId: pet.race.speciesId,
 		};
 		this.userId = pet.userId;
 		this.weight = pet.weight;
