@@ -20,9 +20,8 @@ export class ImageService {
 	}
 
 	async create(file: Express.Multer.File) {
-		const previewSize = this.env.get('DEFAULT_PREVIEW_SIZE_PX');
 		const type = this.getFileType(file);
-		const previewImg = await resizeImg(file, previewSize);
+		const previewImg = await this.getPrevImg(file);
 		const { originalUrl, previewUrl, path } = await this.save(
 			[file.buffer, previewImg],
 			type,
@@ -38,29 +37,20 @@ export class ImageService {
 	}
 
 	async delete(id: number) {
-		const pivote = `/${this.bucket}/`;
 		const img = await this.db.image.delete({
 			where: { id },
 		});
-		const files = [
-			img.originalUrl.split(pivote)[1],
-			img.previewUrl.split(pivote)[1],
-		];
+		const files = this.getRelativePaths(this.bucket, img);
 		await this.handleImgDel(files);
 	}
 
 	async update(id: number, file: Express.Multer.File) {
-		const previewSize = this.env.get('DEFAULT_PREVIEW_SIZE_PX');
 		const type = this.getFileType(file);
-		const previewImg = await resizeImg(file, previewSize);
+		const previewImg = await this.getPrevImg(file);
 		const img = await this.db.image.findUnique({ where: { id } });
 		if (!img) throw new HttpException('Imagen no encontrada', 404);
 
-		const pivote = `/${this.bucket}/`;
-		const files = [
-			img.originalUrl.split(pivote)[1],
-			img.previewUrl.split(pivote)[1],
-		];
+		const files = this.getRelativePaths(this.bucket, img);
 
 		await this.handleImgDel(files);
 		const { originalUrl, previewUrl, path } = await this.save(
@@ -146,5 +136,18 @@ export class ImageService {
 		const { mimetype } = file;
 		const type = mimetype.split('/')[1];
 		return type;
+	}
+
+	private getRelativePaths(
+		bucket: string,
+		img: { originalUrl: string; previewUrl: string },
+	): string[] {
+		const pivot = `/${bucket}/`;
+		return [img.originalUrl.split(pivot)[1], img.previewUrl.split(pivot)[1]];
+	}
+
+	private async getPrevImg(file: Express.Multer.File) {
+		const previewSize = this.env.get('DEFAULT_PREVIEW_SIZE_PX');
+		return await resizeImg(file, previewSize);
 	}
 }
