@@ -9,12 +9,19 @@ import {
 	Query,
 	UseGuards,
 	Request,
+	UploadedFile,
+	UseInterceptors,
 } from '@nestjs/common';
 import { Request as Req } from 'express';
 import { PetService } from './pet.service';
 import { CreatePetDto } from './dto/create-pet.dto';
-import { UpdatePetDto } from './dto/update-pet.dto';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiBody,
+	ApiConsumes,
+	ApiResponse,
+	ApiTags,
+} from '@nestjs/swagger';
 import { PetDto } from './dto/pet.dto';
 import { PetQueryDto } from './dto/pet-query.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
@@ -22,6 +29,8 @@ import { Roles } from '@/lib/decorators/roles.decorators';
 import { Role } from '@/lib/constants/role.enum';
 import { AuthGuard } from '@/auth/guard/auth.guard';
 import { TokenPayload } from '@/auth/types/auth.types';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileValidator } from '@/lib/pipes/file-validator.pipe';
 
 @UseGuards(AuthGuard)
 @ApiTags('Pet')
@@ -33,9 +42,14 @@ export class PetController {
 	@Post()
 	@Roles(Role.Admin, Role.User)
 	@ApiResponse({ type: PetDto })
+	@ApiConsumes('multipart/form-data')
+	@UseInterceptors(FileInterceptor('profileImg'))
 	@ApiBody({ type: CreatePetDto })
-	async create(@Body() createPetDto: CreatePetDto) {
-		return this.petService.create(createPetDto);
+	create(
+		@Body() createPetDto: CreatePetDto,
+		@UploadedFile(FileValidator) img?: Express.Multer.File,
+	) {
+		return this.petService.create({ ...createPetDto, profileImg: img });
 	}
 
 	@Get()
@@ -54,10 +68,17 @@ export class PetController {
 	}
 
 	@Patch(':id')
+	@ApiConsumes('multipart/form-data')
+	@UseInterceptors(FileInterceptor('profileImg'))
 	@Roles(Role.Admin, Role.User)
+	@ApiBody({ type: CreatePetDto })
 	@ApiResponse({ type: PetDto })
-	async update(@Param('id') id: string, @Body() updatePetDto: UpdatePetDto) {
-		return this.petService.update(+id, updatePetDto);
+	async update(
+		@Param('id') id: string,
+		@Body() updatePetDto: CreatePetDto,
+		@UploadedFile(FileValidator) img?: Express.Multer.File,
+	) {
+		return this.petService.update(+id, { ...updatePetDto, profileImg: img });
 	}
 
 	@Delete(':id')

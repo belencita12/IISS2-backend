@@ -22,13 +22,12 @@ export class AuthGuard implements CanActivate {
 	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		
-		const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY,[
+		const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
 			context.getHandler(),
 			context.getClass(),
-		])
-	
-		if(isPublic){
+		]);
+
+		if (isPublic) {
 			return true;
 		}
 
@@ -39,11 +38,10 @@ export class AuthGuard implements CanActivate {
 		if (!token) {
 			throw new UnauthorizedException();
 		}
-		
+
 		try {
 			const payload: TokenPayload = await this.jwtService.verifyAsync(token, {
 				secret,
-				
 			});
 
 			const user = await this.userService.findOne(payload.id);

@@ -1,5 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ImageDto } from '@/lib/commons/image.dto';
+import { RaceDto } from '@/race/dto/race.dto';
+import { SpeciesDto } from '@/species/dto/species.dto';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Sex } from '@prisma/client';
+import { IsOptional } from 'class-validator';
 
 export class PetDto {
 	@ApiProperty({ example: 1 })
@@ -8,11 +12,11 @@ export class PetDto {
 	@ApiProperty({ example: 'Bruce' })
 	name: string;
 
-	@ApiProperty({ example: 1 })
-	speciesId: number;
+	@ApiProperty({ type: SpeciesDto })
+	species: SpeciesDto;
 
-	@ApiProperty({ example: 1 })
-	raceId: number;
+	@ApiProperty({ type: RaceDto })
+	race: RaceDto;
 
 	@ApiProperty({ example: 1 })
 	userId: number;
@@ -23,13 +27,34 @@ export class PetDto {
 	@ApiProperty({ example: 'M' })
 	sex: Sex;
 
-	@ApiProperty({ example: 'https://image.url/profile.jpg' })
-	profileImg?: string;
+	@ApiPropertyOptional({ type: ImageDto })
+	@IsOptional()
+	profileImg?: ImageDto;
 
 	@ApiProperty({ example: '2020-05-15T00:00:00.000Z' })
 	dateOfBirth: Date;
 
 	constructor(pet: any) {
-		Object.assign(this, pet);
+		this.id = pet.id;
+		this.name = pet.name;
+		this.species = {
+			id: pet.speciesId,
+			name: pet.species.name,
+		};
+		this.race = {
+			id: pet.raceId,
+			name: pet.race.name,
+		};
+		this.userId = pet.userId;
+		this.weight = pet.weight;
+		this.sex = pet.sex;
+		this.profileImg = pet.profileImg
+			? {
+					id: pet.profileImg.id,
+					previewUrl: pet.profileImg.previewUrl,
+					originalUrl: pet.profileImg.originalUrl,
+				}
+			: undefined;
+		this.dateOfBirth = pet.dateOfBirth;
 	}
 }

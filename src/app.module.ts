@@ -12,6 +12,8 @@ import { PetModule } from './pet/pet.module';
 import { RaceModule } from './race/race.module';
 import { SpeciesModule } from './species/species.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { SupabaseModule } from './supabase/supabase.module';
+import { ImageModule } from './image/image.module';
 
 @Module({
 	imports: [
@@ -30,6 +32,8 @@ import { PrismaModule } from './prisma/prisma.module';
 		PetModule,
 		RaceModule,
 		SpeciesModule,
+		SupabaseModule,
+		ImageModule,
 	],
 })
 export class AppModule {}

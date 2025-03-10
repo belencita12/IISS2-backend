@@ -1,0 +1,12 @@
+model Image {
+    id Int @id @default(autoincrement())
+
+    path        String @unique
+    previewUrl  String
+    originalUrl String
+
+    petImages Pet[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}

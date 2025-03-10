@@ -1,13 +1,13 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
 
-export class SpeciesDto{
-    @ApiPropertyOptional()
-    id: number;
+export class SpeciesDto {
+	@ApiProperty({ example: 1 })
+	id: number;
 
-    @ApiProperty({ example: "Canino" })
-    name: string;
+	@ApiProperty({ example: 'Canino' })
+	name: string;
 
-    constructor(partial: Partial<SpeciesDto>) {
-        Object.assign(this, partial);
-    }
+	constructor(partial: Partial<SpeciesDto>) {
+		Object.assign(this, partial);
+	}
 }
