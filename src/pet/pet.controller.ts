@@ -15,7 +15,6 @@ import {
 import { Request as Req } from 'express';
 import { PetService } from './pet.service';
 import { CreatePetDto } from './dto/create-pet.dto';
-import { UpdatePetDto } from './dto/update-pet.dto';
 import {
 	ApiBearerAuth,
 	ApiBody,
@@ -72,11 +71,11 @@ export class PetController {
 	@ApiConsumes('multipart/form-data')
 	@UseInterceptors(FileInterceptor('profileImg'))
 	@Roles(Role.Admin, Role.User)
-	@ApiBody({ type: UpdatePetDto })
+	@ApiBody({ type: CreatePetDto })
 	@ApiResponse({ type: PetDto })
 	async update(
 		@Param('id') id: string,
-		@Body() updatePetDto: UpdatePetDto,
+		@Body() updatePetDto: CreatePetDto,
 		@UploadedFile(FileValidator) img?: Express.Multer.File,
 	) {
 		return this.petService.update(+id, { ...updatePetDto, profileImg: img });

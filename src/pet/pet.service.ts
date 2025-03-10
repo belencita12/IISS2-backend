@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePetDto } from './dto/create-pet.dto';
-import { UpdatePetDto } from './dto/update-pet.dto';
 import { Prisma } from '@prisma/client';
 import { PetQueryDto } from './dto/pet-query.dto';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -85,7 +84,7 @@ export class PetService {
 		return new PetDto(pet);
 	}
 
-	async update(id: number, dto: UpdatePetDto) {
+	async update(id: number, dto: CreatePetDto) {
 		const petToUpd = await this.prisma.pet.findUnique({
 			where: { id },
 			select: { profileImg: true },
@@ -112,11 +111,10 @@ export class PetService {
 			},
 			data: {
 				...rest,
-				species: speciesId ? { connect: { id: speciesId } } : undefined,
-				user: userId ? { connect: { id: userId } } : undefined,
-				race: raceId ? { connect: { id: raceId } } : undefined,
+				user: { connect: { id: userId } },
+				species: { connect: { id: speciesId } },
+				race: { connect: { id: raceId } },
 				profileImg: newImg ? { connect: { id: newImg.id } } : undefined,
-				updatedAt: new Date(),
 			},
 		});
 		return new PetDto(pet);
