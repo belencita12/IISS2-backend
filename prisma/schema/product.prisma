@@ -1,0 +1,31 @@
+model Product {
+    id       Int          @id @default(autoincrement())
+    code     String       @unique
+    name     String
+    cost     Decimal      @db.Money
+    iva      Float
+    imageId  Int?
+    image    Image?       @relation(fields: [imageId], references: [id])
+    category Category
+    priceId  Int          @unique
+    price    ProductPrice @relation(fields: [priceId], references: [id])
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+}
+
+model ProductPrice {
+    id     Int     @id @default(autoincrement())
+    amount Decimal @db.Money
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+    Product   Product?
+}
+
+enum Category {
+    SERVICE
+    PRODUCT
+    VACCINE
+}

@@ -5,6 +5,7 @@ import { resizeImg } from '@/lib/utils/image';
 import { PrismaService } from '@/prisma/prisma.service';
 import { SupabaseService } from '@/supabase/supabase.service';
 import { HttpException, Injectable, Logger } from '@nestjs/common';
+import { Image } from '@prisma/client';
 
 @Injectable()
 export class ImageService {
@@ -66,6 +67,14 @@ export class ImageService {
 				previewUrl,
 			},
 		});
+	}
+
+	async upsert(initialImg: Image | null, newImg?: Express.Multer.File) {
+		return newImg && initialImg !== null
+			? await this.update(initialImg.id, newImg)
+			: newImg && !initialImg
+				? await this.create(newImg)
+				: undefined;
 	}
 
 	private async handleImgDel(files: string[]) {

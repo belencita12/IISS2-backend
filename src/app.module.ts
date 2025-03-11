@@ -14,6 +14,8 @@ import { SpeciesModule } from './species/species.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { ImageModule } from './image/image.module';
+import { ProductPriceModule } from './product-price/product-price.module';
+import { ProductModule } from './product/product.module';
 
 @Module({
 	imports: [
@@ -34,6 +36,8 @@ import { ImageModule } from './image/image.module';
 		SpeciesModule,
 		SupabaseModule,
 		ImageModule,
+		ProductPriceModule,
+		ProductModule,
 	],
 })
 export class AppModule {}

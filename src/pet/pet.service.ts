@@ -93,13 +93,10 @@ export class PetService {
 			throw new NotFoundException(`Mascota con id ${id} no encontrada`);
 
 		const { profileImg, raceId, userId, speciesId, ...rest } = dto;
-		const newImg =
-			profileImg && petToUpd.profileImg !== null
-				? await this.imgService.update(petToUpd.profileImg.id, profileImg)
-				: profileImg && !petToUpd.profileImg
-					? await this.imgService.create(profileImg)
-					: undefined;
-
+		const newImg = await this.imgService.upsert(
+			petToUpd.profileImg,
+			profileImg,
+		);
 		const pet = await this.prisma.pet.update({
 			where: { id, deletedAt: null },
 			include: {
