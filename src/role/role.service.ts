@@ -18,7 +18,7 @@ export class RoleService {
 		const { baseWhere } = this.db.getBaseWhere(dto);
 		const where: Prisma.RoleWhereInput = {
 			...baseWhere,
-			name: { contains: dto.name },
+			name: { contains: dto.name, mode: 'insensitive' },
 		};
 		const [data, total] = await Promise.all([
 			this.db.role.findMany({ ...this.db.paginate(dto), where }),

@@ -30,6 +30,7 @@ export class RaceService {
 		const where: Prisma.RaceWhereInput = {
 			...baseWhere,
 			speciesId: dto.speciesId,
+			name: { contains: dto.name, mode: 'insensitive' },
 		};
 
 		const [data, total] = await Promise.all([

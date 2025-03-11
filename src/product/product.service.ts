@@ -43,7 +43,7 @@ export class ProductService {
 		const { baseWhere } = this.db.getBaseWhere(query);
 		const where: Prisma.ProductWhereInput = {
 			...baseWhere,
-			name: { contains: query.name },
+			name: { contains: query.name, mode: 'insensitive' },
 			code: { contains: query.code },
 			category: query.category,
 			cost: { gte: query.minCost, lte: query.maxCost },

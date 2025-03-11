@@ -45,6 +45,7 @@ export class PetService {
 			speciesId: dto.speciesId,
 			raceId: dto.raceId,
 			userId: dto.userId,
+			name: { contains: dto.name, mode: 'insensitive' },
 		};
 
 		const [data, total] = await Promise.all([

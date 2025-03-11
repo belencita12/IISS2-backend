@@ -45,7 +45,7 @@ export class UserService {
 
 		const where: Prisma.UserWhereInput = {
 			...baseWhere,
-			email: { contains: email },
+			email: { contains: email, mode: 'insensitive' },
 		};
 
 		const [users, total] = await Promise.all([
