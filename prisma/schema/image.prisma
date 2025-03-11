@@ -5,7 +5,8 @@ model Image {
     previewUrl  String
     originalUrl String
 
-    petImages Pet[]
+    petImages     Pet[]
+    productImages Product[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

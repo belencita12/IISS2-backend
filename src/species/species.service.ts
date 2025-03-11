@@ -20,7 +20,7 @@ export class SpeciesService {
 
 		const where: Prisma.SpeciesWhereInput = {
 			...baseWhere,
-			name: { contains: dto.name },
+			name: { contains: dto.name, mode: 'insensitive' },
 		};
 
 		const [data, total] = await Promise.all([
