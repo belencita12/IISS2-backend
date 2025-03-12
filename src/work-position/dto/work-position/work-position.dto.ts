@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { WorkShiftDto } from './work-shift.dto';
+import { WorkShiftDto } from '../work-shift/work-shift.dto';
 import { WorkPosition, WorkShift } from '@prisma/client';
 
 interface PositionWithShifts extends WorkPosition {
@@ -7,8 +7,12 @@ interface PositionWithShifts extends WorkPosition {
 }
 
 export class WorkPositionDto {
-	constructor(partial: PositionWithShifts) {
-		Object.assign(this, partial);
+	constructor(data: PositionWithShifts) {
+		this.name = data.name;
+		this.shifts = data.shifts.map((s) => new WorkShiftDto(s));
+		this.createdAt = data.createdAt;
+		this.updatedAt = data.updatedAt;
+		this.deletedAt = data.deletedAt;
 	}
 
 	@ApiProperty({ example: 'Auxiliar' })

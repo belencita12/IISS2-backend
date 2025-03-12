@@ -1,34 +1,61 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Post,
+	Body,
+	Patch,
+	Param,
+	Delete,
+	Query,
+	UseGuards,
+} from '@nestjs/common';
 import { WorkPositionService } from './work-position.service';
-import { CreateWorkPositionDto } from './dto/create-work-position.dto';
-import { UpdateWorkPositionDto } from './dto/update-work-position.dto';
+import { CreateWorkPositionDto } from './dto/work-position/create-work-position.dto';
+import { UpdateWorkPositionDto } from './dto/work-position/update-work-position.dto';
+import { WorkPositionQueryDto } from './dto/work-position/work-position-query.dto';
+import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { RolesGuard } from '@/lib/guard/role.guard';
+import { Roles } from '@/lib/decorators/roles.decorators';
+import { Role } from '@/lib/constants/role.enum';
+import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
+import { WorkPositionDto } from './dto/work-position/work-position.dto';
 
 @Controller('work-position')
+@ApiTags('WorkPosition')
+@ApiBearerAuth('access-token')
+@UseGuards(RolesGuard)
+@Roles(Role.Admin)
 export class WorkPositionController {
-  constructor(private readonly workPositionService: WorkPositionService) {}
+	constructor(private readonly workPositionService: WorkPositionService) {}
 
-  @Post()
-  create(@Body() createWorkPositionDto: CreateWorkPositionDto) {
-    return this.workPositionService.create(createWorkPositionDto);
-  }
+	@Post()
+	@ApiBody({ type: CreateWorkPositionDto })
+	@ApiResponse({ type: WorkPositionDto })
+	create(@Body() dto: CreateWorkPositionDto) {
+		return this.workPositionService.create(dto);
+	}
 
-  @Get()
-  findAll() {
-    return this.workPositionService.findAll();
-  }
+	@Get()
+	@ApiPaginatedResponse(WorkPositionDto)
+	findAll(@Query() query: WorkPositionQueryDto) {
+		return this.workPositionService.findAll(query);
+	}
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.workPositionService.findOne(+id);
-  }
+	@Get(':id')
+	@ApiResponse({ type: WorkPositionDto })
+	findOne(@Param('id') id: string) {
+		return this.workPositionService.findOne(+id);
+	}
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWorkPositionDto: UpdateWorkPositionDto) {
-    return this.workPositionService.update(+id, updateWorkPositionDto);
-  }
+	@Patch(':id')
+	@ApiBody({ type: UpdateWorkPositionDto })
+	@ApiResponse({ type: WorkPositionDto })
+	update(@Param('id') id: string, @Body() dto: UpdateWorkPositionDto) {
+		return this.workPositionService.update(+id, dto);
+	}
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.workPositionService.remove(+id);
-  }
+	@Delete(':id')
+	remove(@Param('id') id: string) {
+		return this.workPositionService.remove(+id);
+	}
 }

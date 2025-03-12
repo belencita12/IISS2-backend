@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
-import { UpdateWorkShiftDto } from './update-work-shift.dto';
+import { UpdateWorkShiftDto } from '../work-shift/update-work-shift.dto';
 
 export class UpdateWorkPositionDto {
 	@IsString()

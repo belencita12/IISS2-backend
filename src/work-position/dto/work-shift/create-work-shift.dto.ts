@@ -9,10 +9,10 @@ export class CreateWorkShiftDto {
 	weekDay: number;
 
 	@IsString()
-	@ApiProperty({ example: '08:00:00' })
+	@ApiProperty({ example: '08:00' })
 	startTime: string;
 
 	@IsString()
-	@ApiProperty({ example: '12:00:00' })
+	@ApiProperty({ example: '12:00' })
 	endTime: string;
 }

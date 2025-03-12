@@ -17,8 +17,8 @@ model WorkShift {
 
     weekDay Int
 
-    startTime DateTime @db.Time()
-    endTime   DateTime @db.Time()
+    startTime String
+    endTime   String
 
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt

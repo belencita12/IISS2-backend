@@ -1,8 +1,10 @@
 import { HttpException, Injectable } from '@nestjs/common';
-import { CreateWorkPositionDto } from './dto/create-work-position.dto';
+import { CreateWorkPositionDto } from './dto/work-position/create-work-position.dto';
 import { PrismaService } from '@/prisma/prisma.service';
-import { WorkPositionDto } from './dto/work-position.dto';
-import { UpdateWorkPositionDto } from './dto/update-work-position.dto';
+import { WorkPositionDto } from './dto/work-position/work-position.dto';
+import { UpdateWorkPositionDto } from './dto/work-position/update-work-position.dto';
+import { WorkPositionQueryDto } from './dto/work-position/work-position-query.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class WorkPositionService {
@@ -24,7 +26,9 @@ export class WorkPositionService {
 		return new WorkPositionDto(work);
 	}
 
-	findAll() {}
+	async findAll(query: WorkPositionQueryDto) {
+		return await this.filter(query);
+	}
 
 	async findOne(id: number) {
 		const work = await this.prisma.workPosition.findUnique({
@@ -57,5 +61,33 @@ export class WorkPositionService {
 			include: { shifts: true },
 		});
 		return new WorkPositionDto(work);
+	}
+
+	private async filter(query: WorkPositionQueryDto) {
+		const { baseWhere } = this.prisma.getBaseWhere(query);
+		const where: Prisma.WorkPositionWhereInput = {
+			...baseWhere,
+			name: { contains: query.name, mode: 'insensitive' },
+			shifts: {
+				some: {
+					startTime: { gte: query.startTimeFrom, lte: query.startTimeTo },
+					endTime: { gte: query.endTimeFrom, lte: query.endTimeTo },
+					weekDay: query.weekDay,
+				},
+			},
+		};
+		const [data, total] = await Promise.all([
+			this.prisma.workPosition.findMany({
+				...this.prisma.paginate(query),
+				where,
+			}),
+			this.prisma.workPosition.count({ where }),
+		]);
+		return this.prisma.getPagOutput({
+			page: query.page,
+			size: query.size,
+			total,
+			data,
+		});
 	}
 }
