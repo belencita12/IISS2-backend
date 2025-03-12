@@ -17,6 +17,7 @@ import { ImageModule } from './image/image.module';
 import { ProductPriceModule } from './product-price/product-price.module';
 import { ProductModule } from './product/product.module';
 import { WorkPositionModule } from './work-position/work-position.module';
+import { EmplyeeModule } from './emplyee/emplyee.module';
 
 @Module({
 	imports: [
@@ -40,6 +41,7 @@ import { WorkPositionModule } from './work-position/work-position.module';
 		ProductPriceModule,
 		ProductModule,
 		WorkPositionModule,
+		EmplyeeModule,
 	],
 })
 export class AppModule {}

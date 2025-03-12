@@ -6,6 +6,11 @@ export const hash = async (str: string) => {
 	return hash;
 };
 
+export const genPassword = async () => {
+	const psw = uuidv4().replace(/-/g, '').slice(0, 12);
+	return await hash(psw);
+};
+
 export const compare = async (str: string, hash: string) => {
 	return await bcrypt.compare(str, hash);
 };

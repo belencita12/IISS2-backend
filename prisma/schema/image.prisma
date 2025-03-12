@@ -6,6 +6,7 @@ model Image {
     originalUrl String
 
     petImages     Pet[]
+    userImages    User[]
     productImages Product[]
 
     createdAt DateTime @default(now())
