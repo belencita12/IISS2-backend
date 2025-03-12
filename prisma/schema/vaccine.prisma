@@ -2,7 +2,8 @@ model Vaccine {
   id             Int                      @id @default(autoincrement())
   speciesId      Int  
   name           String
-  product        Product? 
+  productId      Int                      @unique
+  product        Product                  @relation(fields: [productId], references: [id])
   manufacturerId Int
   manufacturer   VaccineManufacturer      @relation(fields: [manufacturerId], references: [id])
   batchId        Int

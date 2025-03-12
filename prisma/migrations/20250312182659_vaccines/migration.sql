@@ -1,15 +1,5 @@
-/*
-  Warnings:
-
-  - A unique constraint covering the columns `[vaccineId]` on the table `Product` will be added. If there are existing duplicate values, this will fail.
-  - Added the required column `vaccineId` to the `Product` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- AlterTable
 ALTER TABLE "Pet" ADD COLUMN     "vaccinationCartId" INTEGER;
-
--- AlterTable
-ALTER TABLE "Product" ADD COLUMN     "vaccineId" INTEGER NOT NULL;
 
 -- CreateTable
 CREATE TABLE "VaccinationCardDetails" (
@@ -65,6 +55,7 @@ CREATE TABLE "Vaccine" (
     "id" SERIAL NOT NULL,
     "speciesId" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
+    "productId" INTEGER NOT NULL,
     "manufacturerId" INTEGER NOT NULL,
     "batchId" INTEGER NOT NULL,
     "deletedAt" TIMESTAMP(3),
@@ -78,13 +69,10 @@ CREATE TABLE "Vaccine" (
 CREATE UNIQUE INDEX "VaccineBatch_code_key" ON "VaccineBatch"("code");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Product_vaccineId_key" ON "Product"("vaccineId");
+CREATE UNIQUE INDEX "Vaccine_productId_key" ON "Vaccine"("productId");
 
 -- AddForeignKey
 ALTER TABLE "Pet" ADD CONSTRAINT "Pet_vaccinationCartId_fkey" FOREIGN KEY ("vaccinationCartId") REFERENCES "VaccinationCard"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Product" ADD CONSTRAINT "Product_vaccineId_fkey" FOREIGN KEY ("vaccineId") REFERENCES "Vaccine"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "VaccinationCardDetails" ADD CONSTRAINT "VaccinationCardDetails_vaccinationCardId_fkey" FOREIGN KEY ("vaccinationCardId") REFERENCES "VaccinationCard"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -94,6 +82,9 @@ ALTER TABLE "VaccinationCardDetails" ADD CONSTRAINT "VaccinationCardDetails_vacc
 
 -- AddForeignKey
 ALTER TABLE "VaccineBatch" ADD CONSTRAINT "VaccineBatch_manufacturerId_fkey" FOREIGN KEY ("manufacturerId") REFERENCES "VaccineManufacturer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Vaccine" ADD CONSTRAINT "Vaccine_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Vaccine" ADD CONSTRAINT "Vaccine_manufacturerId_fkey" FOREIGN KEY ("manufacturerId") REFERENCES "VaccineManufacturer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Post,
+	Body,
+	Patch,
+	Param,
+	Delete,
+	Query,
+	UseGuards,
+} from '@nestjs/common';
 import { VaccineManufacturerService } from './vaccine-manufacturer.service';
 import { CreateVaccineManufacturerDto } from './dto/create-vaccine-manufacturer.dto';
 import { UpdateVaccineManufacturerDto } from './dto/update-vaccine-manufacturer.dto';
@@ -16,36 +26,46 @@ import { Role } from '@/lib/constants/role.enum';
 @UseGuards(RolesGuard)
 @Roles(Role.Admin)
 export class VaccineManufacturerController {
-  constructor(private readonly vaccineManufacturerService: VaccineManufacturerService) {}
+	constructor(
+		private readonly vaccineManufacturerService: VaccineManufacturerService,
+	) {}
 
-  @Post()
-  @ApiResponse({ type: VaccineManufacturerDto })
-  @ApiBody({ type: CreateVaccineManufacturerDto})
-  async create(@Body() createVaccineManufacturerDto: CreateVaccineManufacturerDto) {
-    return this.vaccineManufacturerService.create(createVaccineManufacturerDto);
-  }
+	@Post()
+	@ApiResponse({ type: VaccineManufacturerDto })
+	@ApiBody({ type: CreateVaccineManufacturerDto })
+	async create(
+		@Body() createVaccineManufacturerDto: CreateVaccineManufacturerDto,
+	) {
+		return this.vaccineManufacturerService.create(createVaccineManufacturerDto);
+	}
 
-  @Get()
-  @ApiPaginatedResponse(VaccineManufacturerDto)
-  async findAll(@Query() query: VaccineManufacturerQueryDto) {
-    return this.vaccineManufacturerService.findAll(query);
-  }
+	@Get()
+	@ApiPaginatedResponse(VaccineManufacturerDto)
+	async findAll(@Query() query: VaccineManufacturerQueryDto) {
+		return this.vaccineManufacturerService.findAll(query);
+	}
 
-  @Get(':id')
-  @ApiResponse({ type: VaccineManufacturerDto})
-  async findOne(@Param('id') id: string) {
-    return this.vaccineManufacturerService.findOne(+id);
-  }
+	@Get(':id')
+	@ApiResponse({ type: VaccineManufacturerDto })
+	async findOne(@Param('id') id: string) {
+		return this.vaccineManufacturerService.findOne(+id);
+	}
 
-  @Patch(':id')
-  @ApiResponse({ type: VaccineManufacturerDto})
-  async update(@Param('id') id: string, @Body() updateVaccineManufacturerDto: UpdateVaccineManufacturerDto) {
-    return this.vaccineManufacturerService.update(+id, updateVaccineManufacturerDto);
-  }
+	@Patch(':id')
+	@ApiResponse({ type: VaccineManufacturerDto })
+	async update(
+		@Param('id') id: string,
+		@Body() updateVaccineManufacturerDto: UpdateVaccineManufacturerDto,
+	) {
+		return this.vaccineManufacturerService.update(
+			+id,
+			updateVaccineManufacturerDto,
+		);
+	}
 
-  @Delete(':id')
-  @ApiResponse({ type: VaccineManufacturerDto})
-  async remove(@Param('id') id: string) {
-    return this.vaccineManufacturerService.remove(+id);
-  }
+	@Delete(':id')
+	@ApiResponse({ type: VaccineManufacturerDto })
+	async remove(@Param('id') id: string) {
+		return this.vaccineManufacturerService.remove(+id);
+	}
 }
