@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateVaccineManufacturerDto } from './dto/create-vaccine-manufacturer.dto';
 import { UpdateVaccineManufacturerDto } from './dto/update-vaccine-manufacturer.dto';
 import { PrismaService } from '@/prisma/prisma.service';
-import { VaccineManufacturerQueryDto } from './dto/delete-vaccine-manufacturer.dto';
+import { VaccineManufacturerQueryDto } from './dto/vaccine-manufacture-queryr.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()

@@ -17,6 +17,7 @@ import { ImageModule } from './image/image.module';
 import { ProductPriceModule } from './product-price/product-price.module';
 import { ProductModule } from './product/product.module';
 import { VaccineManufacturerModule } from './vaccine-manufacturer/vaccine-manufacturer.module';
+import { VaccineBatchModule } from './vaccine-batch/vaccine-batch.module';
 
 @Module({
 	imports: [
@@ -39,6 +40,7 @@ import { VaccineManufacturerModule } from './vaccine-manufacturer/vaccine-manufa
 		ImageModule,
 		ProductPriceModule,
 		ProductModule,
+		VaccineBatchModule,
 		VaccineManufacturerModule,
 	],
 })
