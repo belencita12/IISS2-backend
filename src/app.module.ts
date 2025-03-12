@@ -17,6 +17,7 @@ import { ImageModule } from './image/image.module';
 import { ProductPriceModule } from './product-price/product-price.module';
 import { ProductModule } from './product/product.module';
 import { VaccineManufacturerModule } from './vaccine-manufacturer/vaccine-manufacturer.module';
+import { WorkPositionModule } from './work-position/work-position.module';
 
 @Module({
 	imports: [
@@ -40,6 +41,7 @@ import { VaccineManufacturerModule } from './vaccine-manufacturer/vaccine-manufa
 		ProductPriceModule,
 		ProductModule,
 		VaccineManufacturerModule,
+		WorkPositionModule,
 	],
 })
 export class AppModule {}
