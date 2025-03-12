@@ -73,7 +73,7 @@ export class ProductService {
 				image: true,
 			},
 		});
-		if (!prod) throw new HttpException('Product not found', 404);
+		if (!prod) throw new HttpException('Producto no encontrado', 404);
 		return new ProductDto(prod);
 	}
 
@@ -83,7 +83,7 @@ export class ProductService {
 			include: { image: true, price: true },
 		});
 
-		if (!prodToUpd) throw new HttpException('Product not found', 404);
+		if (!prodToUpd) throw new HttpException('Producto no encontrado', 404);
 
 		const { price, productImg, ...rest } = dto;
 		const prodImg = await this.imgService.upsert(prodToUpd.image, productImg);
@@ -108,6 +108,8 @@ export class ProductService {
 	}
 
 	async remove(id: number) {
+		const prod = await this.db.product.findUnique({ where: { id } });
+		if (!prod) throw new HttpException('Producto no encontrado', 404);
 		await this.db.product.update({
 			where: { id },
 			data: { deletedAt: new Date() },
