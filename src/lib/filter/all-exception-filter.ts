@@ -46,7 +46,6 @@ export class AllExceptionFilter implements ExceptionFilter {
 
 		if (ex instanceof BadRequestException) {
 			const response = ex.getResponse();
-			console.log(response['message']);
 			message = Array.isArray(response['message'])
 				? response['message'][0]
 				: response['message'];
