@@ -1,3 +1,5 @@
+import { IsTimeFormat } from '@/lib/decorators/is-time-format';
+import { IsWeekDay } from '@/lib/decorators/is-week-day';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { WorkShift } from '@prisma/client';
 
@@ -15,13 +17,16 @@ export class WorkShiftDto {
 	@ApiProperty({ example: 1 })
 	id: number;
 
+	@IsWeekDay()
 	@ApiProperty({ example: 1 })
 	weekDay: number;
 
 	@ApiProperty({ example: '08:00' })
+	@IsTimeFormat()
 	startTime: string;
 
 	@ApiProperty({ example: '12:00' })
+	@IsTimeFormat()
 	endTime: string;
 
 	@ApiProperty()

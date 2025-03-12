@@ -47,7 +47,9 @@ export class WorkPositionService {
 			data: {
 				name,
 				shifts: {
-					...(shifts && shifts.length > 0 ? { set: shifts } : {}),
+					...(shifts && shifts.length > 0
+						? { deleteMany: {}, createMany: { data: shifts } }
+						: {}),
 				},
 			},
 		});

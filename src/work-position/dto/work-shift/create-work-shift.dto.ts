@@ -1,18 +1,17 @@
+import { IsTimeFormat } from '@/lib/decorators/is-time-format';
+import { IsWeekDay } from '@/lib/decorators/is-week-day';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsString, Max, Min } from 'class-validator';
 
 export class CreateWorkShiftDto {
-	@IsInt()
-	@Min(0)
-	@Max(6)
+	@IsWeekDay()
 	@ApiProperty({ example: 2 })
 	weekDay: number;
 
-	@IsString()
+	@IsTimeFormat()
 	@ApiProperty({ example: '08:00' })
 	startTime: string;
 
-	@IsString()
+	@IsTimeFormat()
 	@ApiProperty({ example: '12:00' })
 	endTime: string;
 }

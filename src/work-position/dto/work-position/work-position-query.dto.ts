@@ -1,7 +1,9 @@
 import { PaginationQueryDto } from '@/lib/commons/pagination-params.dto';
+import { IsTimeFormat } from '@/lib/decorators/is-time-format';
+import { IsWeekDay } from '@/lib/decorators/is-week-day';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class WorkPositionQueryDto extends PaginationQueryDto {
 	@IsString()
@@ -11,9 +13,7 @@ export class WorkPositionQueryDto extends PaginationQueryDto {
 
 	@IsOptional()
 	@Type(() => Number)
-	@IsInt()
-	@Min(0)
-	@Max(6)
+	@IsWeekDay()
 	@ApiPropertyOptional({
 		example: 2,
 		description: 'Filtrar por el día de la semana 0 = domingo, 6 = sabado',
@@ -21,7 +21,7 @@ export class WorkPositionQueryDto extends PaginationQueryDto {
 	weekDay?: number;
 
 	@IsOptional()
-	@IsString()
+	@IsTimeFormat()
 	@ApiPropertyOptional({
 		example: '08:00',
 		description: 'Filtrar por turnos que comienzan después de esta hora',
@@ -29,7 +29,7 @@ export class WorkPositionQueryDto extends PaginationQueryDto {
 	startTimeFrom?: string;
 
 	@IsOptional()
-	@IsString()
+	@IsTimeFormat()
 	@ApiPropertyOptional({
 		example: '12:00',
 		description: 'Filtrar por turnos que comienzan antes de esta hora',
@@ -37,7 +37,7 @@ export class WorkPositionQueryDto extends PaginationQueryDto {
 	startTimeTo?: string;
 
 	@IsOptional()
-	@IsString()
+	@IsTimeFormat()
 	@ApiPropertyOptional({
 		example: '12:00',
 		description: 'Filtrar por turnos que terminan después de esta hora',
@@ -45,7 +45,7 @@ export class WorkPositionQueryDto extends PaginationQueryDto {
 	endTimeFrom?: string;
 
 	@IsOptional()
-	@IsString()
+	@IsTimeFormat()
 	@ApiPropertyOptional({
 		example: '18:00',
 		description: 'Filtrar por turnos que terminan antes de esta hora',
