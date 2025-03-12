@@ -1,0 +1,14 @@
+model VaccinationCardDetails {
+  id                Int             @id @default(autoincrement())
+  vaccinationCardId Int
+  vaccinationCard   VaccinationCard @relation(fields: [vaccinationCardId], references: [id])
+  vaccineId         Int
+  vaccine           Vaccine         @relation(fields: [vaccineId], references: [id])
+  dose              Float
+  applicationDate   DateTime?
+  expectedDate      DateTime
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}

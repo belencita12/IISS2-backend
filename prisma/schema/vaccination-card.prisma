@@ -1,0 +1,10 @@
+model VaccinationCard {
+  id          Int                      @id @default(autoincrement())
+  description String
+  details     VaccinationCardDetails[]
+  pets        Pet[]
+  
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}

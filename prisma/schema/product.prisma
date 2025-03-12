@@ -9,6 +9,9 @@ model Product {
     category Category
     priceId  Int          @unique
     price    ProductPrice @relation(fields: [priceId], references: [id])
+    vaccineId Int     @unique  
+    vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
+
 
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt

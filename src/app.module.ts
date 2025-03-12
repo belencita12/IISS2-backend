@@ -16,6 +16,7 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { ImageModule } from './image/image.module';
 import { ProductPriceModule } from './product-price/product-price.module';
 import { ProductModule } from './product/product.module';
+import { VaccineManufacturerModule } from './vaccine-manufacturer/vaccine-manufacturer.module';
 
 @Module({
 	imports: [
@@ -38,6 +39,7 @@ import { ProductModule } from './product/product.module';
 		ImageModule,
 		ProductPriceModule,
 		ProductModule,
+		VaccineManufacturerModule,
 	],
 })
 export class AppModule {}

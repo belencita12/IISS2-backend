@@ -1,0 +1,11 @@
+model VaccineBatch {
+  id             Int                 @id @default(autoincrement())
+  code           String              @unique
+  manufacturerId Int
+  manufacturer   VaccineManufacturer @relation(fields: [manufacturerId], references: [id])
+  vaccine        Vaccine[]
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
