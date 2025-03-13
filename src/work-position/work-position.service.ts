@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateWorkPositionDto } from './dto/work-position/create-work-position.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { WorkPositionDto } from './dto/work-position/work-position.dto';
@@ -35,34 +35,43 @@ export class WorkPositionService {
 			where: { id },
 			include: { shifts: true },
 		});
-		if (!work) throw new HttpException('Puesto de trabajo no encontrado', 404);
+		if (!work) throw new NotFoundException('Puesto de trabajo no encontrado');
 		return new WorkPositionDto(work);
 	}
 
 	async update(id: number, dto: UpdateWorkPositionDto) {
 		const exists = await this.db.workPosition.isExists({ id });
-		if (!exists)
-			throw new HttpException('Puesto de trabajo no encontrado', 404);
-		const { name, shifts } = dto;
-		const work = await this.db.workPosition.update({
-			include: { shifts: true },
-			where: { id },
-			data: {
-				name,
-				shifts: {
-					...(shifts && shifts.length > 0
-						? { deleteMany: {}, createMany: { data: shifts } }
-						: {}),
-				},
-			},
+		if (!exists) throw new NotFoundException('Puesto de trabajo no encontrado');
+		const prevShifts = await this.db.workShift.findMany({
+			where: { workPositionId: id },
 		});
-		return new WorkPositionDto(work);
+		const { name, shifts } = dto;
+		await this.db.$transaction(async (tx) => {
+			for (const prevShift of prevShifts) {
+				if (!shifts.some((s) => s.id === prevShift.id))
+					await tx.workShift.delete({ where: { id: prevShift.id } });
+			}
+			for (const shift of shifts) {
+				if (!shift.id)
+					await tx.workShift.create({ data: { ...shift, workPositionId: id } });
+				else
+					await tx.workShift.update({ where: { id: shift.id }, data: shift });
+			}
+			await this.db.workPosition.update({
+				where: { id },
+				data: { name },
+			});
+		});
+		const work = await this.db.workPosition.findUnique({
+			where: { id },
+			include: { shifts: true },
+		});
+		return new WorkPositionDto(work!);
 	}
 
 	async remove(id: number) {
 		const exists = await this.db.workPosition.isExists({ id });
-		if (!exists)
-			throw new HttpException('Puesto de trabajo no encontrado', 404);
+		if (!exists) throw new NotFoundException('Puesto de trabajo no encontrado');
 		await this.db.workPosition.softDelete({ id });
 	}
 
