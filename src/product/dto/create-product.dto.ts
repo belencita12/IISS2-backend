@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Category } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
@@ -25,7 +25,7 @@ export class CreateProductDto {
 	@IsEnum(Category)
 	@IsOptional()
 	@ApiProperty({ enum: Category })
-	category?: Category;
+	category: Category;
 
 	@Transform(({ value }) => Number(value))
 	@IsNumber()
@@ -34,7 +34,7 @@ export class CreateProductDto {
 	iva: number;
 
 	@IsOptional()
-	@ApiProperty({ type: 'string', format: 'binary' })
+	@ApiPropertyOptional({ type: 'string', format: 'binary' })
 	productImg?: Express.Multer.File;
 
 	@Transform(({ value }) => Number(value))
