@@ -93,7 +93,7 @@ export class UserService {
 	async remove(id: number) {
 		const isExists = await this.db.user.isExists({ id });
 		if (!isExists) throw new HttpException('User not found', 404);
-		await this.db.user.delete({ where: { id } });
+		await this.db.user.softDelete({ id });
 	}
 
 	private toDto(user: User & { roles: Role[] }) {
