@@ -38,7 +38,9 @@ export class ProductPriceService {
 	}
 
 	async findOne(id: number) {
-		const price = await this.db.productPrice.findUnique({ where: { id } });
+		const price = await this.db.productPrice.findUnique({
+			where: { id, deletedAt: null },
+		});
 		if (!price) throw new HttpException('Precio no encontrado', 404);
 		return price;
 	}
