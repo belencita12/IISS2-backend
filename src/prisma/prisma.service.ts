@@ -2,14 +2,90 @@ import { EnvService } from '@/env/env.service';
 import { PaginationQueryDto } from '@/lib/commons/pagination-params.dto';
 import { PaginationResponseDto } from '@/lib/commons/pagination-response.dto';
 import { PagOutputParams } from '@/lib/types/pagination';
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { OnModuleInit } from '@nestjs/common';
 import { PrismaClient, Prisma } from '@prisma/client';
 
-@Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit {
+export type PrismaService = ReturnType<BasePrismaService['withExtensions']>;
+
+export class BasePrismaService extends PrismaClient implements OnModuleInit {
 	constructor(private readonly env: EnvService) {
 		super({
 			log: env.get('PRISMA_LOG_LEVEL'),
+		});
+	}
+	withExtensions() {
+		return this.$extends({
+			model: {
+				$allModels: {
+					async isExists<T>(
+						this: T,
+						where: Prisma.Args<T, 'findFirst'>['where'],
+					): Promise<boolean> {
+						const context = Prisma.getExtensionContext(this);
+						const result = await (context as any).findFirst({ where });
+						return !!result;
+					},
+
+					async findUndeleted<T>(
+						this: T,
+						where: Prisma.Args<T, 'findUnique'>,
+					): Promise<
+						Prisma.Result<T, Prisma.Args<T, 'findUnique'>, 'findUnique'>
+					> {
+						return await (this as any).findMany({
+							where: { ...where, deletedAt: null },
+						});
+					},
+					async findManyQuery<T>(
+						this: T,
+						query: PaginationQueryDto,
+						where: Prisma.Args<T, 'findMany'>['where'],
+					): Promise<PaginationResponseDto<Prisma.Result<T, 'findMany', any>>> {
+						const { from, to, includeDeleted, page, size } = query;
+
+						const dateFilter =
+							from || to
+								? {
+										createdAt:
+											from && to
+												? { gte: from, lte: to }
+												: from
+													? { gte: from }
+													: { lte: to },
+									}
+								: {};
+
+						const deleteFilter = includeDeleted
+							? { deletedAt: { not: null } }
+							: { deletedAt: null };
+
+						const pageSize = size || 16;
+						const skip = (page - 1) * pageSize;
+						const take = pageSize;
+
+						const finalWhere = { ...where, ...dateFilter, ...deleteFilter };
+
+						const total = await (this as any).count({ where: finalWhere });
+
+						const data = await (this as any).findMany({
+							where: finalWhere,
+							skip,
+							take,
+							orderBy: { createdAt: Prisma.SortOrder.desc },
+						});
+
+						return {
+							data,
+							total,
+							size: pageSize,
+							prev: page > 1,
+							next: page * pageSize < total,
+							currentPage: page,
+							totalPages: Math.ceil(total / pageSize),
+						};
+					},
+				},
+			},
 		});
 	}
 
