@@ -18,6 +18,7 @@ import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.d
 import { RolesGuard } from '@/lib/guard/role.guard';
 import { Roles } from '@/lib/decorators/roles.decorators';
 import { Role } from '@/lib/constants/role.enum';
+import { IdValidationPipe } from '@/lib/pipes/id-validation.pipe';
 
 @Controller('product-price')
 @ApiTags('ProductPrice')
@@ -42,19 +43,22 @@ export class ProductPriceController {
 
 	@Get(':id')
 	@ApiResponse({ type: ProductPriceDto })
-	findOne(@Param('id') id: string) {
-		return this.productPriceService.findOne(+id);
+	findOne(@Param('id', IdValidationPipe) id: number) {
+		return this.productPriceService.findOne(id);
 	}
 
 	@Patch(':id')
 	@ApiBody({ type: CreateProductPriceDto })
 	@ApiResponse({ type: ProductPriceDto })
-	update(@Param('id') id: string, @Body() dto: CreateProductPriceDto) {
-		return this.productPriceService.update(+id, dto);
+	update(
+		@Param('id', IdValidationPipe) id: number,
+		@Body() dto: CreateProductPriceDto,
+	) {
+		return this.productPriceService.update(id, dto);
 	}
 
 	@Delete(':id')
-	remove(@Param('id') id: string) {
-		return this.productPriceService.remove(+id);
+	remove(@Param('id', IdValidationPipe) id: number) {
+		return this.productPriceService.remove(id);
 	}
 }

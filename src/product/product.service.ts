@@ -108,7 +108,9 @@ export class ProductService {
 	}
 
 	async remove(id: number) {
-		const prod = await this.db.product.findUnique({ where: { id } });
+		const prod = await this.db.product.findUnique({
+			where: { id, deletedAt: null },
+		});
 		if (!prod) throw new HttpException('Producto no encontrado', 404);
 		await this.db.product.update({
 			where: { id },

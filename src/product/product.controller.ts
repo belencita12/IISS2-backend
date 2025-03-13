@@ -28,6 +28,7 @@ import { ProductQueryDto } from './dto/product-query.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileValidator } from '@/lib/pipes/file-validator.pipe';
+import { IdValidationPipe } from '@/lib/pipes/id-validation.pipe';
 
 @Controller('product')
 @ApiTags('Product')
@@ -57,8 +58,8 @@ export class ProductController {
 
 	@Get(':id')
 	@ApiResponse({ type: ProductDto })
-	findOne(@Param('id') id: string) {
-		return this.productService.findOne(+id);
+	findOne(@Param('id', IdValidationPipe) id: number) {
+		return this.productService.findOne(id);
 	}
 
 	@Patch(':id')
@@ -67,18 +68,18 @@ export class ProductController {
 	@ApiBody({ type: CreateProductDto })
 	@ApiResponse({ type: ProductDto })
 	update(
-		@Param('id') id: string,
+		@Param('id', IdValidationPipe) id: number,
 		@Body() dto: CreateProductDto,
 		@UploadedFile(FileValidator) img?: Express.Multer.File,
 	) {
-		return this.productService.update(+id, {
+		return this.productService.update(id, {
 			...dto,
 			productImg: img,
 		});
 	}
 
 	@Delete(':id')
-	remove(@Param('id') id: string) {
-		return this.productService.remove(+id);
+	remove(@Param('id', IdValidationPipe) id: number) {
+		return this.productService.remove(id);
 	}
 }
