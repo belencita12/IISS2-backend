@@ -15,6 +15,14 @@ export class BasePrismaService extends PrismaClient implements OnModuleInit {
 	}
 	withExtensions() {
 		return this.$extends({
+			query: {
+				$allModels: {
+					async findUnique({ model, operation, args, query }) {
+						args.where = { ...args.where, deletedAt: null };
+						return query(args);
+					},
+				},
+			},
 			model: {
 				$allModels: {
 					async isExists<T>(
@@ -25,16 +33,21 @@ export class BasePrismaService extends PrismaClient implements OnModuleInit {
 						const result = await (context as any).findFirst({ where });
 						return !!result;
 					},
-
-					async findUndeleted<T>(
+					async findUniqueAndExists<T>(
 						this: T,
-						where: Prisma.Args<T, 'findUnique'>,
+						args: Prisma.Args<T, 'findUnique'>,
 					): Promise<
 						Prisma.Result<T, Prisma.Args<T, 'findUnique'>, 'findUnique'>
 					> {
-						return await (this as any).findMany({
-							where: { ...where, deletedAt: null },
+						const context = Prisma.getExtensionContext(this);
+						const result = await (context as any).findUnique({
+							...args,
+							where: {
+								...args.where,
+								deletedAt: null,
+							},
 						});
+						return result;
 					},
 					async findManyQuery<T>(
 						this: T,
