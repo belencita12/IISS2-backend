@@ -61,9 +61,7 @@ export class UserController {
 
 	@Delete(':id')
 	@Roles(Role.User)
-	@ApiResponse({ type: UserDto })
 	async remove(@Param('id') id: string) {
-		const deletedUser = await this.userService.remove(+id);
-		return new UserDto(deletedUser);
+		await this.userService.remove(+id);
 	}
 }

@@ -39,15 +39,15 @@ export class RoleService {
 	}
 
 	async update(id: number, updateDto: UpdateRoleDto) {
+		const exists = await this.db.role.isExists({ id });
+		if (!exists) throw new HttpException('Role not found', 404);
 		const role = await this.db.role.update({ where: { id }, data: updateDto });
 		return role;
 	}
 
 	async remove(id: number) {
-		const role = await this.db.role.update({
-			where: { id },
-			data: { deletedAt: new Date() },
-		});
-		return role;
+		const exists = await this.db.role.isExists({ id });
+		if (!exists) throw new HttpException('Role not found', 404);
+		await this.db.role.softDelete({ id });
 	}
 }
