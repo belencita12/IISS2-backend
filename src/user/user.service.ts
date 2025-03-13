@@ -91,12 +91,9 @@ export class UserService {
 		return this.toDto(user);
 	}
 	async remove(id: number) {
-		const user = await this.db.user.update({
-			where: { id },
-			include: { roles: true },
-			data: { deletedAt: new Date() },
-		});
-		return this.toDto(user);
+		const isExists = await this.db.user.isExists({ id });
+		if (!isExists) throw new HttpException('User not found', 404);
+		await this.db.user.delete({ where: { id } });
 	}
 
 	private toDto(user: User & { roles: Role[] }) {

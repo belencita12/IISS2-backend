@@ -54,7 +54,6 @@ export class RoleController {
 	}
 
 	@Delete(':id')
-	@ApiResponse({ type: RoleDto })
 	async remove(@Param('id') id: string) {
 		return this.roleService.remove(+id);
 	}
