@@ -1,4 +1,5 @@
 model JwtBlackList {
   id    Int    @id @default(autoincrement())
   token String @unique
+  deletedAt DateTime?
 }
