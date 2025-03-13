@@ -40,6 +40,11 @@ export class WorkPositionService {
 	}
 
 	async update(id: number, dto: UpdateWorkPositionDto) {
+		const workExists = await this.prisma.workPosition.findUnique({
+			where: { id },
+		});
+		if (!workExists)
+			throw new HttpException('Puesto de trabajo no encontrado', 404);
 		const { name, shifts } = dto;
 		const work = await this.prisma.workPosition.update({
 			include: { shifts: true },
@@ -57,12 +62,15 @@ export class WorkPositionService {
 	}
 
 	async remove(id: number) {
-		const work = await this.prisma.workPosition.update({
+		const work = await this.prisma.workPosition.findUnique({
 			where: { id },
+		});
+		if (!work) throw new HttpException('Puesto de trabajo no encontrado', 404);
+		await this.prisma.workPosition.update({
+			where: { id: work.id },
 			data: { deletedAt: new Date() },
 			include: { shifts: true },
 		});
-		return new WorkPositionDto(work);
 	}
 
 	private async filter(query: WorkPositionQueryDto) {
