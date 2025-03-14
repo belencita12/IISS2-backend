@@ -94,8 +94,8 @@ export class EmployeeService {
 	}
 
 	async update(id: number, dto: UpdateEmplyeeDto) {
-		const employee = await this.db.employee.findUnique({ where: { id } });
-		if (!employee) throw new NotFoundException('Empleado no encontrado');
+		const exists = await this.db.employee.isExists({ id });
+		if (!exists) throw new NotFoundException('Empleado no encontrado');
 		return await this.db.employee.update({
 			where: { id },
 			include: {
