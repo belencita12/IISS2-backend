@@ -4,8 +4,8 @@ import { ProductDto } from './dto/product.dto';
 import { ImageService } from '@/image/image.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import Decimal from 'decimal.js';
-import { Category, Prisma } from '@prisma/client';
 import { ProductQueryDto } from './dto/product-query.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProductService {
@@ -23,7 +23,7 @@ export class ProductService {
 			data: {
 				...rest,
 				code: this.genProdCode(),
-				category: rest.category || Category.PRODUCT,
+				category: rest.category,
 				image: prodImg ? { connect: { id: prodImg.id } } : undefined,
 				price: {
 					create: {
@@ -108,14 +108,9 @@ export class ProductService {
 	}
 
 	async remove(id: number) {
-		const prod = await this.db.product.findUnique({
-			where: { id, deletedAt: null },
-		});
-		if (!prod) throw new HttpException('Producto no encontrado', 404);
-		await this.db.product.update({
-			where: { id },
-			data: { deletedAt: new Date() },
-		});
+		const exists = await this.db.product.isExists({ id });
+		if (!exists) throw new HttpException('Producto no encontrado', 404);
+		await this.db.product.softDelete({ id });
 	}
 
 	private genProdCode() {

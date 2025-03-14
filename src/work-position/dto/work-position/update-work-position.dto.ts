@@ -1,5 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsString, ValidateNested } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	ArrayMinSize,
+	IsArray,
+	IsString,
+	ValidateNested,
+} from 'class-validator';
 import { UpdateWorkShiftDto } from '../work-shift/update-work-shift.dto';
 import { Type } from 'class-transformer';
 
@@ -10,7 +15,8 @@ export class UpdateWorkPositionDto {
 
 	@IsArray()
 	@ValidateNested({ each: true })
+	@ArrayMinSize(1, { message: 'Debe haber al menos un turno' })
 	@Type(() => UpdateWorkShiftDto)
-	@ApiProperty({ type: [UpdateWorkShiftDto] })
+	@ApiPropertyOptional({ type: [UpdateWorkShiftDto] })
 	shifts: UpdateWorkShiftDto[];
 }

@@ -1,8 +1,9 @@
 model WorkPosition {
     id   Int    @id @default(autoincrement())
-    name String
+    name String @unique @db.VarChar(64)
 
-    shifts WorkShift[]
+    shifts    WorkShift[]
+    employees Employee[]
 
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt

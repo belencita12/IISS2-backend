@@ -6,4 +6,5 @@ model Species {
   deletedAt DateTime?
   pets      Pet[]
   races     Race[]
+  Vaccine Vaccine[]
 }

@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateWorkPositionDto } from './dto/work-position/create-work-position.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { WorkPositionDto } from './dto/work-position/work-position.dto';
@@ -8,11 +8,11 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class WorkPositionService {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(private readonly db: PrismaService) {}
 
 	async create(dto: CreateWorkPositionDto) {
 		const { name, shifts } = dto;
-		const work = await this.prisma.workPosition.create({
+		const work = await this.db.workPosition.create({
 			include: { shifts: true },
 			data: {
 				name,
@@ -31,42 +31,52 @@ export class WorkPositionService {
 	}
 
 	async findOne(id: number) {
-		const work = await this.prisma.workPosition.findUnique({
+		const work = await this.db.workPosition.findUnique({
 			where: { id },
 			include: { shifts: true },
 		});
-		if (!work) throw new HttpException('Puesto de trabajo no encontrado', 404);
+		if (!work) throw new NotFoundException('Puesto de trabajo no encontrado');
 		return new WorkPositionDto(work);
 	}
 
 	async update(id: number, dto: UpdateWorkPositionDto) {
-		const { name, shifts } = dto;
-		const work = await this.prisma.workPosition.update({
-			include: { shifts: true },
-			where: { id },
-			data: {
-				name,
-				shifts: {
-					...(shifts && shifts.length > 0
-						? { deleteMany: {}, createMany: { data: shifts } }
-						: {}),
-				},
-			},
+		const exists = await this.db.workPosition.isExists({ id });
+		if (!exists) throw new NotFoundException('Puesto de trabajo no encontrado');
+		const prevShifts = await this.db.workShift.findMany({
+			where: { workPositionId: id },
 		});
-		return new WorkPositionDto(work);
+		const { name, shifts } = dto;
+		await this.db.$transaction(async (tx) => {
+			for (const prevShift of prevShifts) {
+				if (!shifts.some((s) => s.id === prevShift.id))
+					await tx.workShift.delete({ where: { id: prevShift.id } });
+			}
+			for (const shift of shifts) {
+				if (!shift.id)
+					await tx.workShift.create({ data: { ...shift, workPositionId: id } });
+				else
+					await tx.workShift.update({ where: { id: shift.id }, data: shift });
+			}
+			await this.db.workPosition.update({
+				where: { id },
+				data: { name },
+			});
+		});
+		const work = await this.db.workPosition.findUnique({
+			where: { id },
+			include: { shifts: true },
+		});
+		return new WorkPositionDto(work!);
 	}
 
 	async remove(id: number) {
-		const work = await this.prisma.workPosition.update({
-			where: { id },
-			data: { deletedAt: new Date() },
-			include: { shifts: true },
-		});
-		return new WorkPositionDto(work);
+		const exists = await this.db.workPosition.isExists({ id });
+		if (!exists) throw new NotFoundException('Puesto de trabajo no encontrado');
+		await this.db.workPosition.softDelete({ id });
 	}
 
 	private async filter(query: WorkPositionQueryDto) {
-		const { baseWhere } = this.prisma.getBaseWhere(query);
+		const { baseWhere } = this.db.getBaseWhere(query);
 		const where: Prisma.WorkPositionWhereInput = {
 			...baseWhere,
 			name: { contains: query.name, mode: 'insensitive' },
@@ -79,13 +89,13 @@ export class WorkPositionService {
 			},
 		};
 		const [data, total] = await Promise.all([
-			this.prisma.workPosition.findMany({
-				...this.prisma.paginate(query),
+			this.db.workPosition.findMany({
+				...this.db.paginate(query),
 				where,
 			}),
-			this.prisma.workPosition.count({ where }),
+			this.db.workPosition.count({ where }),
 		]);
-		return this.prisma.getPagOutput({
+		return this.db.getPagOutput({
 			page: query.page,
 			size: query.size,
 			total,

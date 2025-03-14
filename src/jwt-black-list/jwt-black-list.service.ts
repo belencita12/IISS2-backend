@@ -6,12 +6,7 @@ export class JwtBlackListService {
 	constructor(private readonly db: PrismaService) {}
 
 	isJwtBanned = async (token: string) => {
-		console.log(token);
-		const tokenVef = await this.db.jwtBlackList.findUnique({
-			where: {
-				token,
-			},
-		});
+		const tokenVef = await this.db.jwtBlackList.isExists({ token });
 		if (tokenVef) throw new HttpException('Token has been already used', 401);
 	};
 

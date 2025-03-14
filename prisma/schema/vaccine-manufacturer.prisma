@@ -1,0 +1,10 @@
+model VaccineManufacturer {
+  id      Int            @id @default(autoincrement())
+  name    String         @unique
+  batch   VaccineBatch[]
+  vaccine Vaccine[]
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
