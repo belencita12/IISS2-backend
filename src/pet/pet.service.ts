@@ -52,7 +52,12 @@ export class PetService {
 			this.prisma.pet.findMany({
 				...this.prisma.paginate(dto),
 				where,
-				include: { species: true, race: true, profileImg: true },
+				include: {
+					species: true,
+					race: true,
+					profileImg: true,
+					vaccines: { include: { vaccine: true } },
+				},
 			}),
 			this.prisma.pet.count({ where }),
 		]);
@@ -79,6 +84,7 @@ export class PetService {
 				profileImg: {
 					select: { id: true, previewUrl: true, originalUrl: true },
 				},
+				vaccines: { include: { vaccine: true } },
 			},
 		});
 		if (!pet) throw new NotFoundException(`Mascota con id ${id} no encontrada`);

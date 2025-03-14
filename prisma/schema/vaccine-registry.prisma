@@ -1,9 +1,9 @@
-model VaccinationCardDetails {
+model VaccineRegistry {
   id                Int             @id @default(autoincrement())
-  vaccinationCardId Int
-  vaccinationCard   VaccinationCard @relation(fields: [vaccinationCardId], references: [id])
   vaccineId         Int
   vaccine           Vaccine         @relation(fields: [vaccineId], references: [id])
+  petId             Int
+  pet               Pet             @relation(fields: [petId], references:[id])
   dose              Float
   applicationDate   DateTime?
   expectedDate      DateTime

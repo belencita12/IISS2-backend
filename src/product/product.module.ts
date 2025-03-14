@@ -9,5 +9,6 @@ import { ImageModule } from '@/image/image.module';
 	imports: [AuthModule, PrismaModule, ImageModule],
 	controllers: [ProductController],
 	providers: [ProductService],
+	exports: [ProductService],
 })
 export class ProductModule {}

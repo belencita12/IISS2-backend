@@ -18,6 +18,9 @@ import { ProductPriceModule } from './product-price/product-price.module';
 import { ProductModule } from './product/product.module';
 import { VaccineManufacturerModule } from './vaccine-manufacturer/vaccine-manufacturer.module';
 import { WorkPositionModule } from './work-position/work-position.module';
+import { VaccineModule } from './vaccine/vaccine.module';
+import { VaccineRegistryModule } from './vaccine-registry/vaccine-registry.module';
+import { VaccineBatchModule } from './vaccine-batch/vaccine-batch.module';
 
 @Module({
 	imports: [
@@ -42,6 +45,9 @@ import { WorkPositionModule } from './work-position/work-position.module';
 		ProductModule,
 		VaccineManufacturerModule,
 		WorkPositionModule,
+		VaccineModule,
+		VaccineRegistryModule,
+		VaccineBatchModule,
 	],
 })
 export class AppModule {}

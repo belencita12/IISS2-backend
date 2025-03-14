@@ -12,8 +12,7 @@ model Pet {
   dateOfBirth DateTime
   imageId     Int?
   profileImg  Image?    @relation(fields: [imageId], references: [id])
-  vaccinationCartId Int?
-  vaccinationCard VaccinationCard? @relation(fields: [vaccinationCartId], references: [id])
+  vaccines    VaccineRegistry[]
 
   deletedAt   DateTime?
   createdAt   DateTime  @default(now())
