@@ -1,8 +1,9 @@
 import { IsId } from '@/lib/decorators/is-id.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class CreateEmplyeeDto {
+export class CreateEmployeeDto {
 	@IsString()
 	@ApiProperty()
 	fullName: string;
@@ -17,11 +18,12 @@ export class CreateEmplyeeDto {
 	@ApiProperty()
 	email: string;
 
+	@Type(() => Number)
 	@IsId()
 	@ApiProperty({ example: 1 })
 	positionId: number;
 
 	@IsOptional()
 	@ApiPropertyOptional({ type: 'string', format: 'binary' })
-	profile: Express.Multer.File;
+	profileImg?: Express.Multer.File;
 }
