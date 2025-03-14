@@ -40,12 +40,15 @@ export class UserService {
 	}
 
 	async findAll(dto: UserQueryDto) {
-		const { email } = dto;
 		const { baseWhere } = this.db.getBaseWhere(dto);
 
 		const where: Prisma.UserWhereInput = {
 			...baseWhere,
-			email: { contains: email, mode: 'insensitive' },
+			...this.getWhereByQuerySearch(dto.query),
+			roles: dto.role ? { some: { name: dto.role } } : undefined,
+			pets: dto.speciesId
+				? { some: { speciesId: dto.speciesId, raceId: dto.raceId } }
+				: undefined,
 		};
 
 		const [users, total] = await Promise.all([
@@ -101,5 +104,20 @@ export class UserService {
 			...user,
 			roles: user.roles.map((role) => role.name),
 		};
+	}
+
+	private getWhereByQuerySearch(query?: string) {
+		let querySearchWhere: Prisma.UserWhereInput = {};
+		if (!query) return querySearchWhere;
+		const searchQuery = query.trim();
+		if (searchQuery.includes('@'))
+			querySearchWhere = {
+				email: { contains: searchQuery, mode: 'insensitive' },
+			};
+		else
+			querySearchWhere = {
+				fullName: { contains: searchQuery, mode: 'insensitive' },
+			};
+		return querySearchWhere;
 	}
 }
