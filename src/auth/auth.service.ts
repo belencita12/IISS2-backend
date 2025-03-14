@@ -3,13 +3,14 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
-import { compare } from '@/lib/utils/encrypt';
+import { compare, genPassword } from '@/lib/utils/encrypt';
 import { ResetPassTokenPayload, TokenPayload } from './types/auth.types';
 import { EmailService } from '@/email/email.service';
 import { EnvService } from '@/env/env.service';
 import { JwtBlackListService } from '@/jwt-black-list/jwt-black-list.service';
 import { getPassResetTemplate } from '@/email/templates/pass-reset';
 import { SignInResponseDto } from './dto/sign-in-res.dto';
+import { RegisterClientDto } from './dto/register-client.dto';
 
 @Injectable()
 export class AuthService {
@@ -50,6 +51,12 @@ export class AuthService {
 		const userDB = await this.usersService.findOne(user.id);
 		if (!userDB) throw new HttpException('User not found', 404);
 		return userDB;
+	}
+
+	async registerClient(dto: RegisterClientDto) {
+		const password = await genPassword();
+		await this.usersService.create({ ...dto, password });
+		await this.getResetPassToken(dto.email);
 	}
 
 	async getResetPassToken(email: string) {

@@ -26,8 +26,13 @@ import { Request as Req } from 'express';
 import { TokenPayload } from './types/auth.types';
 import { ResetPassTokenDto, ResetPasswordDto } from './dto/reset-password.dto';
 import { Public } from '@/lib/decorators/public.decorator';
+import { RegisterClientDto } from './dto/register-client.dto';
+import { RolesGuard } from '@/lib/guard/role.guard';
+import { Roles } from '@/lib/decorators/roles.decorators';
+import { Role } from '@/lib/constants/role.enum';
 
 @ApiTags('Auth')
+@ApiBearerAuth('access-token')
 @Controller('auth')
 export class AuthController {
 	constructor(private readonly authService: AuthService) {}
@@ -36,6 +41,13 @@ export class AuthController {
 	@Post('signup')
 	signUp(@Body() dto: SignUpDto) {
 		return this.authService.signUp(dto);
+	}
+
+	@Post('/admin/signup')
+	@UseGuards(RolesGuard)
+	@Roles(Role.Admin)
+	registerClient(@Body() dto: RegisterClientDto) {
+		return this.authService.registerClient(dto);
 	}
 
 	@Public()
