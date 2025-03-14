@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { WorkPosition } from '@prisma/client';
 
 export class ShortWorkPositionDto {
-	constructor(data: Partial<ShortWorkPositionDto>) {
-		Object.assign(this, data);
+	constructor(data: WorkPosition) {
+		this.id = data.id;
+		this.name = data.name;
 	}
 
 	@ApiProperty({ example: 1 })

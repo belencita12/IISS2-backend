@@ -20,7 +20,7 @@ export class EmployeeDto {
 		this.id = data.id;
 		this.fullName = data.user.fullName;
 		this.ruc = data.ruc;
-		this.position = data.position;
+		this.position = new ShortWorkPositionDto(data.position);
 		this.email = data.user.email;
 		this.image = data.user.image
 			? {

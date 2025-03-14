@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { EmployeeService } from './employee.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { UpdateEmplyeeDto } from './dto/update-employee.dto';
 import { EmployeeQueryDto } from './dto/employee.query.dto';
 import {
 	ApiBearerAuth,
@@ -73,7 +72,7 @@ export class EmployeeController {
 	@Roles(Role.Admin)
 	update(
 		@Param('id', IdValidationPipe) id: number,
-		@Body() dto: UpdateEmplyeeDto,
+		@Body() dto: CreateEmployeeDto,
 		@UploadedFile(FileValidator) img?: Express.Multer.File,
 	) {
 		return this.emplyeeService.update(id, { ...dto, profileImg: img });
