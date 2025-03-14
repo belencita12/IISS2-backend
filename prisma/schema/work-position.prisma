@@ -2,7 +2,8 @@ model WorkPosition {
     id   Int    @id @default(autoincrement())
     name String
 
-    shifts WorkShift[]
+    shifts    WorkShift[]
+    employees Employee[]
 
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt

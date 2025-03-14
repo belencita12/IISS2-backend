@@ -15,6 +15,10 @@ export class UserDto implements User {
 	}
 
 	@Expose()
+	@ApiProperty()
+	imageId: number | null;
+
+	@Expose()
 	@IsNumber()
 	@ApiProperty()
 	id: number;

@@ -1,9 +1,15 @@
 model User {
-  id        Int       @id @default(autoincrement())
-  fullName  String
-  username  String    @unique
-  email     String    @unique
-  password  String
+  id       Int    @id @default(autoincrement())
+  fullName String
+  username String @unique
+  email    String @unique
+  password String
+
+  imageId Int?
+  image   Image? @relation(fields: [imageId], references: [id], onDelete: NoAction)
+
+  employee Employee?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
