@@ -86,7 +86,7 @@ export class PetService {
 	}
 
 	async update(id: number, dto: CreatePetDto) {
-		const petToUpd = await this.prisma.pet.findUnique({
+		const petToUpd = await this.prisma.pet.findFirst({
 			where: { id },
 			select: { profileImg: true },
 		});

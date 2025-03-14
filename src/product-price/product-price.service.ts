@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { CreateProductPriceDto } from './dto/create-product-price.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ProductPriceQueryDto } from './dto/product-price-query.dto';
@@ -38,14 +38,22 @@ export class ProductPriceService {
 	}
 
 	async findOne(id: number) {
-		return await this.db.productPrice.findUnique({ where: { id } });
+		const price = await this.db.productPrice.findUnique({
+			where: { id, deletedAt: null },
+		});
+		if (!price) throw new HttpException('Precio no encontrado', 404);
+		return price;
 	}
 
 	async update(id: number, dto: CreateProductPriceDto) {
+		const price = await this.db.productPrice.findUnique({ where: { id } });
+		if (!price) throw new HttpException('Precio no encontrado', 404);
 		return await this.db.productPrice.update({ where: { id }, data: dto });
 	}
 
 	async remove(id: number) {
+		const price = await this.db.productPrice.findUnique({ where: { id } });
+		if (!price) throw new HttpException('Precio no encontrado', 404);
 		await this.db.productPrice.update({
 			where: { id },
 			data: { deletedAt: new Date() },
