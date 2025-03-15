@@ -1,6 +1,6 @@
+import { ImageDto } from '@/lib/commons/image.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Role, User } from '@prisma/client';
-import { Exclude, Expose, Transform } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import {
 	IsDateString,
 	IsEmail,
@@ -9,14 +9,10 @@ import {
 	IsString,
 } from 'class-validator';
 
-export class UserDto implements User {
+export class UserDto {
 	constructor(partial: Partial<UserDto>) {
 		Object.assign(this, partial);
 	}
-
-	@Expose()
-	@ApiProperty()
-	imageId: number | null;
 
 	@Expose()
 	@IsNumber()
@@ -40,11 +36,13 @@ export class UserDto implements User {
 	email: string;
 
 	@Expose()
-	@Transform(({ value }) => value.map((role: Role) => role.name), {
-		toClassOnly: true,
-	})
 	@ApiProperty({ type: [String] })
 	roles: string[];
+
+	@Expose()
+	@IsOptional()
+	@ApiPropertyOptional()
+	image?: ImageDto;
 
 	@Expose()
 	@IsDateString()

@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { UpdateEmplyeeDto } from './dto/update-employee.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ImageService } from '@/image/image.service';
 import { genPassword, genUsername } from '@/lib/utils/encrypt';
@@ -93,11 +92,36 @@ export class EmployeeService {
 		return new EmployeeDto(employee);
 	}
 
-	async update(id: number, dto: UpdateEmplyeeDto) {
-		const exists = await this.db.employee.isExists({ id });
-		if (!exists) throw new NotFoundException('Empleado no encontrado');
-		return await this.db.employee.update({
+	async update(id: number, dto: CreateEmployeeDto) {
+		const prev = await this.db.employee.findFirst({
 			where: { id },
+			include: { user: { include: { image: true } } },
+		});
+		if (!prev) throw new NotFoundException('Empleado no encontrado');
+
+		const img = await this.imgService.upsert(prev.user.image, dto.profileImg);
+
+		const data: Prisma.EmployeeUpdateInput = {
+			ruc: dto.ruc,
+			position: {
+				connect: { id: dto.positionId },
+			},
+			user: {
+				update: {
+					email: dto.email,
+					fullName: dto.fullName,
+					image: img?.id ? { connect: { id: img.id } } : undefined,
+					username:
+						dto.fullName != prev.user.fullName
+							? genUsername(dto.fullName)
+							: undefined,
+				},
+			},
+		};
+
+		const updated = await this.db.employee.update({
+			where: { id },
+			data,
 			include: {
 				position: true,
 				user: {
@@ -110,8 +134,9 @@ export class EmployeeService {
 					},
 				},
 			},
-			data: dto,
 		});
+
+		return new EmployeeDto(updated);
 	}
 
 	async remove(id: number) {

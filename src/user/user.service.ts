@@ -2,9 +2,10 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
-import { Prisma, Role, User } from '@prisma/client';
+import { Image, Prisma, Role, User } from '@prisma/client';
 import { genUsername, hash } from '@/lib/utils/encrypt';
 import { PrismaService } from '@/prisma/prisma.service';
+import { UserDto } from './dto/user.dto';
 
 @Injectable()
 export class UserService {
@@ -26,7 +27,7 @@ export class UserService {
 					})),
 				},
 			},
-			include: { roles: true },
+			include: { roles: true, image: true },
 		});
 		return this.toDto(user);
 	}
@@ -40,19 +41,22 @@ export class UserService {
 	}
 
 	async findAll(dto: UserQueryDto) {
-		const { email } = dto;
 		const { baseWhere } = this.db.getBaseWhere(dto);
 
 		const where: Prisma.UserWhereInput = {
 			...baseWhere,
-			email: { contains: email, mode: 'insensitive' },
+			...this.getWhereByQuerySearch(dto.query),
+			roles: dto.role ? { some: { name: dto.role } } : undefined,
+			pets: dto.speciesId
+				? { some: { speciesId: dto.speciesId, raceId: dto.raceId } }
+				: undefined,
 		};
 
 		const [users, total] = await Promise.all([
 			this.db.user.findMany({
 				...this.db.paginate(dto),
 				where,
-				include: { roles: true },
+				include: { roles: true, image: true },
 			}),
 			this.db.user.count({ where }),
 		]);
@@ -68,17 +72,19 @@ export class UserService {
 	async findOne(id: number) {
 		const user = await this.db.user.findUnique({
 			where: { id },
-			include: { roles: true },
+			include: { roles: true, image: true },
 		});
-		if (!user) throw new HttpException('User not found', 404);
+		if (!user) throw new HttpException('Usuario no encontrado', 404);
 		return this.toDto(user);
 	}
 
 	async update(id: number, updateDto: UpdateUserDto) {
+		const isExists = await this.db.user.isExists({ id });
+		if (!isExists) throw new HttpException('Usuario no encontrado', 404);
 		const { roles: newRoles, password, ...dto } = updateDto;
 		const user = await this.db.user.update({
 			where: { id },
-			include: { roles: true },
+			include: { roles: true, image: true },
 			data: {
 				...dto,
 				username: dto.fullName ? genUsername(dto.fullName) : undefined,
@@ -92,14 +98,38 @@ export class UserService {
 	}
 	async remove(id: number) {
 		const isExists = await this.db.user.isExists({ id });
-		if (!isExists) throw new HttpException('User not found', 404);
+		if (!isExists) throw new HttpException('Usuario no encontrado', 404);
 		await this.db.user.softDelete({ id });
 	}
 
-	private toDto(user: User & { roles: Role[] }) {
+	private toDto(
+		user: User & { roles: Role[] } & { image: Image | null },
+	): UserDto {
 		return {
 			...user,
+			image: user.image
+				? {
+						id: user.image.id,
+						originalUrl: user.image.originalUrl,
+						previewUrl: user.image.previewUrl,
+					}
+				: undefined,
 			roles: user.roles.map((role) => role.name),
 		};
+	}
+
+	private getWhereByQuerySearch(query?: string) {
+		let querySearchWhere: Prisma.UserWhereInput = {};
+		if (!query) return querySearchWhere;
+		const searchQuery = query.trim();
+		if (searchQuery.includes('@'))
+			querySearchWhere = {
+				email: { contains: searchQuery, mode: 'insensitive' },
+			};
+		else
+			querySearchWhere = {
+				fullName: { contains: searchQuery, mode: 'insensitive' },
+			};
+		return querySearchWhere;
 	}
 }
