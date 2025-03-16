@@ -1,10 +1,9 @@
-import { PaginationQueryDto } from '@/lib/commons/pagination-params.dto';
 import { CreateProductDto } from '@/product/dto/create-product.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { IsDateString, IsOptional, ValidateNested } from 'class-validator';
 
-export class VaccineDto extends PaginationQueryDto {
+export class VaccineDto {
 	@ApiProperty({ example: 1 })
 	id: number;
 
@@ -40,7 +39,6 @@ export class VaccineDto extends PaginationQueryDto {
 	deletedAt: Date | null;
 
 	constructor(partial: Partial<VaccineDto>) {
-		super();
 		Object.assign(this, partial);
 	}
 }

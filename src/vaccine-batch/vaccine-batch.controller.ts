@@ -18,6 +18,7 @@ import { Role } from '@/lib/constants/role.enum';
 import { Roles } from '@/lib/decorators/roles.decorators';
 import { VaccineBatchDto } from './dto/vaccine-batch.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
+import { VaccineBatchQueryDto } from './dto/vaccine-batch-query.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('vaccine-batch')
@@ -35,8 +36,8 @@ export class VaccineBatchController {
 	}
 
 	@Get()
-	@ApiPaginatedResponse(VaccineBatchDto)
-	async findAll(@Query() query: VaccineBatchDto) {
+	@ApiPaginatedResponse(VaccineBatchQueryDto)
+	async findAll(@Query() query: VaccineBatchQueryDto) {
 		return this.vaccineBatchService.findAll(query);
 	}
 

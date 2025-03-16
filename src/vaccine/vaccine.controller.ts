@@ -8,17 +8,27 @@ import {
 	Delete,
 	UseGuards,
 	Query,
+	UseInterceptors,
+	UploadedFile,
 } from '@nestjs/common';
 import { VaccineService } from './vaccine.service';
 import { CreateVaccineDto } from './dto/create-vaccine.dto';
 import { UpdateVaccineDto } from './dto/update-vaccine.dto';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiBody,
+	ApiConsumes,
+	ApiResponse,
+	ApiTags,
+} from '@nestjs/swagger';
 import { RolesGuard } from '@/lib/guard/role.guard';
 import { Role } from '@/lib/constants/role.enum';
 import { Roles } from '@/lib/decorators/roles.decorators';
 import { VaccineDto } from './dto/vaccine.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
 import { VaccineQueryDto } from './dto/vaccine-query.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileValidator } from '@/lib/pipes/file-validator.pipe';
 
 @ApiBearerAuth('access-token')
 @ApiTags('vaccine')
@@ -29,16 +39,24 @@ export class VaccineController {
 	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Post()
+	@ApiConsumes('multipart/form-data')
+	@UseInterceptors(FileInterceptor('productImg'))
 	@ApiResponse({ type: VaccineDto })
 	@ApiBody({ type: CreateVaccineDto })
-	async create(@Body() createVaccineDto: CreateVaccineDto) {
+	async create(
+		@Body() createVaccineDto: CreateVaccineDto,
+		@UploadedFile(FileValidator) img?: Express.Multer.File,
+	) {
+		if (img && createVaccineDto.productData) {
+			createVaccineDto.productData.productImg = img;
+		}
 		return this.vaccineService.create(createVaccineDto);
 	}
 
 	@UseGuards(RolesGuard)
 	@Roles(Role.Admin, Role.User)
 	@Get()
-	@ApiPaginatedResponse(VaccineDto)
+	@ApiPaginatedResponse(VaccineQueryDto)
 	findAll(@Query() query: VaccineQueryDto) {
 		return this.vaccineService.findAll(query);
 	}

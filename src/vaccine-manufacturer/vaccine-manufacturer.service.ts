@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 import { CreateVaccineManufacturerDto } from './dto/create-vaccine-manufacturer.dto';
 import { UpdateVaccineManufacturerDto } from './dto/update-vaccine-manufacturer.dto';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -10,6 +14,17 @@ export class VaccineManufacturerService {
 	constructor(private prisma: PrismaService) {}
 
 	async create(createVaccineManufacturerDto: CreateVaccineManufacturerDto) {
+		const { name } = createVaccineManufacturerDto;
+
+		const manufacturer = await this.prisma.vaccineManufacturer.findFirst({
+			where: { name },
+		});
+
+		if (manufacturer) {
+			throw new BadRequestException(
+				`El fabricante con nombre "${name}" ya existe.`,
+			);
+		}
 		return this.prisma.vaccineManufacturer.create({
 			data: createVaccineManufacturerDto,
 		});
@@ -66,14 +81,18 @@ export class VaccineManufacturerService {
 			});
 			return manufacturer;
 		} catch (error) {
-			if (
-				error instanceof Prisma.PrismaClientKnownRequestError &&
-				error.code === 'P2025'
-			) {
-				throw new NotFoundException(`Especie con id ${id} no encontrada`);
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2025') {
+					throw new NotFoundException(`Fabricante con id ${id} no encontrado`);
+				}
+				if (error.code === 'P2002') {
+					throw new BadRequestException(
+						`El nombre "${updateVaccineManufacturerDto.name}" ya está en uso.`,
+					);
+				}
 			}
 			throw new Error(
-				`Error actualizando especie con id ${id}: ${error.message}`,
+				`Error actualizando fabricante con id ${id}: ${error.message}`,
 			);
 		}
 	}

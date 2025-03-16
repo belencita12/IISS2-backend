@@ -25,7 +25,6 @@ export class VaccineService {
 		if (!species || !manufacturer) {
 			throw new NotFoundException(`Especie o fabricante no encontrado.`);
 		}
-
 		const newProduct = await this.productService.create({
 			name: productData?.name ?? 'Nombre Vacuna',
 			category: productData?.category ?? 'VACCINE',

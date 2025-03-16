@@ -1,7 +1,7 @@
 import { CreateProductDto } from '@/product/dto/create-product.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsInt, IsString, ValidateNested } from 'class-validator';
 
 export class CreateVaccineDto {
 	@ApiProperty({ example: 1 })
@@ -19,6 +19,5 @@ export class CreateVaccineDto {
 	@ApiPropertyOptional({ type: CreateProductDto })
 	@ValidateNested()
 	@Type(() => CreateProductDto)
-	@IsOptional()
 	productData?: CreateProductDto;
 }

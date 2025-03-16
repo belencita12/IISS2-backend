@@ -7,9 +7,6 @@ export class VaccineRegistryDto {
 	id: number;
 
 	@ApiPropertyOptional()
-	name: string;
-
-	@ApiPropertyOptional()
 	vaccineId: number;
 
 	@ApiPropertyOptional()
