@@ -235,5 +235,88 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 	}
 };
 
+export const seedVaccineManufacturers = async (db: PrismaTransactionClient) => {
+	const vaccinesData: Prisma.VaccineManufacturerCreateManyInput[] = [
+		{ name: 'Zoetis' },
+		{ name: 'Merial' },
+		{ name: 'Boehringer Ingelheim' },
+		{ name: 'Novartis' },
+		{ name: 'HIPRA' },
+	];
+	await db.vaccineManufacturer.createMany({ data: vaccinesData });
+};
+
+export const seedVaccines = async (db: PrismaTransactionClient) => {
+	const [man1, man2, man3] = await db.vaccineManufacturer.findMany();
+	const [species1, species2] = await db.species.findMany();
+	const vaccinesData: Prisma.VaccineCreateInput[] = [
+		{
+			name: 'Panleucopenia',
+			species: { connect: { id: species1.id } },
+			manufacturer: { connect: { id: man1.id } },
+			batch: {
+				create: {
+					code: `${genRandomStr()}`,
+					manufacturerId: man1.id,
+				},
+			},
+			product: {
+				create: {
+					name: 'Panleucopenia',
+					category: 'VACCINE',
+					iva: 0.1,
+					code: `PROD-${genRandomStr()}`,
+					cost: 20000,
+					price: { create: { amount: 50000 } },
+				},
+			},
+		},
+		{
+			name: 'Leptospirosis',
+			species: { connect: { id: species2.id } },
+			manufacturer: { connect: { id: man2.id } },
+			batch: {
+				create: {
+					code: `${genRandomStr()}`,
+					manufacturerId: man2.id,
+				},
+			},
+			product: {
+				create: {
+					name: 'Leptospirosis',
+					category: 'VACCINE',
+					iva: 0.1,
+					code: `PROD-${genRandomStr()}`,
+					cost: 12000,
+					price: { create: { amount: 36000 } },
+				},
+			},
+		},
+		{
+			name: 'Parvovirus',
+			species: { connect: { id: species1.id } },
+			manufacturer: { connect: { id: man3.id } },
+			batch: {
+				create: {
+					code: `${genRandomStr()}`,
+					manufacturerId: man3.id,
+				},
+			},
+			product: {
+				create: {
+					name: 'Parvovirus',
+					category: 'VACCINE',
+					iva: 0.1,
+					code: `PROD-${genRandomStr()}`,
+					cost: 11000,
+					price: { create: { amount: 60000 } },
+				},
+			},
+		},
+	];
+	for (const v of vaccinesData) {
+		await db.vaccine.create({ data: v });
+	}
+};
 export const genRandomStr = () =>
 	`${Math.floor(Math.random() * 1000)}${Date.now()}`;
