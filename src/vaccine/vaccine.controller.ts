@@ -8,17 +8,27 @@ import {
 	Delete,
 	UseGuards,
 	Query,
+	UseInterceptors,
+	UploadedFile,
 } from '@nestjs/common';
 import { VaccineService } from './vaccine.service';
 import { CreateVaccineDto } from './dto/create-vaccine.dto';
 import { UpdateVaccineDto } from './dto/update-vaccine.dto';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiBody,
+	ApiConsumes,
+	ApiResponse,
+	ApiTags,
+} from '@nestjs/swagger';
 import { RolesGuard } from '@/lib/guard/role.guard';
 import { Role } from '@/lib/constants/role.enum';
 import { Roles } from '@/lib/decorators/roles.decorators';
 import { VaccineDto } from './dto/vaccine.dto';
 import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
 import { VaccineQueryDto } from './dto/vaccine-query.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileValidator } from '@/lib/pipes/file-validator.pipe';
 
 @ApiBearerAuth('access-token')
 @ApiTags('vaccine')
@@ -29,16 +39,48 @@ export class VaccineController {
 	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Post()
+	@ApiConsumes('multipart/form-data')
+	@UseInterceptors(FileInterceptor('productImg'))
 	@ApiResponse({ type: VaccineDto })
-	@ApiBody({ type: CreateVaccineDto })
-	async create(@Body() createVaccineDto: CreateVaccineDto) {
+	@ApiBody({
+		schema: {
+			type: 'object',
+			properties: {
+				speciesId: { type: 'number' },
+				name: { type: 'string' },
+				manufacturerId: { type: 'number' },
+				cost: { type: 'number' },
+				iva: { type: 'number' },
+				price: { type: 'number' },
+				productImg: { type: 'string', format: 'binary' },
+			},
+		},
+	})
+	async create(
+		@Body() body: any,
+		@UploadedFile(FileValidator) img?: Express.Multer.File,
+	) {
+		const createVaccineDto: CreateVaccineDto = {
+			speciesId: Number(body.speciesId),
+			name: body.name,
+			manufacturerId: Number(body.manufacturerId),
+			productData: {
+				name: body.name,
+				cost: Number(body.cost),
+				category: body.category,
+				iva: Number(body.iva),
+				price: Number(body.price),
+				productImg: img,
+			},
+		};
+
 		return this.vaccineService.create(createVaccineDto);
 	}
 
 	@UseGuards(RolesGuard)
 	@Roles(Role.Admin, Role.User)
 	@Get()
-	@ApiPaginatedResponse(VaccineDto)
+	@ApiPaginatedResponse(VaccineQueryDto)
 	findAll(@Query() query: VaccineQueryDto) {
 		return this.vaccineService.findAll(query);
 	}
@@ -54,8 +96,44 @@ export class VaccineController {
 	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Patch(':id')
+	@ApiConsumes('multipart/form-data')
+	@UseInterceptors(FileInterceptor('productImg'))
 	@ApiResponse({ type: VaccineDto })
-	update(@Param('id') id: string, @Body() updateVaccineDto: UpdateVaccineDto) {
+	@ApiBody({
+		schema: {
+			type: 'object',
+			properties: {
+				speciesId: { type: 'number' },
+				name: { type: 'string' },
+				manufacturerId: { type: 'number' },
+				cost: { type: 'number' },
+				iva: { type: 'number' },
+				price: { type: 'number' },
+				productImg: { type: 'string', format: 'binary' },
+			},
+		},
+	})
+	async update(
+		@Param('id') id: string,
+		@Body() body: any,
+		@UploadedFile(FileValidator) img?: Express.Multer.File,
+	) {
+		const updateVaccineDto: UpdateVaccineDto = {
+			speciesId: body.speciesId ? Number(body.speciesId) : undefined,
+			name: body.name,
+			manufacturerId: body.manufacturerId
+				? Number(body.manufacturerId)
+				: undefined,
+			productData: {
+				name: body.name,
+				cost: body.cost !== undefined ? Number(body.cost) : 0,
+				category: body.category,
+				iva: body.iva !== undefined ? Number(body.iva) : 0.1,
+				price: body.price !== undefined ? Number(body.price) : 0,
+				productImg: img,
+			},
+		};
+
 		return this.vaccineService.update(+id, updateVaccineDto);
 	}
 
