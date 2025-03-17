@@ -3,22 +3,22 @@ import { Expose } from 'class-transformer';
 import { IsDateString, IsOptional } from 'class-validator';
 
 export class VaccineRegistryDto {
-	@ApiPropertyOptional()
+	@ApiProperty()
 	id: number;
 
-	@ApiPropertyOptional()
+	@ApiProperty()
 	vaccineId: number;
 
-	@ApiPropertyOptional()
+	@ApiProperty()
 	petId: number;
 
-	@ApiPropertyOptional()
+	@ApiProperty()
 	dose: number;
 
-	@ApiPropertyOptional()
+	@ApiProperty()
 	applicationDate: Date;
 
-	@ApiPropertyOptional()
+	@ApiProperty()
 	expectedDate: Date;
 
 	@Expose()

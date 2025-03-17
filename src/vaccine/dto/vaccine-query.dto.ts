@@ -1,12 +1,13 @@
-import { IsOptional, IsInt, IsString } from 'class-validator';
+import { IsOptional, IsString, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationQueryDto } from '@/lib/commons/pagination-params.dto';
 
 export class VaccineQueryDto extends PaginationQueryDto {
 	@ApiPropertyOptional()
+	@IsOptional()
+	@IsNumber()
 	@Type(() => Number)
-	@IsInt()
 	speciesId?: number;
 
 	@ApiPropertyOptional()
@@ -16,13 +17,13 @@ export class VaccineQueryDto extends PaginationQueryDto {
 
 	@ApiPropertyOptional()
 	@IsOptional()
+	@IsNumber()
 	@Type(() => Number)
-	@IsInt()
 	productId?: number;
 
 	@ApiPropertyOptional()
 	@IsOptional()
+	@IsNumber()
 	@Type(() => Number)
-	@IsInt()
 	manufacturerId?: number;
 }

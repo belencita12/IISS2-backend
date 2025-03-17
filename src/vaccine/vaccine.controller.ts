@@ -49,11 +49,9 @@ export class VaccineController {
 				speciesId: { type: 'number' },
 				name: { type: 'string' },
 				manufacturerId: { type: 'number' },
-				'productData[name]': { type: 'string' },
-				'productData[cost]': { type: 'number' },
-				'productData[category]': { type: 'string' },
-				'productData[iva]': { type: 'number' },
-				'productData[price]': { type: 'number' },
+				cost: { type: 'number' },
+				iva: { type: 'number' },
+				price: { type: 'number' },
 				productImg: { type: 'string', format: 'binary' },
 			},
 		},
@@ -67,11 +65,11 @@ export class VaccineController {
 			name: body.name,
 			manufacturerId: Number(body.manufacturerId),
 			productData: {
-				name: body['productData[name]'],
-				cost: Number(body['productData[cost]']) || 0,
-				category: body['productData[category]'],
-				iva: Number(body['productData[iva]']) || 0.1,
-				price: Number(body['productData[price]']) || 0,
+				name: body.name,
+				cost: Number(body.cost),
+				category: body.category,
+				iva: Number(body.iva),
+				price: Number(body.price),
 				productImg: img,
 			},
 		};
@@ -98,8 +96,44 @@ export class VaccineController {
 	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Patch(':id')
+	@ApiConsumes('multipart/form-data')
+	@UseInterceptors(FileInterceptor('productImg'))
 	@ApiResponse({ type: VaccineDto })
-	update(@Param('id') id: string, @Body() updateVaccineDto: UpdateVaccineDto) {
+	@ApiBody({
+		schema: {
+			type: 'object',
+			properties: {
+				speciesId: { type: 'number' },
+				name: { type: 'string' },
+				manufacturerId: { type: 'number' },
+				cost: { type: 'number' },
+				iva: { type: 'number' },
+				price: { type: 'number' },
+				productImg: { type: 'string', format: 'binary' },
+			},
+		},
+	})
+	async update(
+		@Param('id') id: string,
+		@Body() body: any,
+		@UploadedFile(FileValidator) img?: Express.Multer.File,
+	) {
+		const updateVaccineDto: UpdateVaccineDto = {
+			speciesId: body.speciesId ? Number(body.speciesId) : undefined,
+			name: body.name,
+			manufacturerId: body.manufacturerId
+				? Number(body.manufacturerId)
+				: undefined,
+			productData: {
+				name: body.name,
+				cost: body.cost !== undefined ? Number(body.cost) : 0,
+				category: body.category,
+				iva: body.iva !== undefined ? Number(body.iva) : 0.1,
+				price: body.price !== undefined ? Number(body.price) : 0,
+				productImg: img,
+			},
+		};
+
 		return this.vaccineService.update(+id, updateVaccineDto);
 	}
 

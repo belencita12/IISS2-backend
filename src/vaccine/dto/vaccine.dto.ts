@@ -13,7 +13,7 @@ export class VaccineDto {
 	@ApiProperty({ example: 'Vacuna X' })
 	name: string;
 
-	@ApiPropertyOptional({ type: CreateProductDto })
+	@ApiProperty({ type: CreateProductDto })
 	@ValidateNested()
 	@Type(() => CreateProductDto)
 	productData?: CreateProductDto;

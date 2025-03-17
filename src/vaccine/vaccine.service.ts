@@ -13,7 +13,6 @@ export class VaccineService {
 		private readonly productService: ProductService,
 	) {}
 	async create(createVaccineDto: CreateVaccineDto, img?: Express.Multer.File) {
-		// Asignar img a productData.productImg si existe
 		if (img && createVaccineDto.productData) {
 			createVaccineDto.productData.productImg = img;
 		}
@@ -32,7 +31,7 @@ export class VaccineService {
 		}
 
 		const newProduct = await this.productService.create({
-			name: productData?.name ?? 'Vacuna Genérica',
+			name: createVaccineDto.name,
 			category: productData?.category ?? 'VACCINE',
 			cost: productData?.cost ?? 0,
 			iva: productData?.iva ?? 0.1,
@@ -96,20 +95,38 @@ export class VaccineService {
 
 	async update(id: number, updateVaccineDto: UpdateVaccineDto) {
 		try {
-			const vaccine = await this.prisma.vaccine.update({
+			const existingVaccine = await this.prisma.vaccine.findUnique({
 				where: { id },
-				data: updateVaccineDto,
+				include: { product: true },
 			});
-			return vaccine;
+
+			if (!existingVaccine) {
+				throw new NotFoundException(`Vacuna con ID ${id} no encontrada.`);
+			}
+
+			const { productData, ...vaccineUpdateData } = updateVaccineDto;
+
+			if (productData && existingVaccine.product) {
+				await this.productService.update(existingVaccine.product.id, {
+					...productData,
+				});
+			}
+
+			const updatedVaccine = await this.prisma.vaccine.update({
+				where: { id },
+				data: vaccineUpdateData,
+			});
+
+			return updatedVaccine;
 		} catch (error) {
 			if (
 				error instanceof Prisma.PrismaClientKnownRequestError &&
 				error.code === 'P2025'
 			) {
-				throw new NotFoundException(`Lote con id ${id} no encontrada`);
+				throw new NotFoundException(`Vacuna con ID ${id} no encontrada.`);
 			}
 			throw new Error(
-				`Error actualizando lote de vacuna con id ${id}: ${error.message}`,
+				`Error actualizando la vacuna con ID ${id}: ${error.message}`,
 			);
 		}
 	}
@@ -117,11 +134,20 @@ export class VaccineService {
 	async remove(id: number) {
 		const vaccine = await this.prisma.vaccine.findUnique({
 			where: { id },
+			include: { product: true },
 		});
 
 		if (!vaccine) {
 			throw new NotFoundException(`Vacuna con ID ${id} no encontrada.`);
 		}
+
+		if (vaccine.product) {
+			await this.prisma.product.update({
+				where: { id: vaccine.product.id },
+				data: { deletedAt: new Date() },
+			});
+		}
+
 		return this.prisma.vaccine.update({
 			where: { id },
 			data: { deletedAt: new Date() },

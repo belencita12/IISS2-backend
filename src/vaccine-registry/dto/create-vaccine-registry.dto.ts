@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsNumber } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateVaccineRegistryDto {
 	@ApiPropertyOptional()
@@ -15,8 +15,9 @@ export class CreateVaccineRegistryDto {
 	dose: number;
 
 	@ApiPropertyOptional()
+	@IsOptional()
 	@IsDateString()
-	applicationDate: Date;
+	applicationDate?: Date;
 
 	@ApiPropertyOptional()
 	@IsDateString()
