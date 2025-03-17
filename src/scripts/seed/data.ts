@@ -318,5 +318,38 @@ export const seedVaccines = async (db: PrismaTransactionClient) => {
 		await db.vaccine.create({ data: v });
 	}
 };
+
+export const seedVaccineRegistries = async (db: PrismaTransactionClient) => {
+	const [vacc1, vacc2, vacc3] = await db.vaccine.findMany();
+	const [pet1, pet2, pet3] = await db.pet.findMany();
+	const today = new Date();
+	const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+	const registriesData: Prisma.VaccineRegistryCreateInput[] = [
+		{
+			pet: { connect: { id: pet1.id } },
+			vaccine: { connect: { id: vacc1.id } },
+			dose: 1.5,
+			applicationDate: today,
+			expectedDate: today,
+		},
+		{
+			pet: { connect: { id: pet2.id } },
+			vaccine: { connect: { id: vacc2.id } },
+			dose: 1.75,
+			expectedDate: tomorrow,
+		},
+		{
+			pet: { connect: { id: pet3.id } },
+			vaccine: { connect: { id: vacc3.id } },
+			dose: 1.25,
+			applicationDate: today,
+			expectedDate: today,
+		},
+	];
+	for (const r of registriesData) {
+		await db.vaccineRegistry.create({ data: r });
+	}
+};
+
 export const genRandomStr = () =>
 	`${Math.floor(Math.random() * 1000)}${Date.now()}`;

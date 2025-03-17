@@ -7,11 +7,14 @@ import {
 	seedRoles,
 	seedSpecies,
 	seedUsers,
+	seedVaccineManufacturers,
+	seedVaccineRegistries,
+	seedVaccines,
 	seedWorkPositions,
 } from './data';
 
 export const seeder = async () => {
-	const TIME_OUT_TX = 60 * 1000;
+	const TIME_OUT_TX = 2 * 60 * 1000;
 	const prisma = new PrismaClient();
 
 	await prisma.$transaction(
@@ -39,6 +42,15 @@ export const seeder = async () => {
 
 			await seedProducts(tx);
 			console.log('Products were seeded successfully\n');
+
+			await seedVaccineManufacturers(tx);
+			console.log('Vaccine Manufacturers were seeded successfully\n');
+
+			await seedVaccines(tx);
+			console.log('Vaccines were seeded successfully\n');
+
+			await seedVaccineRegistries(tx);
+			console.log('Vaccine Registries were seeded successfully\n');
 		},
 		{ timeout: TIME_OUT_TX, maxWait: TIME_OUT_TX },
 	);
