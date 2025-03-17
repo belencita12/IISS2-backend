@@ -1,31 +1,39 @@
 import { PaginationQueryDto } from '@/lib/commons/pagination-params.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class VaccineRegistryQueryDto extends PaginationQueryDto {
 	@ApiPropertyOptional()
 	@IsOptional()
 	@IsString()
-	name: string;
+	name?: string;
 
 	@ApiPropertyOptional()
-	@Type(() => Number)
-	@IsInt()
-	vaccineId: number;
-
-	@ApiPropertyOptional()
-	@Type(() => Number)
-	@IsInt()
-	petId: number;
-
-	@ApiPropertyOptional()
+	@IsOptional()
 	@IsNumber()
-	dose: number;
+	@Type(() => Number)
+	vaccineId?: number;
 
 	@ApiPropertyOptional()
-	applicationDate: Date;
+	@IsOptional()
+	@IsNumber()
+	@Type(() => Number)
+	petId?: number;
 
 	@ApiPropertyOptional()
-	expectedDate: Date;
+	@IsOptional() // Añadido @IsOptional()
+	@IsNumber()
+	@Type(() => Number)
+	dose?: number;
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsDateString()
+	applicationDate?: Date;
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsDateString()
+	expectedDate?: Date;
 }

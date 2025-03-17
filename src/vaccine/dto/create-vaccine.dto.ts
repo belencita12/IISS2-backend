@@ -1,24 +1,39 @@
 import { CreateProductDto } from '@/product/dto/create-product.dto';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
+import { IsDefined, IsNumber, IsString, ValidateNested } from 'class-validator';
 
 export class CreateVaccineDto {
-	@ApiProperty({ example: 1 })
-	@IsInt()
+	@ApiProperty({ example: 1, required: true })
+	@Transform(({ value }) => Number(value))
+	@IsNumber()
+	@IsDefined()
 	speciesId: number;
 
-	@ApiProperty({ example: 'Vacuna X' })
+	@ApiProperty({ example: 'Vacuna X', required: true })
 	@IsString()
+	@IsDefined()
 	name: string;
 
-	@ApiProperty({ example: 5 })
-	@IsInt()
+	@ApiProperty({ example: 5, required: true })
+	@Transform(({ value }) => Number(value))
+	@IsNumber()
+	@IsDefined()
 	manufacturerId: number;
 
-	@ApiPropertyOptional({ type: CreateProductDto })
+	@ApiProperty({
+		type: CreateProductDto,
+		example: {
+			name: 'Wiskas Cachorros 500gr',
+			cost: 10000,
+			category: 'VACCINE',
+			iva: 0.1,
+			price: 40000,
+		},
+		required: true,
+	})
+	@IsDefined()
 	@ValidateNested()
 	@Type(() => CreateProductDto)
-	@IsOptional()
-	productData?: CreateProductDto;
+	productData: CreateProductDto;
 }

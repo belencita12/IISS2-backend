@@ -1,7 +1,6 @@
 import { ImageDto } from '@/lib/commons/image.dto';
 import { RaceDto } from '@/race/dto/race.dto';
 import { SpeciesDto } from '@/species/dto/species.dto';
-import { VaccineRegistryDto } from '@/vaccine-registry/dto/vaccine-registry.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Sex } from '@prisma/client';
 import { IsOptional } from 'class-validator';
@@ -35,10 +34,6 @@ export class PetDto {
 	@ApiProperty({ example: '2020-05-15T00:00:00.000Z' })
 	dateOfBirth: Date;
 
-	@ApiPropertyOptional({ type: () => [VaccineRegistryDto] })
-	@IsOptional()
-	vaccines?: VaccineRegistryDto[];
-
 	constructor(pet: any) {
 		this.id = pet.id;
 		this.name = pet.name;
@@ -61,15 +56,5 @@ export class PetDto {
 				}
 			: undefined;
 		this.dateOfBirth = pet.dateOfBirth;
-		this.vaccines =
-			pet.vaccines?.map((v: any) => ({
-				id: v.id,
-				vaccineId: v.vaccineId,
-				petId: v.petId,
-				name: v.vaccine.name,
-				dose: v.dose,
-				applicationDate: v.applicationDate,
-				expectedDate: v.expectedDate,
-			})) ?? [];
 	}
 }

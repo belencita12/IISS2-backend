@@ -1,9 +1,8 @@
-import { PaginationQueryDto } from '@/lib/commons/pagination-params.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsDateString, IsOptional } from 'class-validator';
 
-export class VaccineBatchDto extends PaginationQueryDto {
+export class VaccineBatchDto {
 	@ApiPropertyOptional()
 	id: number;
 
@@ -33,7 +32,6 @@ export class VaccineBatchDto extends PaginationQueryDto {
 	deletedAt: Date | null;
 
 	constructor(partial: Partial<VaccineBatchDto>) {
-		super();
 		Object.assign(this, partial);
 	}
 }
