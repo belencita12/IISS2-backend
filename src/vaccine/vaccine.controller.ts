@@ -42,14 +42,40 @@ export class VaccineController {
 	@ApiConsumes('multipart/form-data')
 	@UseInterceptors(FileInterceptor('productImg'))
 	@ApiResponse({ type: VaccineDto })
-	@ApiBody({ type: CreateVaccineDto })
+	@ApiBody({
+		schema: {
+			type: 'object',
+			properties: {
+				speciesId: { type: 'number' },
+				name: { type: 'string' },
+				manufacturerId: { type: 'number' },
+				'productData[name]': { type: 'string' },
+				'productData[cost]': { type: 'number' },
+				'productData[category]': { type: 'string' },
+				'productData[iva]': { type: 'number' },
+				'productData[price]': { type: 'number' },
+				productImg: { type: 'string', format: 'binary' },
+			},
+		},
+	})
 	async create(
-		@Body() createVaccineDto: CreateVaccineDto,
+		@Body() body: any,
 		@UploadedFile(FileValidator) img?: Express.Multer.File,
 	) {
-		if (img && createVaccineDto.productData) {
-			createVaccineDto.productData.productImg = img;
-		}
+		const createVaccineDto: CreateVaccineDto = {
+			speciesId: Number(body.speciesId),
+			name: body.name,
+			manufacturerId: Number(body.manufacturerId),
+			productData: {
+				name: body['productData[name]'],
+				cost: Number(body['productData[cost]']) || 0,
+				category: body['productData[category]'],
+				iva: Number(body['productData[iva]']) || 0.1,
+				price: Number(body['productData[price]']) || 0,
+				productImg: img,
+			},
+		};
+
 		return this.vaccineService.create(createVaccineDto);
 	}
 

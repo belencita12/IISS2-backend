@@ -12,7 +12,12 @@ export class VaccineService {
 		private readonly prisma: PrismaService,
 		private readonly productService: ProductService,
 	) {}
-	async create(createVaccineDto: CreateVaccineDto) {
+	async create(createVaccineDto: CreateVaccineDto, img?: Express.Multer.File) {
+		// Asignar img a productData.productImg si existe
+		if (img && createVaccineDto.productData) {
+			createVaccineDto.productData.productImg = img;
+		}
+
 		const { speciesId, manufacturerId, productData, ...dto } = createVaccineDto;
 
 		const [species, manufacturer] = await Promise.all([
@@ -23,10 +28,11 @@ export class VaccineService {
 		]);
 
 		if (!species || !manufacturer) {
-			throw new NotFoundException(`Especie o fabricante no encontrado.`);
+			throw new NotFoundException('Especie o fabricante no encontrado.');
 		}
+
 		const newProduct = await this.productService.create({
-			name: productData?.name ?? 'Nombre Vacuna',
+			name: productData?.name ?? 'Vacuna Genérica',
 			category: productData?.category ?? 'VACCINE',
 			cost: productData?.cost ?? 0,
 			iva: productData?.iva ?? 0.1,

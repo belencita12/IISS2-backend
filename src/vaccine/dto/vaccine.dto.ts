@@ -16,10 +16,9 @@ export class VaccineDto {
 	@ApiPropertyOptional({ type: CreateProductDto })
 	@ValidateNested()
 	@Type(() => CreateProductDto)
-	@IsOptional()
 	productData?: CreateProductDto;
 
-	@ApiProperty({ example: 5 })
+	@ApiProperty({ example: 1 })
 	manufacturerId: number;
 
 	@Expose()
