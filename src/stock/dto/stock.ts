@@ -1,7 +1,12 @@
+import { IsId } from '@/lib/decorators/is-id.decorator';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateStockDto {
+export class stockDto {
+	@IsId()
+	@ApiProperty({ example: 1 })
+	id: number;
+
 	@IsString()
 	@IsNotEmpty()
 	@ApiProperty({ example: 'Vacunas' })

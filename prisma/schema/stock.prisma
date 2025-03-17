@@ -1,0 +1,10 @@
+model Stock{
+    id      Int @id @default(autoincrement())
+    name    String @unique
+    address String
+    details StockDetails[]
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?    
+}
