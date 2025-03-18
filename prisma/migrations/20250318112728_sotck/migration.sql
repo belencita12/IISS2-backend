@@ -1,4 +1,16 @@
 -- CreateTable
+CREATE TABLE "Stock" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "address" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "Stock_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "StockDetails" (
     "id" SERIAL NOT NULL,
     "productId" INTEGER NOT NULL,
@@ -9,18 +21,6 @@ CREATE TABLE "StockDetails" (
     "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "StockDetails_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Stock" (
-    "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
-    "address" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "deletedAt" TIMESTAMP(3),
-
-    CONSTRAINT "Stock_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
