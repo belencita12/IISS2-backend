@@ -1,6 +1,7 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { hash } from '../../lib/utils/encrypt';
 import { DefaultArgs } from '@prisma/client/runtime/library';
+import { dogImgs, productsImgs, uploadImg } from './images';
 
 type PrismaTransactionClient = Omit<
 	PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
@@ -13,7 +14,7 @@ export const seedUsers = async (db: PrismaTransactionClient) => {
 		{
 			username: 'admin@example',
 			password,
-			fullName: 'Admin',
+			fullName: 'Florentino Valgaba',
 			email: 'admin@gmail.com',
 			roles: { connect: [{ name: 'ADMIN' }] },
 		},
@@ -21,7 +22,7 @@ export const seedUsers = async (db: PrismaTransactionClient) => {
 			username: 'user@example',
 			password,
 			roles: { connect: [{ name: 'USER' }] },
-			fullName: 'User',
+			fullName: 'Augusto Gimenez',
 			email: 'user@gmail.com',
 		},
 		{
@@ -32,17 +33,24 @@ export const seedUsers = async (db: PrismaTransactionClient) => {
 			email: 'adrian@gmail.com',
 		},
 		{
+			username: 'romeo@example',
+			password,
+			roles: { connect: [{ name: 'USER' }] },
+			fullName: 'Romeo Lopez',
+			email: 'romeo@gmail.com',
+		},
+		{
 			username: 'employee_1@example',
 			password,
 			roles: { connect: [{ name: 'EMPLOYEE' }] },
-			fullName: 'Employee 1',
+			fullName: 'Fernando Valgaba',
 			email: 'employee1@gmail.com',
 		},
 		{
 			username: 'employee_2@example',
 			password,
 			roles: { connect: [{ name: 'EMPLOYEE' }] },
-			fullName: 'Employee 2',
+			fullName: 'Richard Valgaba',
 			email: 'employee2@gmail.com',
 		},
 	];
@@ -88,11 +96,18 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 	const dateOfBirth = new Date('2020-05-15T00:00:00.000Z');
 	const specie = await db.species.findUnique({ where: { name: 'Perro' } });
 	if (!specie) throw new Error('Specie was not created correctly');
-	const race = await db.race.findMany({ where: { speciesId: specie.id } });
+	const race = await db.race.findMany({
+		where: { speciesId: specie.id },
+		orderBy: { name: 'asc' },
+	});
 	const users = await db.user.findMany({
 		where: { roles: { some: { name: 'USER' } } },
 	});
-	const [user1, user2] = users;
+	const goldenImg = await uploadImg(dogImgs[0], db);
+	const labradorImg = await uploadImg(dogImgs[1], db);
+	const mestizoImg = await uploadImg(dogImgs[2], db);
+
+	const [user1, user2, user3] = users;
 	const [race1, race2, race3] = race;
 	await db.pet.createMany({
 		data: [
@@ -122,6 +137,55 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 				weight: 6.5,
 				sex: 'M',
 				dateOfBirth,
+			},
+			{
+				name: 'Lea',
+				raceId: race1.id,
+				userId: user3.id,
+				speciesId: specie.id,
+				weight: 5.5,
+				sex: 'F',
+				dateOfBirth,
+			},
+			{
+				name: 'Mike',
+				raceId: race1.id,
+				userId: user3.id,
+				speciesId: specie.id,
+				weight: 5.5,
+				sex: 'M',
+				dateOfBirth,
+				imageId: labradorImg.id,
+			},
+			{
+				name: 'Chulo',
+				raceId: race1.id,
+				userId: user3.id,
+				speciesId: specie.id,
+				weight: 5.5,
+				sex: 'M',
+				dateOfBirth,
+				imageId: labradorImg.id,
+			},
+			{
+				name: 'Zoco',
+				raceId: race2.id,
+				userId: user3.id,
+				speciesId: specie.id,
+				weight: 7.5,
+				sex: 'M',
+				dateOfBirth,
+				imageId: goldenImg.id,
+			},
+			{
+				name: 'Frufru',
+				raceId: race3.id,
+				userId: user3.id,
+				speciesId: specie.id,
+				weight: 3.5,
+				sex: 'M',
+				dateOfBirth,
+				imageId: mestizoImg.id,
 			},
 		],
 	});
@@ -180,6 +244,11 @@ export const seedEmployees = async (db: PrismaTransactionClient) => {
 };
 
 export const seedProducts = async (db: PrismaTransactionClient) => {
+	const prod1Img = await uploadImg(productsImgs[0], db);
+	const prod2Img = await uploadImg(productsImgs[1], db);
+	const prod3Img = await uploadImg(productsImgs[2], db);
+	const prod4Img = await uploadImg(productsImgs[3], db);
+
 	const productsData: Prisma.ProductCreateInput[] = [
 		{
 			name: 'Desparasitante Perro',
@@ -187,6 +256,11 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			code: `PROD-${genRandomStr()}`,
 			cost: 20000,
 			iva: 0.1,
+			image: {
+				connect: {
+					id: prod1Img.id,
+				},
+			},
 			price: {
 				create: {
 					amount: 24000,
@@ -199,6 +273,11 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			code: `PROD-${genRandomStr()}`,
 			cost: 24000,
 			iva: 0.1,
+			image: {
+				connect: {
+					id: prod2Img.id,
+				},
+			},
 			price: {
 				create: {
 					amount: 28000,
@@ -211,6 +290,11 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			code: `PROD-${genRandomStr()}`,
 			cost: 18000,
 			iva: 0.1,
+			image: {
+				connect: {
+					id: prod3Img.id,
+				},
+			},
 			price: {
 				create: {
 					amount: 20000,
@@ -223,6 +307,11 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			code: `PROD-${genRandomStr()}`,
 			cost: 12000,
 			iva: 0.1,
+			image: {
+				connect: {
+					id: prod4Img.id,
+				},
+			},
 			price: {
 				create: {
 					amount: 15000,
