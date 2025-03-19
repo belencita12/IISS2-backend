@@ -6,6 +6,7 @@ import {
 	seedRaces,
 	seedRoles,
 	seedSpecies,
+	seedStock,
 	seedUsers,
 	seedVaccineManufacturers,
 	seedVaccineRegistries,
@@ -51,6 +52,9 @@ export const seeder = async () => {
 
 			await seedVaccineRegistries(tx);
 			console.log('Vaccine Registries were seeded successfully\n');
+
+			await seedStock(tx);
+			console.log('Stock were seeded successfully\n');
 		},
 		{ timeout: TIME_OUT_TX, maxWait: TIME_OUT_TX },
 	);

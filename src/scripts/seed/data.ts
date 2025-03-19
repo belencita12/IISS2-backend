@@ -440,5 +440,36 @@ export const seedVaccineRegistries = async (db: PrismaTransactionClient) => {
 	}
 };
 
+export const seedStock = async (db: PrismaTransactionClient) => {
+	const [prod1, prod2, prod3] = await db.product.findMany({
+		select: { id: true },
+	});
+	const stockData: Prisma.StockCreateInput[] = [
+		{
+			address: 'Av. Caballero 800',
+			name: 'Deposito Original',
+			details: { create: { productId: prod1.id, amount: 12 } },
+		},
+		{
+			address: 'Av. Irrazabal 976',
+			name: 'Deposito Reserva',
+			details: { create: { productId: prod2.id, amount: 10 } },
+		},
+		{
+			address: 'Av. Japon 111',
+			name: 'Deposito Extra',
+			details: {
+				create: {
+					productId: prod3.id,
+					amount: 15,
+				},
+			},
+		},
+	];
+	for (const s of stockData) {
+		await db.stock.create({ data: s });
+	}
+};
+
 export const genRandomStr = () =>
 	`${Math.floor(Math.random() * 1000)}${Date.now()}`;

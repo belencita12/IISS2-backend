@@ -38,6 +38,10 @@ export const seeder = async () => {
 		console.log('Races were deleted successfully\n');
 		await tx.species.deleteMany();
 		console.log('Species were deleted successfully\n');
+		await tx.stockDetails.deleteMany();
+		console.log('StockDetails were deleted successfully\n');
+		await tx.stock.deleteMany();
+		console.log('Stocks were deleted successfully\n');
 		const { error } = await client.storage.emptyBucket(BUCKET);
 		if (error) throw new Error(error.message);
 		console.log('Bucket were cleaned successfully\n');
