@@ -41,7 +41,6 @@ export class StockService {
 	async findOne(id: number) {
 		const stock = await this.prisma.stock.findUnique({
 			where: { id, deletedAt: null },
-			include: { details: true },
 		});
 		if (!stock) throw new NotFoundException(`Stock con ID ${id} no encontrado`);
 		return new StockDto(stock);
@@ -69,7 +68,7 @@ export class StockService {
 
 	async remove(id: number) {
 		const exists = await this.prisma.stock.isExists({ id });
-		if (!exists) throw new NotFoundException('stock no encontrado');
+		if (!exists) throw new NotFoundException('Deposito no encontrado');
 		await this.prisma.stock.softDelete({ id });
 	}
 }

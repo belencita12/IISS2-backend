@@ -8,6 +8,14 @@ export class StockDetailsDto {
 		description: 'ID del producto relacionado con el detalle de stock.',
 		example: 123,
 	})
+	stockId: number;
+
+	@IsNotEmpty()
+	@IsNumber()
+	@ApiProperty({
+		description: 'ID del producto relacionado con el detalle de stock.',
+		example: 123,
+	})
 	productId: number;
 
 	@IsNotEmpty()
