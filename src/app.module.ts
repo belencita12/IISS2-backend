@@ -22,6 +22,8 @@ import { VaccineModule } from './vaccine/vaccine.module';
 import { VaccineRegistryModule } from './vaccine-registry/vaccine-registry.module';
 import { VaccineBatchModule } from './vaccine-batch/vaccine-batch.module';
 import { EmployeeModule } from './employee/employee.module';
+import { StockModule } from './stock/stock.module';
+import { StockDetailsModule } from './stock-details/stock-details.module';
 
 @Module({
 	imports: [
@@ -50,6 +52,8 @@ import { EmployeeModule } from './employee/employee.module';
 		VaccineRegistryModule,
 		VaccineBatchModule,
 		EmployeeModule,
+		StockModule,
+		StockDetailsModule,
 	],
 })
 export class AppModule {}

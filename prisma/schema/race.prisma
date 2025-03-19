@@ -7,4 +7,6 @@ model Race {
   deletedAt DateTime?
   pets      Pet[]
   species   Species   @relation(fields: [speciesId], references: [id])
+
+  @@unique([name, speciesId])
 }

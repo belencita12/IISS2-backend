@@ -183,18 +183,19 @@ export class EmployeeService {
 		let querySearchWhere: Prisma.EmployeeWhereInput = {};
 		if (!query) return querySearchWhere;
 		const searchQuery = query.trim();
-		if (searchQuery.includes('@'))
+		if (searchQuery.includes('@')) {
 			querySearchWhere.user = {
 				email: { contains: searchQuery, mode: 'insensitive' },
 			};
-		if (/^\d+$/.test(searchQuery))
+		} else if (/^[\d-]+$/.test(searchQuery)) {
 			querySearchWhere = {
 				ruc: { contains: searchQuery, mode: 'insensitive' },
 			};
-		else
+		} else {
 			querySearchWhere.user = {
 				fullName: { contains: searchQuery, mode: 'insensitive' },
 			};
+		}
 		return querySearchWhere;
 	}
 }
