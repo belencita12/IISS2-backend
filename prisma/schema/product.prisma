@@ -10,10 +10,11 @@ model Product {
     priceId  Int          @unique
     price    ProductPrice @relation(fields: [priceId], references: [id])
     vaccine   Vaccine?
+    StockDetails StockDetails[]
 
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
-    deletedAt DateTime?
+    deletedAt DateTime?    
 }
 
 model ProductPrice {
