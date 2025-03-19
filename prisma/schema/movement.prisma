@@ -1,0 +1,21 @@
+model Movement {
+    id          Int          @id @default(autoincrement())
+    description String?      
+    managerId   Int?
+    type        MovementType
+    originStockId      Int?
+    originStock      Stock?           @relation("StockOrigin", fields: [originStockId], references: [id])
+    destinationStockId Int?
+    destinationStock Stock?           @relation("StockDestination", fields: [destinationStockId], references: [id])
+    details          MovementDetail[]
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+}
+
+enum MovementType {
+    INBOUND
+    OUTBOUND
+    TRANSFER
+}

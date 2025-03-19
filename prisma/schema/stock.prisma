@@ -1,23 +1,26 @@
-model Stock{
-    id      Int @id @default(autoincrement())
-    name    String @unique
-    address String
-    details StockDetails[]
+model Stock {
+  id      Int            @id @default(autoincrement())
+  name    String         @unique
+  address String
+  details StockDetails[]
 
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    deletedAt DateTime?    
+  movementsFrom   Movement[] @relation("StockOrigin")
+  movementsTo     Movement[] @relation("StockDestination")
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
 }
 
 model StockDetails {
-  id         Int      @id @default(autoincrement())
-  productId  Int
-  product    Product @relation(fields: [productId], references: [id])
-  stockId    Int
-  stock      Stock @relation(fields: [stockId], references: [id])
-  amount     Int
+  id        Int     @id @default(autoincrement())
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  stockId   Int
+  stock     Stock   @relation(fields: [stockId], references: [id])
+  amount    Int
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  deletedAt DateTime?    
+  deletedAt DateTime?
 }
