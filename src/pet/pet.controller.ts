@@ -31,6 +31,7 @@ import { AuthGuard } from '@/auth/guard/auth.guard';
 import { TokenPayload } from '@/auth/types/auth.types';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileValidator } from '@/lib/pipes/file-validator.pipe';
+import { UpdatePetDto } from './dto/update-pet.dto';
 
 @UseGuards(AuthGuard)
 @ApiTags('Pet')
@@ -71,11 +72,11 @@ export class PetController {
 	@ApiConsumes('multipart/form-data')
 	@UseInterceptors(FileInterceptor('profileImg'))
 	@Roles(Role.Admin, Role.User)
-	@ApiBody({ type: CreatePetDto })
+	@ApiBody({ type: UpdatePetDto })
 	@ApiResponse({ type: PetDto })
 	async update(
 		@Param('id') id: string,
-		@Body() updatePetDto: CreatePetDto,
+		@Body() updatePetDto: UpdatePetDto,
 		@UploadedFile(FileValidator) img?: Express.Multer.File,
 	) {
 		return this.petService.update(+id, { ...updatePetDto, profileImg: img });
