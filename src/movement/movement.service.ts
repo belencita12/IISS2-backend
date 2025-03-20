@@ -15,6 +15,14 @@ export class MovementService {
 
 	async create(dto: CreateMovementDto) {
 		return this.prisma.$transaction(async (prisma) => {
+			const manager = await prisma.user.findUnique({
+				where: { id: dto.managerId },
+			});
+			if (!manager) {
+				throw new BadRequestException(
+					`El usuario con ID ${dto.managerId} no existe.`,
+				);
+			}
 			this.validateRequiredFields(dto);
 			await this.validateStockExistence(
 				dto.originStockId,
