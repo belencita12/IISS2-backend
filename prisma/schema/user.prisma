@@ -15,4 +15,5 @@ model User {
   deletedAt DateTime?
   roles     Role[]    @relation("UserRoles")
   pets      Pet[]
+  movements Movement[]
 }

@@ -20,12 +20,24 @@ export class StockService {
 		const { baseWhere } = this.prisma.getBaseWhere(query);
 		const where: Prisma.StockWhereInput = {
 			...baseWhere,
-			name: { contains: query.name, mode: 'insensitive' },
+			...(query.name !== undefined && {
+				name: {
+					contains: query.name,
+					mode: 'insensitive',
+				},
+			}),
+			...(query.address !== undefined && {
+				address: {
+					contains: query.address,
+					mode: 'insensitive',
+				},
+			}),
 		};
 
 		const [data, total] = await Promise.all([
 			this.prisma.stock.findMany({
 				...this.prisma.paginate(query),
+				where,
 			}),
 			this.prisma.stock.count({ where }),
 		]);
