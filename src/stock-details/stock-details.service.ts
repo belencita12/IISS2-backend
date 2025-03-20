@@ -10,14 +10,23 @@ export class StockDetailsService {
 	constructor(private prisma: PrismaService) {}
 
 	async create(dto: CreateStockDetailsDto) {
-		const stockDetail = await this.prisma.stock.findUnique({
-			where: { id: dto.stockId, deletedAt: null },
+		const stock = await this.prisma.stock.findUnique({
+			where: { id: dto.stockId },
 		});
-		if (!stockDetail) {
+		if (!stock) {
 			throw new NotFoundException(
-				`Detalle deposito con ID ${dto.stockId} no existe o fue eliminada`,
+				`Stock con ID ${dto.stockId} no existe o fue eliminado`,
 			);
 		}
+		const product = await this.prisma.product.findUnique({
+			where: { id: dto.productId, deletedAt: null },
+		});
+		if (!product) {
+			throw new NotFoundException(
+				`Producto con ID ${dto.productId} no existe o fue eliminado`,
+			);
+		}
+
 		return this.prisma.stockDetails.create({
 			data: dto,
 		});
@@ -47,7 +56,7 @@ export class StockDetailsService {
 
 	async findOne(id: number) {
 		const stockDetails = await this.prisma.stockDetails.findUnique({
-			where: { id, deletedAt: null },
+			where: { id },
 		});
 		if (!stockDetails) {
 			throw new NotFoundException(
@@ -59,8 +68,30 @@ export class StockDetailsService {
 
 	async update(id: number, dto: UpdateStockDetailsDto) {
 		try {
+			if (dto.stockId) {
+				const stock = await this.prisma.stock.findUnique({
+					where: { id: dto.stockId },
+				});
+				if (!stock) {
+					throw new NotFoundException(
+						`Stock con ID ${dto.stockId} no existe o fue eliminado`,
+					);
+				}
+			}
+
+			if (dto.productId) {
+				const product = await this.prisma.product.findUnique({
+					where: { id: dto.productId },
+				});
+				if (!product) {
+					throw new NotFoundException(
+						`Producto con ID ${dto.productId} no existe o fue eliminado`,
+					);
+				}
+			}
+
 			const stockDetails = await this.prisma.stockDetails.update({
-				where: { id, deletedAt: null },
+				where: { id },
 				data: dto,
 			});
 			return stockDetails;
@@ -70,8 +101,11 @@ export class StockDetailsService {
 				error.code === 'P2025'
 			) {
 				throw new NotFoundException(
-					`Detalle deposito con id ${id} no encontrada`,
+					`Detalle deposito con id ${id} no encontrado`,
 				);
+			}
+			if (error instanceof NotFoundException) {
+				throw error;
 			}
 			throw new Error(
 				`Error actualizando detalle deposito con id ${id}: ${error.message}`,
@@ -82,6 +116,6 @@ export class StockDetailsService {
 	async remove(id: number) {
 		const exists = await this.prisma.stockDetails.isExists({ id });
 		if (!exists) throw new NotFoundException('Detalle deposito no encontrado');
-		await this.prisma.stock.softDelete({ id });
+		await this.prisma.stockDetails.softDelete({ id });
 	}
 }

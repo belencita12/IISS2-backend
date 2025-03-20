@@ -9,7 +9,7 @@ CREATE TABLE "MovementDetail" (
     "quantity" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "deletedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "MovementDetail_pkey" PRIMARY KEY ("id")
 );
@@ -18,8 +18,9 @@ CREATE TABLE "MovementDetail" (
 CREATE TABLE "Movement" (
     "id" SERIAL NOT NULL,
     "description" TEXT,
-    "managerId" INTEGER,
+    "managerId" INTEGER NOT NULL,
     "type" "MovementType" NOT NULL,
+    "dateMovement" TIMESTAMP(3) NOT NULL,
     "originStockId" INTEGER,
     "destinationStockId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

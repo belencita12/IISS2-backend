@@ -3,39 +3,63 @@ import {
 	Get,
 	Post,
 	Body,
-	Patch,
 	Param,
 	Delete,
+	UseGuards,
+	Query,
+	ParseIntPipe,
 } from '@nestjs/common';
 import { MovementService } from './movement.service';
-import { CreateMovementDto } from './dto/create-movement.dto';
-import { UpdateMovementDto } from './dto/update-movement.dto';
+import {
+	ApiBearerAuth,
+	ApiBody,
+	ApiOperation,
+	ApiResponse,
+	ApiTags,
+} from '@nestjs/swagger';
+import { RolesGuard } from '@/lib/guard/role.guard';
+import { Roles } from '@/lib/decorators/roles.decorators';
+import { Role } from '@/lib/constants/role.enum';
+
+import { ApiPaginatedResponse } from '@/lib/decorators/api-pagination-response.decorator';
+import { CreateMovementDto } from './dto/movement/create-movement.dto';
+import { MovementDto } from './dto/movement/movement.dto';
+import { MovementQueryDto } from './dto/movement/movement-query.dto';
 
 @Controller('movement')
+@ApiTags('movement')
+@ApiBearerAuth('access-token')
+@UseGuards(RolesGuard)
+@Roles(Role.Admin)
 export class MovementController {
 	constructor(private readonly movementService: MovementService) {}
 
 	@Post()
+	@ApiBody({ type: CreateMovementDto })
+	@ApiResponse({ type: MovementDto })
 	create(@Body() createMovementDto: CreateMovementDto) {
 		return this.movementService.create(createMovementDto);
 	}
 
 	@Get()
-	findAll() {
-		return this.movementService.findAll();
+	@ApiPaginatedResponse(MovementDto)
+	findAll(@Query() query: MovementQueryDto) {
+		return this.movementService.findAll(query);
 	}
 
 	@Get(':id')
+	@ApiResponse({ type: MovementDto })
 	findOne(@Param('id') id: string) {
 		return this.movementService.findOne(+id);
 	}
 
-	@Patch(':id')
-	update(
-		@Param('id') id: string,
-		@Body() updateMovementDto: UpdateMovementDto,
-	) {
-		return this.movementService.update(+id, updateMovementDto);
+	@Post(':id/revert')
+	@ApiOperation({
+		summary: 'Revertir un movimiento creando un movimiento inverso',
+	})
+	@ApiResponse({ status: 201, description: 'Movimiento revertido creado' })
+	async revertMovement(@Param('id', ParseIntPipe) id: number) {
+		return this.movementService.revertMovement(id);
 	}
 
 	@Delete(':id')

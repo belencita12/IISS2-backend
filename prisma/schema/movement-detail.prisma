@@ -1,12 +1,12 @@
 model MovementDetail {
-  id         Int @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   productId  Int
-  product    Product @relation(fields: [productId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
   movementId Int
   movement   Movement @relation(fields: [movementId], references: [id])
   quantity   Int
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  deletedAt DateTime
+  deletedAt DateTime?
 }

@@ -25,7 +25,6 @@ import { EmployeeModule } from './employee/employee.module';
 import { StockModule } from './stock/stock.module';
 import { StockDetailsModule } from './stock-details/stock-details.module';
 import { MovementModule } from './movement/movement.module';
-import { MovementDetailsModule } from './movement-details/movement-details.module';
 
 @Module({
 	imports: [
@@ -57,7 +56,6 @@ import { MovementDetailsModule } from './movement-details/movement-details.modul
 		StockModule,
 		StockDetailsModule,
 		MovementModule,
-		MovementDetailsModule,
 	],
 })
 export class AppModule {}
