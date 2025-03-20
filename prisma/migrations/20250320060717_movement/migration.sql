@@ -37,6 +37,9 @@ ALTER TABLE "MovementDetail" ADD CONSTRAINT "MovementDetail_productId_fkey" FORE
 ALTER TABLE "MovementDetail" ADD CONSTRAINT "MovementDetail_movementId_fkey" FOREIGN KEY ("movementId") REFERENCES "Movement"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Movement" ADD CONSTRAINT "Movement_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Movement" ADD CONSTRAINT "Movement_originStockId_fkey" FOREIGN KEY ("originStockId") REFERENCES "Stock"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
