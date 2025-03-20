@@ -7,6 +7,7 @@ import { TokenPayload } from '@/auth/types/auth.types';
 import { Role } from '@/lib/constants/role.enum';
 import { ImageService } from '@/image/image.service';
 import { PetDto } from './dto/pet.dto';
+import { UpdatePetDto } from './dto/update-pet.dto';
 
 @Injectable()
 export class PetService {
@@ -91,7 +92,7 @@ export class PetService {
 		return new PetDto(pet);
 	}
 
-	async update(id: number, dto: CreatePetDto) {
+	async update(id: number, dto: UpdatePetDto) {
 		const petToUpd = await this.prisma.pet.findFirst({
 			where: { id },
 			select: { profileImg: true },
@@ -115,9 +116,9 @@ export class PetService {
 			},
 			data: {
 				...rest,
-				user: { connect: { id: userId } },
-				species: { connect: { id: speciesId } },
-				race: { connect: { id: raceId } },
+				user: userId ? { connect: { id: userId } } : undefined,
+				species: speciesId ? { connect: { id: speciesId } } : undefined,
+				race: raceId ? { connect: { id: raceId } } : undefined,
 				profileImg: newImg ? { connect: { id: newImg.id } } : undefined,
 			},
 		});
