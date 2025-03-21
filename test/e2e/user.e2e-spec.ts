@@ -1,9 +1,9 @@
 import * as request from 'supertest';
 import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { UserController } from '@/user/user.controller';
-import { UserService } from '@/user/user.service';
-import { UserDto } from '@/user/dto/user.dto';
+import { UserController } from '@/features/user/user.controller';
+import { UserService } from '@/features/user/user.service';
+import { UserDto } from '@/features/user/dto/user.dto';
 import { userMock, paginatedResultMock, expUser } from '@test-lib/mock/user';
 import { RolesGuard } from '@/lib/guard/role.guard';
 import { AutoPassGuardMock, expCommonPagMock } from '@test-lib/mock/commons';

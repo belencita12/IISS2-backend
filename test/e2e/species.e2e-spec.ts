@@ -5,11 +5,11 @@ import {
 	NotFoundException,
 	ValidationPipe,
 } from '@nestjs/common';
-import { SpeciesService } from '@/species/species.service';
-import { SpeciesController } from '@/species/species.controller';
-import { CreateSpeciesDto } from '@/species/dto/create-species.dto';
-import { SpeciesDto } from '@/species/dto/species.dto';
-import { UpdateSpeciesDto } from '@/species/dto/update-species.dto';
+import { SpeciesService } from '@/features/species/species.service';
+import { SpeciesController } from '@/features/species/species.controller';
+import { CreateSpeciesDto } from '@/features/species/dto/create-species.dto';
+import { SpeciesDto } from '@/features/species/dto/species.dto';
+import { UpdateSpeciesDto } from '@/features/species/dto/update-species.dto';
 import {
 	paginatedSpeciesMock,
 	speciesMock,

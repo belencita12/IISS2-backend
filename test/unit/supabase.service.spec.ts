@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SupabaseService } from '../../src/supabase/supabase.service';
+import { SupabaseService } from '../../src/features/media-module/supabase/supabase.service';
 import { EnvService } from '@/env/env.service';
 
 const envMock = {

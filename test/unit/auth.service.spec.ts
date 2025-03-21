@@ -1,6 +1,6 @@
-import { AuthService } from '@/auth/auth.service';
+import { AuthService } from '@/features/auth/auth.service';
 import { EnvService } from '@/env/env.service';
-import { UserService } from '@/user/user.service';
+import { UserService } from '@/features/user/user.service';
 import { JwtModule } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import {

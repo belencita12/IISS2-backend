@@ -1,4 +1,4 @@
-import { PetDto } from '@/pet/dto/pet.dto';
+import { PetDto } from '@/features/pet/dto/pet.dto';
 import { genPagMock } from './commons';
 
 export const petMock: PetDto = {

@@ -1,7 +1,7 @@
 //unit/user.service.spec.ts
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '@/prisma.service';
-import { UserService } from '@/user/user.service';
+import { UserService } from '@/features/user/user.service';
 import { hash } from '@/lib/utils/encrypt'; // Función para encriptar contraseñas
 import {
 	paginateMock,
