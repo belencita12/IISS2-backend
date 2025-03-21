@@ -1,8 +1,8 @@
 import * as request from 'supertest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from '@/auth/auth.controller';
-import { AuthService } from '@/auth/auth.service';
-import { UserService } from '@/user/user.service';
+import { AuthController } from '@/features/auth/auth.controller';
+import { AuthService } from '@/features/auth/auth.service';
+import { UserService } from '@/features/user/user.service';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { INestApplication } from '@nestjs/common';
 import { EnvService } from '@/env/env.service';

@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { Role } from '../constants/role.enum';
 import { Request } from 'express';
-import { PrismaService } from '@/prisma/prisma.service';
-import { TokenPayload } from '@/auth/types/auth.types';
+import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
+import { PrismaService } from '@features/prisma/prisma.service';
 
 @Injectable()
 export class DelImgGuard implements CanActivate {

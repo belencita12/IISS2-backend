@@ -11,11 +11,12 @@
 		"outDir": "./dist",
 		"baseUrl": "./",
 		"paths": {
-			"@/*": ["src/*"],
+			"@features/*": ["src/features/*"],
 			"@lib/*": ["src/lib/*"],
 			"@config/*": ["src/config/*"],
 			"@decorators/*": ["src/lib/decorators/*"],
 			"@commons/*": ["src/lib/commons/*"],
+			"@media-module/*": ["src/lib/media-module/*"],
 			"@test-lib/*": ["test/lib/*"]
 		},
 		"incremental": true,

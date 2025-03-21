@@ -1,4 +1,4 @@
-import { SpeciesDto } from '@/species/dto/species.dto';
+import { SpeciesDto } from '@/features/species/dto/species.dto';
 
 export const speciesMock: SpeciesDto = {
 	id: 1,

@@ -5,18 +5,18 @@ import {
 	NotFoundException,
 	ValidationPipe,
 } from '@nestjs/common';
-import { PetService } from '@/pet/pet.service';
-import { PetController } from '@/pet/pet.controller';
-import { CreatePetDto } from '@/pet/dto/create-pet.dto';
-import { PetDto } from '@/pet/dto/pet.dto';
-import { UpdatePetDto } from '@/pet/dto/update-pet.dto';
+import { PetService } from '@/features/pet/pet.service';
+import { PetController } from '@/features/pet/pet.controller';
+import { CreatePetDto } from '@/features/pet/dto/create-pet.dto';
+import { PetDto } from '@/features/pet/dto/pet.dto';
+import { UpdatePetDto } from '@/features/pet/dto/update-pet.dto';
 import {
 	pagPetMock,
 	petDtoMock,
 	petMock,
 	expPetDtoMock,
 } from '@test-lib/mock/pet';
-import { AuthGuard } from '@/auth/guard/auth.guard';
+import { AuthGuard } from '@/features/auth/guard/auth.guard';
 import { AutoPassGuardMock, expCommonPagMock } from '@test-lib/mock/commons';
 
 const petService = {
