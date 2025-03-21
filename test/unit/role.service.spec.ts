@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '@/prisma.service';
-import { RoleService } from '@/role/role.service';
+import { RoleService } from '@/features/role/role.service';
 import {
 	paginateMock,
 	pagRolesResultMock,

@@ -5,11 +5,11 @@ import {
 	NotFoundException,
 	ValidationPipe,
 } from '@nestjs/common';
-import { RaceService } from '@/race/race.service';
-import { RaceController } from '@/race/race.controller';
-import { CreateRaceDto } from '@/race/dto/create-race.dto';
-import { RaceDto } from '@/race/dto/race.dto';
-import { UpdateRaceDto } from '@/race/dto/update-race.dto';
+import { RaceService } from '@/features/race/race.service';
+import { RaceController } from '@/features/race/race.controller';
+import { CreateRaceDto } from '@/features/race/dto/create-race.dto';
+import { RaceDto } from '@/features/race/dto/race.dto';
+import { UpdateRaceDto } from '@/features/race/dto/update-race.dto';
 import { paginatedRaceMock, raceMock, expRace } from '@test-lib/mock/race';
 import { RolesGuard } from '@/lib/guard/role.guard';
 import { AutoPassGuardMock, expCommonPagMock } from '@test-lib/mock/commons';
