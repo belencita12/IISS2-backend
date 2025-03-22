@@ -1,9 +1,8 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
 import { Role } from '@lib/constants/role.enum';
-import { IsId } from '@lib/decorators/is-id.decorator';
+import { IsRuc } from '@lib/decorators/is-ruc';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsPhoneNumber, IsString } from 'class-validator';
 
 export class UserQueryDto extends PaginationQueryDto {
 	@IsOptional()
@@ -11,17 +10,18 @@ export class UserQueryDto extends PaginationQueryDto {
 	@ApiPropertyOptional()
 	query?: string;
 
-	@IsOptional()
-	@Type(() => Number)
-	@IsId()
+	@IsString()
 	@ApiPropertyOptional()
-	speciesId?: number;
+	adress?: string;
 
-	@IsOptional()
-	@Type(() => Number)
-	@IsId()
+	@IsPhoneNumber()
 	@ApiPropertyOptional()
-	raceId: number;
+	phoneNumber?: string;
+
+	@IsString()
+	@IsRuc()
+	@ApiPropertyOptional()
+	ruc?: string;
 
 	@IsOptional()
 	@IsEnum(Role)

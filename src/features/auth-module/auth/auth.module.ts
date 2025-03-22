@@ -9,6 +9,7 @@ import { EnvService } from '@features/global-module/env/env.service';
 import { UserModule } from '@features/auth-module/user/user.module';
 import { EmailModule } from '@features/global-module/email/email.module';
 import { JwtBlackListModule } from '@features/auth-module/jwt-black-list/jwt-black-list.module';
+import { ClientModule } from '@features/client/client.module';
 
 @Module({
 	imports: [
@@ -23,6 +24,7 @@ import { JwtBlackListModule } from '@features/auth-module/jwt-black-list/jwt-bla
 		}),
 		UserModule,
 		EmailModule,
+		ClientModule,
 		JwtBlackListModule,
 	],
 	controllers: [AuthController],

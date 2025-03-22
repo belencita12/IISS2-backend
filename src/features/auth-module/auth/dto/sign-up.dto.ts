@@ -1,16 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString } from 'class-validator';
+import { CreateClientDto } from '@features/client/dto/create-client.dto';
 
-export class SignUpDto {
-	@IsString()
-	@ApiProperty()
-	fullName: string;
-
-	@IsEmail()
-	@ApiProperty()
-	email: string;
-
-	@IsString()
-	@ApiProperty()
-	password: string;
-}
+export class SignUpDto extends CreateClientDto {}

@@ -8,54 +8,114 @@ type PrismaTransactionClient = Omit<
 	'$on' | '$connect' | '$disconnect' | '$use' | '$transaction' | '$extends'
 >;
 
-export const seedUsers = async (db: PrismaTransactionClient) => {
+export const seedEmployees = async (db: PrismaTransactionClient) => {
+	const [{ id: veterinarioId }, { id: auxiliarId }, { id: gerenteId }] =
+		await db.workPosition.findMany({ select: { id: true } });
 	const password = await hash('12345678');
-	const users: Prisma.UserCreateInput[] = [
+
+	const employeesData: Prisma.EmployeeCreateInput[] = [
 		{
-			username: 'admin@example',
-			password,
-			fullName: 'Florentino Valgaba',
-			email: 'admin@gmail.com',
-			roles: { connect: [{ name: 'ADMIN' }] },
+			position: {
+				connect: { id: veterinarioId },
+			},
+			user: {
+				create: {
+					ruc: '1234567-1',
+					username: 'employee_2@example',
+					password,
+					phoneNumber: '595985764321',
+					roles: { connect: [{ name: 'EMPLOYEE' }] },
+					fullName: 'Richard Valgaba',
+					email: 'employee2@gmail.com',
+				},
+			},
 		},
 		{
-			username: 'user@example',
-			password,
-			roles: { connect: [{ name: 'USER' }] },
-			fullName: 'Augusto Gimenez',
-			email: 'user@gmail.com',
+			position: {
+				connect: { id: auxiliarId },
+			},
+			user: {
+				create: {
+					ruc: '7654321-2',
+					username: 'employee_1@example',
+					password,
+					phoneNumber: '595985764321',
+					roles: { connect: [{ name: 'EMPLOYEE' }] },
+					fullName: 'Fernando Valgaba',
+					email: 'employee1@gmail.com',
+				},
+			},
 		},
 		{
-			username: 'adrian@example',
-			password,
-			roles: { connect: [{ name: 'USER' }] },
-			fullName: 'Adrian Valgaba',
-			email: 'adrian@gmail.com',
-		},
-		{
-			username: 'romeo@example',
-			password,
-			roles: { connect: [{ name: 'USER' }] },
-			fullName: 'Romeo Lopez',
-			email: 'romeo@gmail.com',
-		},
-		{
-			username: 'employee_1@example',
-			password,
-			roles: { connect: [{ name: 'EMPLOYEE' }] },
-			fullName: 'Fernando Valgaba',
-			email: 'employee1@gmail.com',
-		},
-		{
-			username: 'employee_2@example',
-			password,
-			roles: { connect: [{ name: 'EMPLOYEE' }] },
-			fullName: 'Richard Valgaba',
-			email: 'employee2@gmail.com',
+			position: {
+				connect: { id: gerenteId },
+			},
+			user: {
+				create: {
+					username: 'admin@example',
+					password,
+					ruc: '7777789-1',
+					phoneNumber: '595985764321',
+					fullName: 'Florentino Valgaba',
+					email: 'admin@gmail.com',
+					roles: { connect: [{ name: 'ADMIN' }, { name: 'EMPLOYEE' }] },
+				},
+			},
 		},
 	];
-	for (const user of users) {
-		await db.user.create({ data: user });
+	for (const employee of employeesData) {
+		await db.employee.create({ data: employee });
+	}
+};
+
+export const seedClients = async (db: PrismaTransactionClient) => {
+	const password = await hash('12345678');
+	const clients: Prisma.ClientCreateInput[] = [
+		{
+			user: {
+				create: {
+					username: 'richard@example',
+					password,
+					phoneNumber: '595985764333',
+					ruc: '5622567-1',
+					adress: 'E/ Posadas y Lomas Valentinas',
+					roles: { connect: [{ name: 'USER' }] },
+					fullName: 'Richard Valgaba',
+					email: 'richard@gmail.com',
+				},
+			},
+		},
+		{
+			user: {
+				create: {
+					username: 'adrian@example',
+					password,
+					phoneNumber: '595985764321',
+					ruc: '8373829-1',
+					adress: 'Av Irrazabal - Esq. 25 de Mayo',
+					roles: { connect: [{ name: 'USER' }] },
+					fullName: 'Adrian Valgaba',
+					email: 'adrian@gmail.com',
+				},
+			},
+		},
+		{
+			user: {
+				create: {
+					username: 'jose@example',
+					password,
+					phoneNumber: '595922764321',
+					ruc: '3748492-1',
+					adress: 'Calle Independencia Esq. Villarica',
+					roles: { connect: [{ name: 'USER' }] },
+					fullName: 'Jose Valgaba',
+					email: 'jose@gmail.com',
+				},
+			},
+		},
+	];
+	for (const c of clients) {
+		await db.client.create({ data: c });
 	}
 };
 
@@ -100,21 +160,19 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 		where: { speciesId: specie.id },
 		orderBy: { name: 'asc' },
 	});
-	const users = await db.user.findMany({
-		where: { roles: { some: { name: 'USER' } } },
-	});
+	const clients = await db.client.findMany();
 	const goldenImg = await uploadImg(dogImgs[0], db);
 	const labradorImg = await uploadImg(dogImgs[1], db);
 	const mestizoImg = await uploadImg(dogImgs[2], db);
 
-	const [user1, user2, user3] = users;
+	const [client1, client2, client3] = clients;
 	const [race1, race2, race3] = race;
 	await db.pet.createMany({
 		data: [
 			{
 				name: 'Luna',
 				raceId: race1.id,
-				userId: user1.id,
+				clientId: client1.id,
 				speciesId: specie.id,
 				weight: 5.5,
 				sex: 'F',
@@ -123,7 +181,7 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 			{
 				name: 'Max',
 				raceId: race2.id,
-				userId: user2.id,
+				clientId: client2.id,
 				speciesId: specie.id,
 				weight: 4.5,
 				sex: 'M',
@@ -132,7 +190,7 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 			{
 				name: 'Felix',
 				raceId: race3.id,
-				userId: user2.id,
+				clientId: client2.id,
 				speciesId: specie.id,
 				weight: 6.5,
 				sex: 'M',
@@ -141,7 +199,7 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 			{
 				name: 'Lea',
 				raceId: race1.id,
-				userId: user3.id,
+				clientId: client3.id,
 				speciesId: specie.id,
 				weight: 5.5,
 				sex: 'F',
@@ -150,7 +208,7 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 			{
 				name: 'Mike',
 				raceId: race1.id,
-				userId: user3.id,
+				clientId: client3.id,
 				speciesId: specie.id,
 				weight: 5.5,
 				sex: 'M',
@@ -160,7 +218,7 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 			{
 				name: 'Chulo',
 				raceId: race1.id,
-				userId: user3.id,
+				clientId: client3.id,
 				speciesId: specie.id,
 				weight: 5.5,
 				sex: 'M',
@@ -170,7 +228,7 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 			{
 				name: 'Zoco',
 				raceId: race2.id,
-				userId: user3.id,
+				clientId: client3.id,
 				speciesId: specie.id,
 				weight: 7.5,
 				sex: 'M',
@@ -180,7 +238,7 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 			{
 				name: 'Frufru',
 				raceId: race3.id,
-				userId: user3.id,
+				clientId: client3.id,
 				speciesId: specie.id,
 				weight: 3.5,
 				sex: 'M',
@@ -211,36 +269,12 @@ export const seedWorkPositions = async (db: PrismaTransactionClient) => {
 			shifts: { create: shiftsData },
 		},
 		{ name: 'Auxiliar', shifts: { create: shiftsData } },
+		{ name: 'Gerente' },
 	];
 
 	for (const workPosition of workPositions) {
 		await db.workPosition.create({ data: workPosition });
 	}
-};
-
-export const seedEmployees = async (db: PrismaTransactionClient) => {
-	const [{ id: employeeFirstId }, { id: employeeSecondId }] =
-		await db.user.findMany({
-			select: { id: true },
-			where: { roles: { some: { name: 'EMPLOYEE' } } },
-		});
-
-	const [{ id: veterinarioId }, { id: auxiliarId }] =
-		await db.workPosition.findMany({ select: { id: true } });
-
-	const employeesData: Prisma.EmployeeCreateManyInput[] = [
-		{
-			ruc: '1234567-1',
-			positionId: veterinarioId,
-			userId: employeeFirstId,
-		},
-		{
-			ruc: '7654321-2',
-			positionId: auxiliarId,
-			userId: employeeSecondId,
-		},
-	];
-	await db.employee.createMany({ data: employeesData });
 };
 
 export const seedProducts = async (db: PrismaTransactionClient) => {

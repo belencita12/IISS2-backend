@@ -11,6 +11,7 @@ import { JwtBlackListService } from '@features/auth-module/jwt-black-list/jwt-bl
 import { UserService } from '@features/auth-module/user/user.service';
 import { compare, genPassword } from '@lib/utils/encrypt';
 import { getPassResetTemplate } from '@features/global-module/email/templates/pass-reset';
+import { ClientService } from '@features/client/client.service';
 
 @Injectable()
 export class AuthService {
@@ -19,11 +20,12 @@ export class AuthService {
 		private emailService: EmailService,
 		private jwtBlackListService: JwtBlackListService,
 		private usersService: UserService,
+		private clientService: ClientService,
 		private jwt: JwtService,
 	) {}
 
 	async signUp(dto: SignUpDto) {
-		await this.usersService.create(dto);
+		await this.clientService.create(dto);
 	}
 
 	async signIn(dto: SignInDto): Promise<SignInResponseDto> {
@@ -32,14 +34,15 @@ export class AuthService {
 		const match = await compare(dto.password, user.password);
 		if (!match) throw new HttpException('Email or password is incorrect', 401);
 		const roles = user.roles.map((r) => r.name);
+		const payloadId = user.id;
 		const payload: TokenPayload = {
-			id: user.id,
+			id: payloadId,
 			username: user.username,
 			email: user.email,
 			roles: user.roles.map((role) => role.name),
 		};
 		return {
-			id: user.id,
+			id: payloadId,
 			fullName: user.fullName,
 			token: this.jwt.sign(payload),
 			username: user.username,
@@ -55,7 +58,7 @@ export class AuthService {
 
 	async registerClient(dto: RegisterClientDto) {
 		const password = await genPassword();
-		await this.usersService.create({ ...dto, password });
+		await this.clientService.create({ ...dto, password });
 		await this.getResetPassToken(dto.email);
 	}
 

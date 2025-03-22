@@ -1,6 +1,5 @@
 model Employee {
     id  Int    @id @default(autoincrement())
-    ruc String @unique @db.VarChar(10)
 
     userId Int  @unique
     user   User @relation(fields: [userId], references: [id], onDelete: NoAction)
