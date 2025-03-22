@@ -7,6 +7,7 @@ import { AuthService } from '@features/auth-module/auth/auth.service';
 import { ImageService } from '@features/media-module/image/image.service';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { genPassword, genUsername } from '@lib/utils/encrypt';
+import { onlyNumbers } from '@lib/utils/reg-exp';
 
 @Injectable()
 export class EmployeeService {
@@ -17,7 +18,7 @@ export class EmployeeService {
 	) {}
 
 	async create(dto: CreateEmployeeDto) {
-		const { profileImg, ruc, positionId, email, fullName, ...data } = dto;
+		const { profileImg, positionId, ...data } = dto;
 
 		const isPosExists = await this.db.workPosition.isExists({
 			id: positionId,
@@ -26,33 +27,22 @@ export class EmployeeService {
 			throw new NotFoundException('Posicion de trabajo no encontrada');
 
 		const password = await genPassword();
-		const username = genUsername(fullName);
+		const username = genUsername(dto.fullName);
 
 		const img = profileImg ? await this.imgService.create(profileImg) : null;
 
 		const employee = await this.db.employee.create({
 			include: {
 				position: true,
-				user: {
-					select: {
-						email: true,
-						fullName: true,
-						username: true,
-						roles: true,
-						image: true,
-					},
-				},
+				user: { include: { roles: true, image: true } },
 			},
 			data: {
-				...data,
-				ruc,
 				position: { connect: { id: positionId } },
 				user: {
 					create: {
+						...data,
 						username,
-						email,
 						password,
-						fullName,
 						imageId: img?.id ?? null,
 						roles: {
 							connectOrCreate: {
@@ -64,7 +54,7 @@ export class EmployeeService {
 				},
 			},
 		});
-		this.authService.getResetPassToken(employee.user.email);
+		this.authService.getResetPassToken(dto.email);
 		return new EmployeeDto(employee);
 	}
 
@@ -77,15 +67,7 @@ export class EmployeeService {
 			where: { id },
 			include: {
 				position: true,
-				user: {
-					select: {
-						email: true,
-						fullName: true,
-						username: true,
-						roles: true,
-						image: true,
-					},
-				},
+				user: { include: { roles: true, image: true } },
 			},
 		});
 		if (!employee) throw new NotFoundException('Empleado no encontrado');
@@ -102,12 +84,12 @@ export class EmployeeService {
 		const img = await this.imgService.upsert(prev.user.image, dto.profileImg);
 
 		const data: Prisma.EmployeeUpdateInput = {
-			ruc: dto.ruc,
 			position: {
 				connect: { id: dto.positionId },
 			},
 			user: {
 				update: {
+					ruc: dto.ruc,
 					email: dto.email,
 					fullName: dto.fullName,
 					image: img?.id ? { connect: { id: img.id } } : undefined,
@@ -124,15 +106,7 @@ export class EmployeeService {
 			data,
 			include: {
 				position: true,
-				user: {
-					select: {
-						email: true,
-						fullName: true,
-						username: true,
-						roles: true,
-						image: true,
-					},
-				},
+				user: { include: { roles: true, image: true } },
 			},
 		});
 
@@ -158,15 +132,7 @@ export class EmployeeService {
 				where,
 				include: {
 					position: true,
-					user: {
-						select: {
-							email: true,
-							fullName: true,
-							username: true,
-							roles: true,
-							image: true,
-						},
-					},
+					user: { include: { roles: true, image: true } },
 				},
 			}),
 			this.db.employee.count({ where }),
@@ -180,15 +146,15 @@ export class EmployeeService {
 	}
 
 	private getWhereByQuerySearch(query?: string) {
-		let querySearchWhere: Prisma.EmployeeWhereInput = {};
+		const querySearchWhere: Prisma.EmployeeWhereInput = {};
 		if (!query) return querySearchWhere;
 		const searchQuery = query.trim();
 		if (searchQuery.includes('@')) {
 			querySearchWhere.user = {
 				email: { contains: searchQuery, mode: 'insensitive' },
 			};
-		} else if (/^[\d-]+$/.test(searchQuery)) {
-			querySearchWhere = {
+		} else if (onlyNumbers.test(searchQuery)) {
+			querySearchWhere.user = {
 				ruc: { contains: searchQuery, mode: 'insensitive' },
 			};
 		} else {

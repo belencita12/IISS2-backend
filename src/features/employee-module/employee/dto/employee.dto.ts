@@ -1,27 +1,23 @@
 import { ShortWorkPositionDto } from '@features/employee-module/work-position/dto/work-position/short-work-position.dto';
 import { ImageDto } from '@lib/commons/image.dto';
 import { IsId } from '@lib/decorators/is-id.decorator';
-import { ApiProperty } from '@nestjs/swagger';
-import { Employee, WorkPosition } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Employee, User, WorkPosition, Image } from '@prisma/client';
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-interface EmployeeWithDetails extends Employee {
+interface EmployeeEntity extends Employee {
 	position: WorkPosition;
-	user: {
-		image: ImageDto | null;
-		fullName: string;
-		email: string;
-		username: string;
-	};
+	user: User & { image: Image | null };
 }
 
 export class EmployeeDto {
-	constructor(data: EmployeeWithDetails) {
+	constructor(data: EmployeeEntity) {
 		this.id = data.id;
 		this.fullName = data.user.fullName;
-		this.ruc = data.ruc;
-		this.position = new ShortWorkPositionDto(data.position);
 		this.email = data.user.email;
+		this.ruc = data.user.ruc;
+		this.adress = data.user.adress || undefined;
+		this.position = new ShortWorkPositionDto(data.position);
 		this.image = data.user.image
 			? {
 					id: data.user.image.id,
@@ -45,6 +41,11 @@ export class EmployeeDto {
 	@IsNotEmpty()
 	@ApiProperty({ example: 'Roberto Gimenez' })
 	fullName: string;
+
+	@IsOptional()
+	@IsString()
+	@ApiPropertyOptional({ example: 'Calle 123' })
+	adress?: string;
 
 	@IsString()
 	@IsNotEmpty()

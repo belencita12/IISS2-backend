@@ -16,21 +16,21 @@ export class PetService {
 		private readonly imgService: ImageService,
 	) {}
 	async create(createPetDto: CreatePetDto) {
-		const { speciesId, raceId, profileImg, userId, ...dto } = createPetDto;
+		const {
+			speciesId,
+			raceId,
+			profileImg,
+			clientId: userId,
+			...dto
+		} = createPetDto;
 		const imgData = profileImg
 			? await this.imgService.create(profileImg)
 			: undefined;
 		const pet = await this.prisma.pet.create({
-			include: {
-				species: { select: { name: true } },
-				race: { select: { name: true } },
-				profileImg: {
-					select: { id: true, previewUrl: true, originalUrl: true },
-				},
-			},
+			include: { species: true, race: true, profileImg: true },
 			data: {
 				...dto,
-				user: { connect: { id: userId } },
+				client: { connect: { id: userId } },
 				species: { connect: { id: speciesId } },
 				race: { connect: { id: raceId } },
 				profileImg: imgData ? { connect: { id: imgData.id } } : undefined,
@@ -45,7 +45,7 @@ export class PetService {
 			...baseWhere,
 			speciesId: dto.speciesId,
 			raceId: dto.raceId,
-			userId: dto.userId,
+			clientId: dto.clientId,
 			name: { contains: dto.name, mode: 'insensitive' },
 		};
 
@@ -74,63 +74,39 @@ export class PetService {
 	async findOne(id: number, user: TokenPayload) {
 		const { roles, id: userId } = user;
 		const pet = await this.prisma.pet.findUnique({
-			where: {
-				id,
-				deletedAt: null,
-				userId: roles.includes(Role.User) ? userId : undefined,
-			},
-			include: {
-				species: { select: { name: true } },
-				race: { select: { name: true } },
-				profileImg: {
-					select: { id: true, previewUrl: true, originalUrl: true },
-				},
-				vaccines: { include: { vaccine: true } },
-			},
+			where: { id, clientId: roles.includes(Role.User) ? userId : undefined },
+			include: { species: true, race: true, profileImg: true },
 		});
-		if (!pet) throw new NotFoundException(`Mascota con id ${id} no encontrada`);
+		if (!pet) throw new NotFoundException(`Mascota no encontrada`);
 		return new PetDto(pet);
 	}
 
 	async update(id: number, dto: UpdatePetDto) {
-		const petToUpd = await this.prisma.pet.findFirst({
+		const pet = await this.prisma.pet.findFirst({
 			where: { id },
 			select: { profileImg: true },
 		});
-		if (!petToUpd)
-			throw new NotFoundException(`Mascota con id ${id} no encontrada`);
+		if (!pet) throw new NotFoundException(`Mascota no encontrada`);
 
-		const { profileImg, raceId, userId, speciesId, ...rest } = dto;
-		const newImg = await this.imgService.upsert(
-			petToUpd.profileImg,
-			profileImg,
-		);
-		const pet = await this.prisma.pet.update({
+		const { profileImg, raceId, clientId: clientId, speciesId, ...rest } = dto;
+		const newImg = await this.imgService.upsert(pet.profileImg, profileImg);
+		const newPet = await this.prisma.pet.update({
 			where: { id, deletedAt: null },
-			include: {
-				species: { select: { name: true } },
-				race: { select: { name: true } },
-				profileImg: {
-					select: { id: true, previewUrl: true, originalUrl: true },
-				},
-			},
+			include: { profileImg: true, species: true, race: true },
 			data: {
 				...rest,
-				user: userId ? { connect: { id: userId } } : undefined,
+				client: clientId ? { connect: { id: clientId } } : undefined,
 				species: speciesId ? { connect: { id: speciesId } } : undefined,
 				race: raceId ? { connect: { id: raceId } } : undefined,
 				profileImg: newImg ? { connect: { id: newImg.id } } : undefined,
 			},
 		});
-		return new PetDto(pet);
+		return new PetDto(newPet);
 	}
 
 	async remove(id: number) {
-		const delPet = await this.prisma.pet.update({
-			where: { id },
-			include: { profileImg: true, species: true, race: true },
-			data: { deletedAt: new Date() },
-		});
-		return new PetDto(delPet);
+		const pet = await this.prisma.pet.isExists({ id });
+		if (!pet) throw new NotFoundException(`Mascota no encontrada`);
+		await this.prisma.pet.softDelete({ id });
 	}
 }

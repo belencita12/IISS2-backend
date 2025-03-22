@@ -31,7 +31,7 @@ import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
 import { Role } from '@lib/constants/role.enum';
 import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
 import { Roles } from '@lib/decorators/roles.decorators';
-import { FileValidator } from '@lib/pipes/file-validator.pipe';
+import { ImgValidator } from '@lib/pipes/file-validator.pipe';
 
 @UseGuards(AuthGuard)
 @ApiTags('Pet')
@@ -48,7 +48,7 @@ export class PetController {
 	@ApiBody({ type: CreatePetDto })
 	create(
 		@Body() createPetDto: CreatePetDto,
-		@UploadedFile(FileValidator) img?: Express.Multer.File,
+		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
 		return this.petService.create({ ...createPetDto, profileImg: img });
 	}
@@ -77,7 +77,7 @@ export class PetController {
 	async update(
 		@Param('id') id: string,
 		@Body() updatePetDto: UpdatePetDto,
-		@UploadedFile(FileValidator) img?: Express.Multer.File,
+		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
 		return this.petService.update(+id, { ...updatePetDto, profileImg: img });
 	}

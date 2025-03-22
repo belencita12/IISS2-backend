@@ -28,7 +28,7 @@ import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.de
 import { Roles } from '@lib/decorators/roles.decorators';
 import { RolesGuard } from '@lib/guard/role.guard';
 import { IdValidationPipe } from '@lib/pipes/id-validation.pipe';
-import { FileValidator } from '@lib/pipes/file-validator.pipe';
+import { ImgValidator } from '@lib/pipes/file-validator.pipe';
 
 @Controller('employee')
 @ApiTags('Employee')
@@ -45,7 +45,7 @@ export class EmployeeController {
 	@Roles(Role.Admin)
 	create(
 		@Body() dto: CreateEmployeeDto,
-		@UploadedFile(FileValidator) img?: Express.Multer.File,
+		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
 		return this.emplyeeService.create({ ...dto, profileImg: img });
 	}
@@ -73,7 +73,7 @@ export class EmployeeController {
 	update(
 		@Param('id', IdValidationPipe) id: number,
 		@Body() dto: CreateEmployeeDto,
-		@UploadedFile(FileValidator) img?: Express.Multer.File,
+		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
 		return this.emplyeeService.update(id, { ...dto, profileImg: img });
 	}

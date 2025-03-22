@@ -94,10 +94,10 @@ export const extendPrismaClient = () => {
 			$allModels: {
 				async isExists<T>(
 					this: T,
-					where: Prisma.Args<T, 'findFirst'>['where'],
+					where: Prisma.Args<T, 'findUnique'>['where'],
 				): Promise<boolean> {
 					const context = Prisma.getExtensionContext(this);
-					const result = await (context as any).findFirst({ where });
+					const result = await (context as any).findUnique({ where });
 					return !!result;
 				},
 				async softDelete<T>(

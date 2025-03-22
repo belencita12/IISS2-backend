@@ -51,31 +51,19 @@ export class StockService {
 	}
 
 	async findOne(id: number) {
-		const stock = await this.prisma.stock.findUnique({
-			where: { id, deletedAt: null },
-		});
-		if (!stock) throw new NotFoundException(`Stock con ID ${id} no encontrado`);
+		const stock = await this.prisma.stock.findUnique({ where: { id } });
+		if (!stock) throw new NotFoundException('Deposito no encontrado');
 		return new StockDto(stock);
 	}
 
 	async update(id: number, dto: UpdateStockDto) {
-		try {
-			const stock = await this.prisma.stock.update({
-				where: { id, deletedAt: null },
-				data: dto,
-			});
-			return stock;
-		} catch (error) {
-			if (
-				error instanceof Prisma.PrismaClientKnownRequestError &&
-				error.code === 'P2025'
-			) {
-				throw new NotFoundException(`Deposito con id ${id} no encontrada`);
-			}
-			throw new Error(
-				`Error actualizando deposito con id ${id}: ${error.message}`,
-			);
-		}
+		const exists = await this.prisma.stock.isExists({ id });
+		if (!exists) throw new NotFoundException('Deposito no encontrado');
+		const stock = await this.prisma.stock.update({
+			where: { id, deletedAt: null },
+			data: dto,
+		});
+		return stock;
 	}
 
 	async remove(id: number) {

@@ -27,7 +27,7 @@ export class CreatePetDto {
 	@Transform(({ value }) => Number(value))
 	@IsNumber()
 	@ApiProperty({ example: 1 })
-	userId: number;
+	clientId: number;
 
 	@Transform(({ value }) => Number(value))
 	@IsNumber()

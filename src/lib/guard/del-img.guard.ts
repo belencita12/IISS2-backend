@@ -21,16 +21,16 @@ export class DelImgGuard implements CanActivate {
 
 		const imageId = Number(request.params.id);
 
-		const isUserOwner = await this.db.image.count({
+		const isClientOwner = await this.db.image.count({
 			where: {
 				id: imageId,
 				petImages: {
-					some: { userId: user.id },
+					some: { client: { user: { id: user.id } } },
 				},
 			},
 		});
 
-		if (!user.roles.includes(Role.User) || isUserOwner === 0)
+		if (!user.roles.includes(Role.User) || isClientOwner === 0)
 			throw new ForbiddenException('No eres dueño de esta imagen');
 
 		return true;

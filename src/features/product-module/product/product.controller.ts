@@ -28,7 +28,7 @@ import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.de
 import { Roles } from '@lib/decorators/roles.decorators';
 import { RolesGuard } from '@lib/guard/role.guard';
 import { IdValidationPipe } from '@lib/pipes/id-validation.pipe';
-import { FileValidator } from '@lib/pipes/file-validator.pipe';
+import { ImgValidator } from '@lib/pipes/file-validator.pipe';
 
 @Controller('product')
 @ApiTags('Product')
@@ -45,7 +45,7 @@ export class ProductController {
 	@ApiBody({ type: CreateProductDto })
 	create(
 		@Body() createProductDto: CreateProductDto,
-		@UploadedFile(FileValidator) img?: Express.Multer.File,
+		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
 		return this.productService.create({ ...createProductDto, productImg: img });
 	}
@@ -70,7 +70,7 @@ export class ProductController {
 	update(
 		@Param('id', IdValidationPipe) id: number,
 		@Body() dto: CreateProductDto,
-		@UploadedFile(FileValidator) img?: Express.Multer.File,
+		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
 		return this.productService.update(id, {
 			...dto,

@@ -1,7 +1,8 @@
-import { IsOptional, IsInt, IsString, Min } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
+import { IsId } from '@lib/decorators/is-id.decorator';
 
 export class PetQueryDto extends PaginationQueryDto {
 	@ApiPropertyOptional()
@@ -12,19 +13,18 @@ export class PetQueryDto extends PaginationQueryDto {
 	@ApiPropertyOptional()
 	@IsOptional()
 	@Type(() => Number)
-	@IsInt()
+	@IsId()
 	speciesId?: number;
 
 	@ApiPropertyOptional()
 	@IsOptional()
 	@Type(() => Number)
-	@IsInt()
+	@IsId()
 	raceId?: number;
 
 	@Type(() => Number)
 	@IsOptional()
-	@IsInt()
-	@Min(1)
+	@IsId()
 	@ApiPropertyOptional()
-	userId?: number;
+	clientId?: number;
 }

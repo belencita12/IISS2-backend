@@ -1,8 +1,4 @@
-import {
-	BadRequestException,
-	Injectable,
-	NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateVaccineManufacturerDto } from './dto/create-vaccine-manufacturer.dto';
 import { UpdateVaccineManufacturerDto } from './dto/update-vaccine-manufacturer.dto';
 import { VaccineManufacturerQueryDto } from './dto/vaccine-manufacturer-query.dto';
@@ -14,17 +10,6 @@ export class VaccineManufacturerService {
 	constructor(private prisma: PrismaService) {}
 
 	async create(createVaccineManufacturerDto: CreateVaccineManufacturerDto) {
-		const { name } = createVaccineManufacturerDto;
-
-		const manufacturer = await this.prisma.vaccineManufacturer.findFirst({
-			where: { name },
-		});
-
-		if (manufacturer) {
-			throw new BadRequestException(
-				`El fabricante con nombre "${name}" ya existe.`,
-			);
-		}
 		return this.prisma.vaccineManufacturer.create({
 			data: createVaccineManufacturerDto,
 		});
@@ -56,17 +41,14 @@ export class VaccineManufacturerService {
 
 	async findOne(id: number) {
 		const manufacturer = await this.prisma.vaccineManufacturer.findUnique({
-			where: { id, deletedAt: null },
+			where: { id },
 			include: {
 				batch: true,
 				vaccine: true,
 			},
 		});
-		if (!manufacturer) {
-			throw new NotFoundException(
-				`Fabricante de vacuna con id ${id} no encontrada`,
-			);
-		}
+		if (!manufacturer)
+			throw new NotFoundException('Fabricante de vacuna no encontrada');
 		return manufacturer;
 	}
 
@@ -74,41 +56,22 @@ export class VaccineManufacturerService {
 		id: number,
 		updateVaccineManufacturerDto: UpdateVaccineManufacturerDto,
 	) {
-		try {
-			const manufacturer = await this.prisma.vaccineManufacturer.update({
-				where: { id, deletedAt: null },
-				data: updateVaccineManufacturerDto,
-			});
-			return manufacturer;
-		} catch (error) {
-			if (error instanceof Prisma.PrismaClientKnownRequestError) {
-				if (error.code === 'P2025') {
-					throw new NotFoundException(`Fabricante con id ${id} no encontrado`);
-				}
-				if (error.code === 'P2002') {
-					throw new BadRequestException(
-						`El nombre "${updateVaccineManufacturerDto.name}" ya está en uso.`,
-					);
-				}
-			}
-			throw new Error(
-				`Error actualizando fabricante con id ${id}: ${error.message}`,
-			);
-		}
+		const prevVaccMan = await this.prisma.vaccineManufacturer.findFirst({
+			where: { id },
+		});
+		if (!prevVaccMan)
+			throw new NotFoundException('Fabricante de vacuna no encontrado');
+		const manufacturer = await this.prisma.vaccineManufacturer.update({
+			where: { id },
+			data: updateVaccineManufacturerDto,
+		});
+		return manufacturer;
 	}
 
 	async remove(id: number) {
-		const manufacturer = await this.prisma.vaccineManufacturer.findFirst({
-			where: { id, deletedAt: null },
-		});
-		if (!manufacturer) {
-			throw new NotFoundException(
-				`Especie con id ${id} no encontrada o ya eliminada`,
-			);
-		}
-		return this.prisma.vaccineManufacturer.update({
-			where: { id },
-			data: { deletedAt: new Date() },
-		});
+		const exists = await this.prisma.vaccineManufacturer.isExists({ id });
+		if (!exists)
+			throw new NotFoundException('Fabricante de vacuna no encontrado');
+		return this.prisma.vaccineManufacturer.softDelete({ id });
 	}
 }

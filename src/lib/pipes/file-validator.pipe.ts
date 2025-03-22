@@ -4,7 +4,7 @@ import {
 	ParseFilePipe,
 } from '@nestjs/common';
 
-export const FileValidator = new ParseFilePipe({
+export const ImgValidator = new ParseFilePipe({
 	fileIsRequired: false,
 	validators: [
 		new MaxFileSizeValidator({

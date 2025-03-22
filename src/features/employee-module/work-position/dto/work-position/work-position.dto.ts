@@ -8,12 +8,16 @@ interface PositionWithShifts extends WorkPosition {
 
 export class WorkPositionDto {
 	constructor(data: PositionWithShifts) {
+		this.id = data.id;
 		this.name = data.name;
 		this.shifts = data.shifts.map((s) => new WorkShiftDto(s));
 		this.createdAt = data.createdAt;
 		this.updatedAt = data.updatedAt;
 		this.deletedAt = data.deletedAt;
 	}
+
+	@ApiProperty({ example: 1 })
+	id: number;
 
 	@ApiProperty({ example: 'Auxiliar' })
 	name: string;
