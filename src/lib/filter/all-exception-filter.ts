@@ -41,6 +41,10 @@ export class AllExceptionFilter implements ExceptionFilter {
 						'Uno o más campos ya están en uso. Intente con datos diferentes';
 					httpStatus = HttpStatus.BAD_REQUEST;
 				}
+			} else if (ex.code === 'P2025') {
+				message =
+					'No se han encontrado uno o más registro para concretar la operación';
+				httpStatus = HttpStatus.NOT_FOUND;
 			}
 		}
 
