@@ -8,65 +8,46 @@ import { ProviderDto } from './dto/provider.dto';
 
 @Injectable()
 export class ProviderService {
-    constructor(private readonly db: PrismaService) { }
+    constructor(private prisma: PrismaService) {}
 
     async create(dto: CreateProviderDto) {
-        const provider = await this.db.provider.create({
-            data: {
-                businessName: dto.businessName,
-                description: dto.description,
-                phoneNumber: dto.phoneNumber,
-                ruc: dto.ruc,
-            },
-        });
+        const provider = await this.prisma.provider.create({ data: dto });
         return new ProviderDto(provider);
     }
+
     async findOne(id: number) {
-        const provider = await this.db.provider.findUnique({
-            where: { id },
-        });
+        const provider = await this.prisma.provider.findUnique({ where: { id } });
         if (!provider) throw new NotFoundException('Proveedor no encontrado');
         return new ProviderDto(provider);
     }
 
     async update(id: number, dto: UpdateProviderDto) {
-        const providerExists = await this.db.provider.findUnique({ where: { id } });
-        if (!providerExists) throw new NotFoundException('Proveedor no encontrado');
+        const exists = await this.prisma.provider.isExists({ id });
+        if (!exists) throw new NotFoundException('Proveedor no encontrado');
 
-        const updated = await this.db.provider.update({
-            where: { id },
-            data: {
-                businessName: dto.businessName,
-                description: dto.description,
-                phoneNumber: dto.phoneNumber,
-                ruc: dto.ruc,
-            },
-        });
+        const updated = await this.prisma.provider.update({ where: { id }, data: dto });
         return new ProviderDto(updated);
     }
 
     async remove(id: number) {
-        const exists = await this.db.provider.findUnique({ where: { id } });
+        const exists = await this.prisma.provider.isExists({ id });
         if (!exists) throw new NotFoundException('Proveedor no encontrado');
-        return await this.db.provider.delete({ where: { id } });
+        return await this.prisma.provider.delete({ where: { id } });
     }
 
     async findAll(dto: ProviderQueryDto) {
-        const { baseWhere } = this.db.getBaseWhere(dto);
+        const { baseWhere } = this.prisma.getBaseWhere(dto);
         const where: Prisma.ProviderWhereInput = {
             ...baseWhere,
             ...(dto.query ? this.getWhereByQuerySearch(dto.query) : {}),
         };
 
         const [providers, total] = await Promise.all([
-            this.db.provider.findMany({
-                ...this.db.paginate(dto),
-                where,
-            }),
-            this.db.provider.count({ where }),
+            this.prisma.provider.findMany({ ...this.prisma.paginate(dto), where }),
+            this.prisma.provider.count({ where }),
         ]);
 
-        return this.db.getPagOutput({
+        return this.prisma.getPagOutput({
             page: dto.page,
             size: dto.size,
             total,
