@@ -13,8 +13,7 @@ export class CreateProviderDto {
     description?: string;
 
     @IsPhoneNumber()
-    @ApiProperty({})
-    @IsOptional()
+	@ApiProperty()
     phoneNumber: string;
 
     @IsString()

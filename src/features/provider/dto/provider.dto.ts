@@ -27,7 +27,8 @@ export class ProviderDto {
     description?: string;
 
     @IsPhoneNumber()
-	@ApiProperty()
+    @IsNotEmpty()
+	@ApiProperty({ example: '+595972456892' })
 	phoneNumber: string;
 
     @IsString()

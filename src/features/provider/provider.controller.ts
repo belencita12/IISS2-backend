@@ -66,6 +66,7 @@ export class ProviderController {
 
     @Delete(':id')
     @ApiResponse({ description: 'Proveedor eliminado correctamente' })
+    @Roles(Role.Admin)
     remove(@Param('id', IdValidationPipe) id: number) {
         return this.providerService.remove(id);
     }
