@@ -1,8 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	IsArray,
 	IsEmail,
 	IsOptional,
+	IsPhoneNumber,
 	IsString,
 	MinLength,
 } from 'class-validator';
@@ -17,13 +17,25 @@ export class CreateUserDto {
 	@ApiProperty()
 	email: string;
 
+	@IsOptional()
 	@IsString()
-	@IsArray({ each: true })
+	@ApiPropertyOptional()
+	adress?: string;
+
+	@IsPhoneNumber()
+	@ApiProperty()
+	phoneNumber: string;
+
+	@IsString()
+	@ApiProperty()
+	ruc: string;
+
+	@IsString({ each: true })
 	@IsOptional()
 	roles?: string[];
 
 	@IsString()
-	@MinLength(8)
+	@MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
 	@ApiProperty()
 	password: string;
 }

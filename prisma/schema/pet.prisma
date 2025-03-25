@@ -1,8 +1,8 @@
 model Pet {
   id          Int               @id @default(autoincrement())
   name        String
-  userId      Int
-  user        User              @relation(fields: [userId], references: [id])
+  clientId    Int
+  client      Client            @relation(fields: [clientId], references: [id])
   speciesId   Int
   species     Species           @relation(fields: [speciesId], references: [id])
   raceId      Int
@@ -18,7 +18,7 @@ model Pet {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  @@unique([name, userId])
+  @@unique([name, clientId])
 }
 
 enum Sex {

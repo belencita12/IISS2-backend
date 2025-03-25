@@ -13,21 +13,14 @@ export class VaccineBatchService {
 		const { manufacturerId, vaccineId, ...dto } = createVaccineBatchDto;
 
 		const [manufacturerExists, vaccineExists] = await Promise.all([
-			this.prisma.vaccineManufacturer.findUnique({
-				where: { id: manufacturerId, deletedAt: null },
-			}),
-			this.prisma.vaccine.findUnique({
-				where: { id: vaccineId, deletedAt: null },
-			}),
+			this.prisma.vaccineManufacturer.isExists({ id: manufacturerId }),
+			this.prisma.vaccine.isExists({ id: vaccineId }),
 		]);
-		if (!manufacturerExists) {
-			throw new NotFoundException(
-				`fabricante de vacuna con ID ${createVaccineBatchDto.manufacturerId} no existe o fue eliminada`,
-			);
-		}
-		if (!vaccineExists) {
-			throw new NotFoundException(`Vacuna con ID ${vaccineId} no encontrada.`);
-		}
+		if (!manufacturerExists)
+			throw new NotFoundException('Fabricante de vacuna no encontrado');
+
+		if (!vaccineExists) throw new NotFoundException('Vacuna no encontrada');
+
 		const vaccineBatch = await this.prisma.vaccineBatch.create({
 			include: {
 				manufacturer: { select: { name: true } },
@@ -70,44 +63,27 @@ export class VaccineBatchService {
 
 	async findOne(id: number) {
 		const batch = await this.prisma.vaccineBatch.findUnique({
-			where: { id, deletedAt: null },
+			where: { id },
 			include: { manufacturer: true, vaccine: true },
 		});
-		if (!batch) {
-			throw new NotFoundException(`Batch with ID ${id} not found`);
-		}
+		if (!batch) throw new NotFoundException(`Lote no encontrado`);
+
 		return batch;
 	}
 
 	async update(id: number, updateVaccineBatchDto: UpdateVaccineBatchDto) {
-		try {
-			const batch = await this.prisma.vaccineBatch.update({
-				where: { id, deletedAt: null },
-				data: updateVaccineBatchDto,
-			});
-			return batch;
-		} catch (error) {
-			if (
-				error instanceof Prisma.PrismaClientKnownRequestError &&
-				error.code === 'P2025'
-			) {
-				throw new NotFoundException(`Lote con id ${id} no encontrada`);
-			}
-			throw new Error(
-				`Error actualizando lote de vacuna con id ${id}: ${error.message}`,
-			);
-		}
+		const isExists = await this.prisma.vaccineBatch.isExists({ id });
+		if (!isExists) throw new NotFoundException(`Lote no encontrado`);
+		const batch = await this.prisma.vaccineBatch.update({
+			where: { id, deletedAt: null },
+			data: updateVaccineBatchDto,
+		});
+		return batch;
 	}
 
 	async remove(id: number) {
-		const batch = await this.prisma.vaccineBatch.findFirst({
-			where: { id, deletedAt: null },
-		});
-		if (!batch) {
-			throw new NotFoundException(
-				`Lote con id ${id} no encontrada o ya eliminada`,
-			);
-		}
+		const batch = await this.prisma.vaccineBatch.isExists({ id });
+		if (!batch) throw new NotFoundException(`Lote no encontrado`);
 		return this.prisma.vaccineBatch.update({
 			where: { id },
 			data: { deletedAt: new Date() },

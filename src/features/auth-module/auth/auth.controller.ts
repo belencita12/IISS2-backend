@@ -83,7 +83,6 @@ export class AuthController {
 	@ApiResponse({ type: UserDto })
 	async me(@Request() req: Req) {
 		const payload: TokenPayload = req['user'];
-		const user = await this.authService.me(payload);
-		return new UserDto(user);
+		return await this.authService.me(payload);
 	}
 }

@@ -9,19 +9,13 @@ import { PrismaService } from '@features/prisma/prisma.service';
 export class RaceService {
 	constructor(private prisma: PrismaService) {}
 
-	async create(createRaceDto: CreateRaceDto) {
-		const speciesExists = await this.prisma.species.findUnique({
-			where: { id: createRaceDto.speciesId, deletedAt: null },
+	async create(dto: CreateRaceDto) {
+		const speciesExists = await this.prisma.species.isExists({
+			id: dto.speciesId,
 		});
-
-		if (!speciesExists) {
-			throw new NotFoundException(
-				`Especie con ID ${createRaceDto.speciesId} no existe o fue eliminada`,
-			);
-		}
-
+		if (!speciesExists) throw new NotFoundException('Especie no encontrada');
 		return this.prisma.race.create({
-			data: createRaceDto,
+			data: dto,
 		});
 	}
 
@@ -52,15 +46,13 @@ export class RaceService {
 
 	async findOne(id: number) {
 		const race = await this.prisma.race.findUnique({
-			where: { id, deletedAt: null },
+			where: { id },
 			include: {
 				species: true,
 				pets: true,
 			},
 		});
-		if (!race) {
-			throw new NotFoundException(`Race with ID ${id} not found`);
-		}
+		if (!race) throw new NotFoundException(`Raza no encontrada`);
 		return race;
 	}
 
@@ -83,14 +75,8 @@ export class RaceService {
 	}
 
 	async remove(id: number) {
-		const race = await this.prisma.race.findFirst({
-			where: { id, deletedAt: null },
-		});
-		if (!race) {
-			throw new NotFoundException(
-				`Especie con id ${id} no encontrada o ya eliminada`,
-			);
-		}
+		const race = await this.prisma.race.isExists({ id });
+		if (!race) throw new NotFoundException('Raza no encontrada');
 		return this.prisma.race.update({
 			where: { id },
 			data: { deletedAt: new Date() },

@@ -46,9 +46,7 @@ export class SpeciesService {
 				pets: true,
 			},
 		});
-		if (!species) {
-			throw new NotFoundException(`Especie con id ${id} no encontrada`);
-		}
+		if (!species) throw new NotFoundException('Especie no encontrada');
 		return species;
 	}
 
@@ -73,14 +71,8 @@ export class SpeciesService {
 	}
 
 	async remove(id: number) {
-		const species = await this.prisma.species.findFirst({
-			where: { id, deletedAt: null },
-		});
-		if (!species) {
-			throw new NotFoundException(
-				`Especie con id ${id} no encontrada o ya eliminada`,
-			);
-		}
+		const species = await this.prisma.species.isExists({ id });
+		if (!species) throw new NotFoundException('Especie no encontrada');
 		return this.prisma.species.update({
 			where: { id },
 			data: { deletedAt: new Date() },

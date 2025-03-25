@@ -28,7 +28,7 @@ import { Role } from '@lib/constants/role.enum';
 import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
 import { Roles } from '@lib/decorators/roles.decorators';
 import { RolesGuard } from '@lib/guard/role.guard';
-import { FileValidator } from '@lib/pipes/file-validator.pipe';
+import { ImgValidator } from '@lib/pipes/file-validator.pipe';
 
 @ApiBearerAuth('access-token')
 @ApiTags('vaccine')
@@ -58,7 +58,7 @@ export class VaccineController {
 	})
 	async create(
 		@Body() body: any,
-		@UploadedFile(FileValidator) img?: Express.Multer.File,
+		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
 		const createVaccineDto: CreateVaccineDto = {
 			speciesId: Number(body.speciesId),
@@ -116,7 +116,7 @@ export class VaccineController {
 	async update(
 		@Param('id') id: string,
 		@Body() body: any,
-		@UploadedFile(FileValidator) img?: Express.Multer.File,
+		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
 		const updateVaccineDto: UpdateVaccineDto = {
 			speciesId: body.speciesId ? Number(body.speciesId) : undefined,

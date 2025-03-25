@@ -6,14 +6,11 @@ import {
 	IsEmail,
 	IsNumber,
 	IsOptional,
+	IsPhoneNumber,
 	IsString,
 } from 'class-validator';
 
 export class UserDto {
-	constructor(partial: Partial<UserDto>) {
-		Object.assign(this, partial);
-	}
-
 	@Expose()
 	@IsNumber()
 	@ApiProperty()
@@ -28,6 +25,18 @@ export class UserDto {
 	@IsString()
 	@ApiProperty()
 	username: string;
+
+	@IsString()
+	@ApiProperty()
+	adress?: string;
+
+	@IsPhoneNumber()
+	@ApiProperty()
+	phoneNumber: string;
+
+	@IsString()
+	@ApiProperty()
+	ruc: string;
 
 	@Expose()
 	@IsString()
