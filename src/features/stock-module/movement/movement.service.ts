@@ -15,14 +15,14 @@ export class MovementService {
 
 	async create(dto: CreateMovementDto) {
 		return this.prisma.$transaction(async (prisma) => {
-			const manager = await prisma.user.findUnique({
+			const manager = await prisma.employee.findUnique({
 				where: { id: dto.managerId },
 			});
-			if (!manager)
+			if (!manager) {
 				throw new BadRequestException(
-					`El usuario con ID ${dto.managerId} no existe.`,
+					`El empleado con ID ${dto.managerId} no existe.`,
 				);
-
+			}
 			this.validateRequiredFields(dto);
 			await this.validateStockExistence(
 				dto.originStockId,
@@ -34,11 +34,16 @@ export class MovementService {
 					managerId: dto.managerId,
 					type: dto.type,
 					dateMovement: dto.dateMovement ?? new Date(),
-					originStockId: dto.originStockId || null,
-					destinationStockId: dto.destinationStockId || null,
+					originStockId: dto.originStockId ?? null,
+					destinationStockId: dto.destinationStockId ?? null,
 				},
 			});
 			for (const detail of dto.details) {
+				if (detail.quantity <= 0) {
+					throw new BadRequestException(
+						`La cantidad debe ser un valor positivo para el producto ${detail.productId}.`,
+					);
+				}
 				await this.validateStockAvailability(
 					detail.productId,
 					dto.originStockId!,
@@ -66,21 +71,21 @@ export class MovementService {
 	}
 
 	async findAll(dto: MovementQueryDto) {
+		const validTypes = ['INBOUND', 'OUTBOUND', 'TRANSFER'];
+		if (dto.type && !validTypes.includes(dto.type)) {
+			throw new BadRequestException(`Tipo de movimiento inválido: ${dto.type}`);
+		}
 		const { baseWhere } = this.prisma.getBaseWhere(dto);
 		const where: Prisma.MovementWhereInput = {
 			...baseWhere,
 			managerId: dto.managerId,
 			type: dto.type,
-			originStock: dto.originBranch
-				? { name: { contains: dto.originBranch, mode: 'insensitive' } }
+			dateMovement: dto.dateMovement
+				? { gte: new Date(dto.dateMovement) }
 				: undefined,
-			destinationStock: dto.destinationBranch
-				? {
-						name: {
-							contains: dto.destinationBranch,
-							mode: 'insensitive',
-						},
-					}
+			originStockId: dto.originStockId ? Number(dto.originStockId) : undefined,
+			destinationStockId: dto.destinationStockId
+				? Number(dto.destinationStockId)
 				: undefined,
 		};
 
@@ -117,9 +122,14 @@ export class MovementService {
 
 	async revertMovement(movementId: number, dto: RevertMovementDto = {}) {
 		const originalMovement = await this.findOne(movementId);
+		if (originalMovement.type !== 'TRANSFER') {
+			throw new BadRequestException(
+				`Solo se pueden revertir transferencias. El movimiento ${movementId} es de tipo ${originalMovement.type}.`,
+			);
+		}
 		if (!originalMovement.details || originalMovement.details.length === 0) {
 			throw new BadRequestException(
-				`El movimiento ${movementId} no tiene detalles para revertir`,
+				`El movimiento ${movementId} no tiene detalles para revertir.`,
 			);
 		}
 		const revertDto: CreateMovementDto = {
@@ -127,7 +137,7 @@ export class MovementService {
 				dto.description ||
 				`Reversión de "${originalMovement.description || `Movimiento #${movementId}`}"`,
 			managerId: dto.managerId || originalMovement.managerId,
-			type: originalMovement.type,
+			type: 'TRANSFER',
 			dateMovement: new Date(),
 			originStockId: originalMovement.destinationStockId || undefined,
 			destinationStockId: originalMovement.originStockId || undefined,
@@ -136,17 +146,6 @@ export class MovementService {
 				quantity: detail.quantity,
 			})),
 		};
-		if (originalMovement.type === 'INBOUND') {
-			revertDto.type = 'OUTBOUND';
-		} else if (originalMovement.type === 'OUTBOUND') {
-			revertDto.type = 'INBOUND';
-		} else if (originalMovement.type !== 'TRANSFER') {
-			throw new BadRequestException(
-				// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-				`El tipo de movimiento ${originalMovement.type} no puede ser revertido`,
-			);
-		}
-
 		const revertedMovement = await this.create(revertDto);
 		return revertedMovement;
 	}
@@ -205,6 +204,11 @@ export class MovementService {
 					'Para movimientos de tipo TRANSFER, originStockId y destinationStockId son obligatorios',
 				);
 			}
+			if (dto.originStockId === dto.destinationStockId) {
+				throw new BadRequestException(
+					'El stock de origen y destino no pueden ser el mismo para un movimiento de tipo TRANSFER',
+				);
+			}
 		} else if (dto.type === 'INBOUND') {
 			if (dto.destinationStockId === undefined) {
 				throw new BadRequestException(
@@ -221,6 +225,7 @@ export class MovementService {
 			throw new BadRequestException('Tipo de movimiento inválido');
 		}
 	}
+
 	private async validateStockAvailability(
 		productId: number,
 		stockId: number,
@@ -233,9 +238,14 @@ export class MovementService {
 		const stockDetail = await this.prisma.stockDetails.findFirst({
 			where: { stockId, productId },
 		});
-		if (!stockDetail || stockDetail.amount < quantity) {
+		if (!stockDetail) {
 			throw new BadRequestException(
-				`Stock insuficiente para producto ${productId}. Stock disponible: ${stockDetail?.amount || 0}, cantidad solicitada: ${quantity}`,
+				`El producto con ID ${productId} no existe en el stock con ID ${stockId}.`,
+			);
+		}
+		if (stockDetail.amount < quantity) {
+			throw new BadRequestException(
+				`Stock insuficiente para producto ${productId} en stock ${stockId}. Disponible: ${stockDetail.amount}, solicitado: ${quantity}`,
 			);
 		}
 	}
@@ -252,7 +262,6 @@ export class MovementService {
 		if (!validTypes.includes(type)) {
 			throw new BadRequestException(`Tipo de movimiento inválido: ${type}`);
 		}
-
 		if (type === 'INBOUND') {
 			await this.handleInbound(prisma, productId, destinationStockId, quantity);
 		} else if (type === 'TRANSFER') {
@@ -275,10 +284,28 @@ export class MovementService {
 		destinationStockId: number,
 		quantity: number,
 	) {
-		await prisma.stockDetails.updateMany({
+		const originStockDetail = await prisma.stockDetails.findFirst({
+			where: { stockId: originStockId, productId },
+		});
+		if (!originStockDetail) {
+			throw new BadRequestException(
+				`El producto con ID ${productId} no existe en el stock de origen con ID ${originStockId}.`,
+			);
+		}
+		if (originStockDetail.amount < quantity) {
+			throw new BadRequestException(
+				`Stock insuficiente para producto ${productId} en stock ${originStockId}. Disponible: ${originStockDetail.amount}, solicitado: ${quantity}`,
+			);
+		}
+		const updateOriginResult = await prisma.stockDetails.updateMany({
 			where: { stockId: originStockId, productId },
 			data: { amount: { decrement: quantity } },
 		});
+		if (updateOriginResult.count === 0) {
+			throw new Error(
+				`Fallo al actualizar el stock de origen para productId: ${productId} en stockId: ${originStockId}.`,
+			);
+		}
 		const destinationStockDetail = await prisma.stockDetails.findFirst({
 			where: { stockId: destinationStockId, productId },
 		});
@@ -297,7 +324,6 @@ export class MovementService {
 			});
 		}
 	}
-
 	private async handleInbound(
 		prisma,
 		productId: number,

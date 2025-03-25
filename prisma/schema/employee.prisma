@@ -8,6 +8,8 @@ model Employee {
     positionId Int
     position   WorkPosition @relation(fields: [positionId], references: [id], onDelete: NoAction)
 
+    movements Movement[]
+
     deletedAt DateTime?
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt

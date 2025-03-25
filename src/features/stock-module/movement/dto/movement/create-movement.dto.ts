@@ -23,7 +23,7 @@ export class CreateMovementDto {
 	@IsNumber()
 	@ApiProperty({
 		description: 'ID del encargado del movimiento.',
-		example: 5,
+		example: 2,
 	})
 	managerId: number;
 

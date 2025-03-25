@@ -2,7 +2,7 @@ import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MovementType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional } from 'class-validator';
 
 export class MovementQueryDto extends PaginationQueryDto {
 	@IsNumber()
@@ -34,13 +34,6 @@ export class MovementQueryDto extends PaginationQueryDto {
 	})
 	originStockId?: number;
 
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional({
-		description: 'Nombre de la sucursal de origen',
-	})
-	originBranch?: string;
-
 	@IsNumber()
 	@IsOptional()
 	@Type(() => Number)
@@ -48,11 +41,4 @@ export class MovementQueryDto extends PaginationQueryDto {
 		description: 'ID del stock de destino',
 	})
 	destinationStockId?: number;
-
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional({
-		description: 'Nombre de la sucursal de destino',
-	})
-	destinationBranch?: string;
 }
