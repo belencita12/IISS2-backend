@@ -28,11 +28,11 @@ export class ProviderDto {
 
     @IsPhoneNumber()
     @IsNotEmpty()
-	@ApiProperty({ example: '+595972456892' })
-	phoneNumber: string;
+    @ApiProperty({ example: '+595972456892' })
+    phoneNumber: string;
 
     @IsString()
-	@IsNotEmpty()
-	@ApiProperty({ example: '12345678-1' })
+    @IsNotEmpty()
+    @ApiProperty({ example: '12345678-1' })
     ruc: string;
 }

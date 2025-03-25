@@ -57,7 +57,7 @@ export class ProviderController {
     }
 
     @Patch(':id')
-    @ApiResponse({ type: ProviderDto ,  description: 'Proveedor actualizado correctamente'})
+    @ApiResponse({ type: ProviderDto, description: 'Proveedor actualizado correctamente' })
     @ApiBody({ type: UpdateProviderDto })
     @Roles(Role.Admin)
     update(@Param('id', IdValidationPipe) id: number, @Body() dto: UpdateProviderDto) {
