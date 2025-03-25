@@ -8,7 +8,6 @@ import { ClientDto } from './dto/client.dto';
 import { ClientQueryDto } from './dto/client-query.dto';
 import { onlyNumbers } from '@lib/utils/reg-exp';
 import { ImageService } from '@features/media-module/image/image.service';
-import { ClientEntity } from './entity/client.entity';
 
 @Injectable()
 export class ClientService {
@@ -39,7 +38,7 @@ export class ClientService {
 				},
 			},
 		});
-		return this.toDto(client);
+		return new ClientDto(client);
 	}
 
 	async findAll(dto: ClientQueryDto) {
@@ -52,7 +51,7 @@ export class ClientService {
 			include: { user: { include: { roles: true, image: true } } },
 		});
 		if (!client) throw new NotFoundException('Cliente no encontrado');
-		return this.toDto(client);
+		return new ClientDto(client);
 	}
 
 	async update(id: number, dto: UpdateClientDto) {
@@ -81,14 +80,17 @@ export class ClientService {
 				},
 			},
 		});
-		return this.toDto(newClient);
+		return new ClientDto(newClient);
 	}
 
 	async remove(id: number) {
-		const client = await this.db.client.isExists({ id });
+		const client = await this.db.client.findUnique({
+			where: { id },
+			select: { id: true, user: { select: { id: true } } },
+		});
 		if (!client) throw new NotFoundException('Cliente no encontrado');
-		await this.db.user.softDelete({ id });
-		await this.db.client.softDelete({ id });
+		await this.db.user.softDelete({ id: client.user.id });
+		await this.db.client.softDelete({ id: client.id });
 	}
 
 	private async filter(dto: ClientQueryDto) {
@@ -122,7 +124,7 @@ export class ClientService {
 			page: dto.page,
 			size: dto.size,
 			total,
-			data: data.map((client) => this.toDto(client)),
+			data: data.map((client) => new ClientDto(client)),
 		});
 	}
 
@@ -144,28 +146,5 @@ export class ClientService {
 			};
 		}
 		return querySearchWhere;
-	}
-
-	private toDto(client: ClientEntity): ClientDto {
-		const clientDto = new ClientDto();
-		clientDto.id = client.id;
-		clientDto.phoneNumber = client.user.phoneNumber;
-		clientDto.adress = client.user.adress || undefined;
-		clientDto.username = client.user.username;
-		clientDto.email = client.user.email;
-		clientDto.fullName = client.user.fullName;
-		clientDto.ruc = client.user.ruc;
-		clientDto.roles = client.user.roles.map((role) => role.name);
-		clientDto.image = client.user.image
-			? {
-					id: client.user.image.id,
-					originalUrl: client.user.image.originalUrl,
-					previewUrl: client.user.image.previewUrl,
-				}
-			: undefined;
-		clientDto.createdAt = client.createdAt;
-		clientDto.updatedAt = client.updatedAt;
-		clientDto.deletedAt = client.deletedAt;
-		return clientDto;
 	}
 }

@@ -45,7 +45,6 @@ export class UserService {
 
 		const where: Prisma.UserWhereInput = {
 			...baseWhere,
-			...this.getWhereByQuerySearch(dto.query),
 			roles: dto.role ? { some: { name: dto.role } } : undefined,
 		};
 
