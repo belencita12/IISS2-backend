@@ -39,7 +39,7 @@ export class CreateMovementDto {
 		description: 'Fecha del movimiento',
 		example: '2025-03-19T14:00:00.000Z',
 	})
-	dateMovement?: Date;
+	dateMovement: Date;
 
 	@IsNumber()
 	@IsOptional()

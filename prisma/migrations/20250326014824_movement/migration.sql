@@ -20,7 +20,7 @@ CREATE TABLE "Movement" (
     "description" TEXT,
     "managerId" INTEGER NOT NULL,
     "type" "MovementType" NOT NULL,
-    "dateMovement" TIMESTAMP(3) NOT NULL,
+    "dateMovement" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "originStockId" INTEGER,
     "destinationStockId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
