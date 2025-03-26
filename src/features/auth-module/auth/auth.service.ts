@@ -34,18 +34,21 @@ export class AuthService {
 		const match = await compare(dto.password, user.password);
 		if (!match) throw new HttpException('Email or password is incorrect', 401);
 		const roles = user.roles.map((r) => r.name);
-		const payloadId = user.id;
 		const payload: TokenPayload = {
-			id: payloadId,
+			id: user.id,
 			username: user.username,
 			email: user.email,
 			roles: user.roles.map((role) => role.name),
+			employeeId: user.employee?.id,
+			clientId: user.client?.id,
 		};
 		return {
-			id: payloadId,
+			id: user.id,
 			fullName: user.fullName,
 			token: this.jwt.sign(payload),
 			username: user.username,
+			employeeId: user.employee?.id,
+			clientId: user.client?.id,
 			roles,
 		};
 	}
