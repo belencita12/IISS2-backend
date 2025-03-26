@@ -1,32 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateStockDetailsDto } from './dto/create-stock-detail.dto';
 import { UpdateStockDetailsDto } from './dto/update-stock-detail.dto';
 import { StockDetailsQueryDto } from './dto/stock-details-query.dto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@features/prisma/prisma.service';
+import { StockDetailsDto } from './dto/stock-details.dto';
+import { CreateStockDetailsDto } from './dto/create-stock-detail.dto';
 
 @Injectable()
 export class StockDetailsService {
 	constructor(private prisma: PrismaService) {}
 
 	async create(dto: CreateStockDetailsDto) {
-		const stock = await this.prisma.stock.findUnique({
+		const isStockExists = await this.prisma.stock.findUnique({
 			where: { id: dto.stockId },
 		});
-		if (!stock) {
-			throw new NotFoundException(
-				`Stock con ID ${dto.stockId} no existe o fue eliminado`,
-			);
-		}
-		const product = await this.prisma.product.findUnique({
-			where: { id: dto.productId, deletedAt: null },
-		});
-		if (!product) {
-			throw new NotFoundException(
-				`Producto con ID ${dto.productId} no existe o fue eliminado`,
-			);
-		}
-
+		if (!isStockExists) throw new NotFoundException('Deposito no encontrado');
 		return this.prisma.stockDetails.create({
 			data: dto,
 		});
@@ -41,6 +29,7 @@ export class StockDetailsService {
 		};
 		const [data, total] = await Promise.all([
 			this.prisma.stockDetails.findMany({
+				include: { product: { include: { price: true, image: true } } },
 				...this.prisma.paginate(dto),
 				where,
 			}),
@@ -50,67 +39,41 @@ export class StockDetailsService {
 			page: dto.page,
 			size: dto.size,
 			total,
-			data,
+			data: data.map((s) => new StockDetailsDto(s)),
 		});
 	}
 
 	async findOne(id: number) {
 		const stockDetails = await this.prisma.stockDetails.findUnique({
+			include: { product: { include: { price: true, image: true } } },
 			where: { id },
 		});
-		if (!stockDetails) {
-			throw new NotFoundException(
-				`Detalle deposito con id ${id} no encontrada`,
-			);
-		}
-		return stockDetails;
+		if (!stockDetails)
+			throw new NotFoundException('Detalle del deposito no encontrado');
+		return new StockDetailsDto(stockDetails);
 	}
 
 	async update(id: number, dto: UpdateStockDetailsDto) {
-		try {
-			if (dto.stockId) {
-				const stock = await this.prisma.stock.findUnique({
-					where: { id: dto.stockId },
-				});
-				if (!stock) {
-					throw new NotFoundException(
-						`Stock con ID ${dto.stockId} no existe o fue eliminado`,
-					);
-				}
-			}
-
-			if (dto.productId) {
-				const product = await this.prisma.product.findUnique({
-					where: { id: dto.productId },
-				});
-				if (!product) {
-					throw new NotFoundException(
-						`Producto con ID ${dto.productId} no existe o fue eliminado`,
-					);
-				}
-			}
-
-			const stockDetails = await this.prisma.stockDetails.update({
-				where: { id },
-				data: dto,
+		if (dto.stockId) {
+			const stock = await this.prisma.stock.findUnique({
+				where: { id: dto.stockId },
 			});
-			return stockDetails;
-		} catch (error) {
-			if (
-				error instanceof Prisma.PrismaClientKnownRequestError &&
-				error.code === 'P2025'
-			) {
-				throw new NotFoundException(
-					`Detalle deposito con id ${id} no encontrado`,
-				);
-			}
-			if (error instanceof NotFoundException) {
-				throw error;
-			}
-			throw new Error(
-				`Error actualizando detalle deposito con id ${id}: ${error.message}`,
-			);
+			if (!stock) throw new NotFoundException(`Deposito no encontrado`);
 		}
+
+		if (dto.productId) {
+			const product = await this.prisma.product.findUnique({
+				where: { id: dto.productId },
+			});
+			if (!product) throw new NotFoundException('Producto no encontrado');
+		}
+
+		const stockDetails = await this.prisma.stockDetails.update({
+			include: { product: { include: { price: true, image: true } } },
+			where: { id },
+			data: dto,
+		});
+		return new StockDetailsDto(stockDetails);
 	}
 
 	async remove(id: number) {
