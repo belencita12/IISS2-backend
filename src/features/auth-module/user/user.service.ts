@@ -35,7 +35,7 @@ export class UserService {
 	async findByEmail(email: string) {
 		const user = await this.db.user.findUnique({
 			where: { email },
-			include: { roles: true },
+			include: { roles: true, employee: true, client: true },
 		});
 		return user;
 	}
@@ -45,11 +45,7 @@ export class UserService {
 
 		const where: Prisma.UserWhereInput = {
 			...baseWhere,
-			...this.getWhereByQuerySearch(dto.query),
 			roles: dto.role ? { some: { name: dto.role } } : undefined,
-			pets: dto.speciesId
-				? { some: { speciesId: dto.speciesId, raceId: dto.raceId } }
-				: undefined,
 		};
 
 		const [users, total] = await Promise.all([
@@ -107,6 +103,7 @@ export class UserService {
 	): UserDto {
 		return {
 			...user,
+			adress: user.adress || undefined,
 			image: user.image
 				? {
 						id: user.image.id,

@@ -32,31 +32,26 @@ export class UserController {
 	@ApiResponse({ type: UserDto })
 	@ApiBody({ type: CreateUserDto })
 	async create(@Body() createUserDto: CreateUserDto) {
-		const user = await this.userService.create(createUserDto);
-		return new UserDto(user);
+		return await this.userService.create(createUserDto);
 	}
 
 	@Get()
 	@ApiPaginatedResponse(UserDto)
 	async findAll(@Query() query: UserQueryDto) {
-		const dataPaginated = await this.userService.findAll(query);
-		dataPaginated.data = dataPaginated.data.map((user) => new UserDto(user));
-		return dataPaginated;
+		return await this.userService.findAll(query);
 	}
 
 	@Get(':id')
 	@ApiResponse({ type: UserDto })
 	async findOne(@Param('id') id: string) {
-		const user = await this.userService.findOne(+id);
-		return new UserDto(user);
+		return await this.userService.findOne(+id);
 	}
 
 	@Patch(':id')
 	@Roles(Role.User)
 	@ApiResponse({ type: UserDto })
 	async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-		const updatedUser = await this.userService.update(+id, updateUserDto);
-		return new UserDto(updatedUser);
+		return await this.userService.update(+id, updateUserDto);
 	}
 
 	@Delete(':id')

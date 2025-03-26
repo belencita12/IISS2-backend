@@ -19,7 +19,7 @@ export class PetDto {
 	race: RaceDto;
 
 	@ApiProperty({ example: 1 })
-	userId: number;
+	clientId: number;
 
 	@ApiProperty({ example: 12 })
 	weight: number;
@@ -45,7 +45,7 @@ export class PetDto {
 			id: pet.raceId,
 			name: pet.race.name,
 		};
-		this.userId = pet.userId;
+		this.clientId = pet.userId;
 		this.weight = pet.weight;
 		this.sex = pet.sex;
 		this.profileImg = pet.profileImg

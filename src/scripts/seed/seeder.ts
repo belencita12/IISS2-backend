@@ -7,7 +7,7 @@ import {
 	seedRoles,
 	seedSpecies,
 	seedStock,
-	seedUsers,
+	seedClients,
 	seedVaccineManufacturers,
 	seedVaccineRegistries,
 	seedVaccines,
@@ -23,8 +23,8 @@ export const seeder = async () => {
 			await seedRoles(tx);
 			console.log('Roles were seeded successfully\n');
 
-			await seedUsers(tx);
-			console.log('Users were seeded successfully\n');
+			await seedClients(tx);
+			console.log('Clients were seeded successfully\n');
 
 			await seedSpecies(tx);
 			console.log('Species were seeded successfully\n');

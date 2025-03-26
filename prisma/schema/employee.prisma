@@ -1,12 +1,13 @@
 model Employee {
     id  Int    @id @default(autoincrement())
-    ruc String @unique @db.VarChar(10)
 
     userId Int  @unique
     user   User @relation(fields: [userId], references: [id], onDelete: NoAction)
 
     positionId Int
     position   WorkPosition @relation(fields: [positionId], references: [id], onDelete: NoAction)
+
+    movements Movement[]
 
     deletedAt DateTime?
     createdAt DateTime  @default(now())

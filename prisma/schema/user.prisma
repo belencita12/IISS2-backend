@@ -1,19 +1,21 @@
 model User {
-  id       Int    @id @default(autoincrement())
-  fullName String
-  username String @unique
-  email    String @unique
-  password String
+  id          Int    @id @default(autoincrement())
+  adress      String? @db.VarChar(100)
+  phoneNumber String @db.VarChar(20)
+  fullName    String
+  username    String @unique
+  email       String @unique
+  ruc         String @unique
+  password    String
 
   imageId Int?
   image   Image? @relation(fields: [imageId], references: [id], onDelete: NoAction)
 
   employee Employee?
+  client   Client?
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   deletedAt DateTime?
   roles     Role[]    @relation("UserRoles")
-  pets      Pet[]
-  movements Movement[]
 }

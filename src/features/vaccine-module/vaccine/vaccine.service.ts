@@ -85,72 +85,40 @@ export class VaccineService {
 				product: true,
 			},
 		});
-
-		if (!vaccine) {
-			throw new NotFoundException(`Vacuna con ID ${id} no encontrada.`);
-		}
-
+		if (!vaccine) throw new NotFoundException(`Vacuna no encontrada`);
 		return vaccine;
 	}
 
 	async update(id: number, updateVaccineDto: UpdateVaccineDto) {
-		try {
-			const existingVaccine = await this.prisma.vaccine.findUnique({
-				where: { id },
-				include: { product: true },
+		const existingVaccine = await this.prisma.vaccine.findUnique({
+			where: { id },
+			include: { product: true },
+		});
+
+		if (!existingVaccine) throw new NotFoundException('Vacuna no encontrada.');
+
+		const { productData, ...vaccineUpdateData } = updateVaccineDto;
+
+		if (productData)
+			await this.productService.update(existingVaccine.product.id, {
+				...productData,
 			});
 
-			if (!existingVaccine) {
-				throw new NotFoundException(`Vacuna con ID ${id} no encontrada.`);
-			}
+		const updatedVaccine = await this.prisma.vaccine.update({
+			where: { id },
+			data: vaccineUpdateData,
+		});
 
-			const { productData, ...vaccineUpdateData } = updateVaccineDto;
-
-			if (productData && existingVaccine.product) {
-				await this.productService.update(existingVaccine.product.id, {
-					...productData,
-				});
-			}
-
-			const updatedVaccine = await this.prisma.vaccine.update({
-				where: { id },
-				data: vaccineUpdateData,
-			});
-
-			return updatedVaccine;
-		} catch (error) {
-			if (
-				error instanceof Prisma.PrismaClientKnownRequestError &&
-				error.code === 'P2025'
-			) {
-				throw new NotFoundException(`Vacuna con ID ${id} no encontrada.`);
-			}
-			throw new Error(
-				`Error actualizando la vacuna con ID ${id}: ${error.message}`,
-			);
-		}
+		return updatedVaccine;
 	}
 
 	async remove(id: number) {
 		const vaccine = await this.prisma.vaccine.findUnique({
 			where: { id },
-			include: { product: true },
+			select: { id: true, product: { select: { id: true } } },
 		});
-
-		if (!vaccine) {
-			throw new NotFoundException(`Vacuna con ID ${id} no encontrada.`);
-		}
-
-		if (vaccine.product) {
-			await this.prisma.product.update({
-				where: { id: vaccine.product.id },
-				data: { deletedAt: new Date() },
-			});
-		}
-
-		return this.prisma.vaccine.update({
-			where: { id },
-			data: { deletedAt: new Date() },
-		});
+		if (!vaccine) throw new NotFoundException('Vacuna no encontrada.');
+		await this.prisma.product.softDelete({ id: vaccine.product.id });
+		await this.prisma.vaccine.softDelete({ id });
 	}
 }
