@@ -17,6 +17,5 @@ model User {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   deletedAt DateTime?
-  roles     Role[]     @relation("UserRoles")
-  movements Movement[]
+  roles     Role[]    @relation("UserRoles")
 }

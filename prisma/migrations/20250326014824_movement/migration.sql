@@ -20,7 +20,7 @@ CREATE TABLE "Movement" (
     "description" TEXT,
     "managerId" INTEGER NOT NULL,
     "type" "MovementType" NOT NULL,
-    "dateMovement" TIMESTAMP(3) NOT NULL,
+    "dateMovement" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "originStockId" INTEGER,
     "destinationStockId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -37,7 +37,7 @@ ALTER TABLE "MovementDetail" ADD CONSTRAINT "MovementDetail_productId_fkey" FORE
 ALTER TABLE "MovementDetail" ADD CONSTRAINT "MovementDetail_movementId_fkey" FOREIGN KEY ("movementId") REFERENCES "Movement"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Movement" ADD CONSTRAINT "Movement_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Movement" ADD CONSTRAINT "Movement_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "Employee"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Movement" ADD CONSTRAINT "Movement_originStockId_fkey" FOREIGN KEY ("originStockId") REFERENCES "Stock"("id") ON DELETE SET NULL ON UPDATE CASCADE;

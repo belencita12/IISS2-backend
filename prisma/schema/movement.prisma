@@ -2,9 +2,9 @@ model Movement {
     id                 Int              @id @default(autoincrement())
     description        String?
     managerId          Int
-    manager            User             @relation(fields: [ managerId], references: [id])
+    manager            Employee         @relation(fields: [managerId], references: [id])
     type               MovementType
-    dateMovement       DateTime
+    dateMovement       DateTime         @default(now())
     originStockId      Int?
     originStock        Stock?           @relation("StockOrigin", fields: [originStockId], references: [id])
     destinationStockId Int?

@@ -1,8 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MovementType } from '@prisma/client';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
-import { MovementDetailDto } from '../movement-detail/movement-detail.dto';
 
 export class MovementDto {
 	@IsNumber()
@@ -29,10 +28,12 @@ export class MovementDto {
 	})
 	type: MovementType;
 
+	@IsOptional()
 	@IsDateString()
-	@ApiProperty({
-		description: 'Fecha del movimiento',
-		example: '2025-03-19T14:00:00.000Z',
+	@Type(() => Date)
+	@ApiPropertyOptional({
+		description: 'Fecha para filtrar los movimientos (formato ISO 8601)',
+		example: '2025-03-19T00:00:00.000Z',
 	})
 	dateMovement: Date;
 
@@ -51,12 +52,6 @@ export class MovementDto {
 		example: 2,
 	})
 	destinationStockId?: number;
-
-	@ApiProperty({
-		description: 'Detalles del movimiento',
-		type: [MovementDetailDto],
-	})
-	details: MovementDetailDto[];
 
 	@Expose()
 	@IsDateString()
