@@ -26,9 +26,18 @@ export class MovementQueryDto extends PaginationQueryDto {
 	@Type(() => Date)
 	@IsDate()
 	@ApiPropertyOptional({
-		description: 'Fecha para filtrar los movimientos (formato ISO 8601)',
+		description: 'Fecha inicial para filtrar movimientos',
 	})
-	dateMovement?: Date;
+	fromDate?: Date;
+
+	@IsOptional()
+	@Type(() => Date)
+	@IsDate()
+	@ApiPropertyOptional({
+		description: 'Fecha final para filtrar movimientos',
+	})
+	toDate?: Date;
+
 	@IsNumber()
 	@IsOptional()
 	@Type(() => Number)

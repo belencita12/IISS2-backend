@@ -81,12 +81,14 @@ export class MovementService {
 			...baseWhere,
 			managerId: dto.managerId,
 			type: dto.type,
-			dateMovement: dto.dateMovement
-				? {
-						gte: new Date(new Date(dto.dateMovement).setHours(0, 0, 0, 0)),
-						lt: new Date(new Date(dto.dateMovement).setHours(23, 59, 59, 999)),
-					}
-				: undefined,
+			dateMovement:
+				dto.fromDate && dto.toDate
+					? { gte: dto.fromDate, lte: dto.toDate }
+					: dto.fromDate
+						? { gte: dto.fromDate }
+						: dto.toDate
+							? { lte: dto.toDate }
+							: undefined,
 			originStockId: dto.originStockId ? Number(dto.originStockId) : undefined,
 			destinationStockId: dto.destinationStockId
 				? Number(dto.destinationStockId)
