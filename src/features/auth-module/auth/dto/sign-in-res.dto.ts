@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsString } from 'class-validator';
 
 export class SignInResponseDto {
@@ -21,4 +21,10 @@ export class SignInResponseDto {
 	@IsString()
 	@ApiProperty({ isArray: true })
 	roles: string[];
+
+	@ApiPropertyOptional()
+	employeeId?: number;
+
+	@ApiPropertyOptional()
+	clientId?: number;
 }
