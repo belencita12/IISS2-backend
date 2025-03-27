@@ -32,6 +32,9 @@ import { Role } from '@lib/constants/role.enum';
 import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
 import { Roles } from '@lib/decorators/roles.decorators';
 import { ImgValidator } from '@lib/pipes/file-validator.pipe';
+import { IsOwnerGuard } from '@lib/guard/is-owner.guard';
+import { Resource } from '@lib/decorators/resource.decorator';
+import { CurrentUser } from '@lib/decorators/current-user.decoratot';
 
 @UseGuards(AuthGuard)
 @ApiTags('Pet')
@@ -56,11 +59,19 @@ export class PetController {
 	@Get()
 	@Roles(Role.Admin, Role.User)
 	@ApiPaginatedResponse(PetDto)
-	async findAll(@Query() query: PetQueryDto) {
+	async findAll(
+		@Query() query: PetQueryDto,
+		@CurrentUser() user: TokenPayload,
+	) {
+		if (user && user.clientId) {
+			query.clientId = user.clientId;
+		}
 		return this.petService.findAll(query);
 	}
 
 	@Get(':id')
+	@UseGuards(IsOwnerGuard)
+	@Resource('pet')
 	@Roles(Role.Admin, Role.User)
 	@ApiResponse({ type: PetDto })
 	async findOne(@Param('id') id: string, @Request() req: Req) {
@@ -69,6 +80,8 @@ export class PetController {
 	}
 
 	@Patch(':id')
+	@UseGuards(IsOwnerGuard)
+	@Resource('pet')
 	@ApiConsumes('multipart/form-data')
 	@UseInterceptors(FileInterceptor('profileImg'))
 	@Roles(Role.Admin, Role.User)
@@ -83,7 +96,9 @@ export class PetController {
 	}
 
 	@Delete(':id')
-	@Roles(Role.Admin)
+	@UseGuards(IsOwnerGuard)
+	@Resource('pet')
+	@Roles(Role.Admin, Role.User)
 	@ApiResponse({ type: PetDto })
 	async remove(@Param('id') id: string) {
 		return this.petService.remove(+id);
