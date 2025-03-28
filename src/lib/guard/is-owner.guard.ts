@@ -24,6 +24,11 @@ export class IsOwnerGuard implements CanActivate {
 			throw new ForbiddenException('Usuario no autenticado');
 		}
 
+		const userRoles = Array.isArray(user.roles) ? user.roles : [];
+		if (userRoles.includes('admin')) {
+			return true;
+		}
+
 		const model = this.reflector.get<string>(
 			RESOURCE_KEY,
 			context.getHandler(),
@@ -42,11 +47,6 @@ export class IsOwnerGuard implements CanActivate {
 		resourceId = Number(resourceId);
 		if (isNaN(resourceId)) {
 			throw new ForbiddenException('ID del recurso inválido');
-		}
-
-		const userRoles = Array.isArray(user.roles) ? user.roles : [];
-		if (userRoles.includes('admin')) {
-			return true;
 		}
 
 		const resource = await this.prisma[model].findFirst({
