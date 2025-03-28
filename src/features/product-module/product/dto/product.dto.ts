@@ -6,7 +6,7 @@ import { IsEnum, IsInt, IsNumber, IsString, IsArray } from 'class-validator';
 export interface ProductEntity extends Product {
 	price: ProductPrice;
 	image: Image | null;
-	tags: (ProductTag & { tag: Tag })[];
+	tags?: (ProductTag & { tag: Tag })[];
 }
 
 export class ProductDto {
@@ -25,7 +25,7 @@ export class ProductDto {
 			: undefined;
 		this.category = data.category;
 		this.price = data.price.amount.toNumber();
-		this.tags = data.tags.map(t => t.tag.name);
+		this.tags = data.tags ? data.tags.map(t => t.tag.name) : [];
 		this.createdAt = data.createdAt;
 		this.updatedAt = data.updatedAt;
 		this.deletedAt = data.deletedAt;

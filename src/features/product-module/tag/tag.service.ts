@@ -34,19 +34,20 @@ export class TagService {
 
     async getOrCreateTags(tagNames: string[]) {
         if (!tagNames.length) return [];
-        const tags = tagNames.map(name => name.toLowerCase());
         const existingTags = await this.prisma.tag.findMany({
-            where: { name: { in: tags } }
+            where: { name: { in: tagNames, },},
         });
         const existingTagNames = existingTags.map(tag => tag.name);
-        const newTagNames = tags.filter(tag => !existingTagNames.includes(tag));
+        const newTagNames = tagNames.filter(tag => !existingTagNames.includes(tag));
         if (newTagNames.length > 0) {
             await this.prisma.tag.createMany({
                 data: newTagNames.map(name => ({ name })),
                 skipDuplicates: true,
             });
         }
-        return existingTags.map(tag => tag.id);
+        const allTags = await this.prisma.tag.findMany({
+            where: { name: { in: tagNames, },},
+        });
+        return allTags.map(tag => tag.id);
     }
-
 }
