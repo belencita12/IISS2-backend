@@ -6,7 +6,7 @@ import { TagDto } from './dto/tag.dto';
 
 @Injectable()
 export class TagService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(private prisma: PrismaService) { }
 
     async create(dto: CreateTagDto) {
         const tag = await this.prisma.tag.create({ data: dto });
@@ -15,43 +15,38 @@ export class TagService {
 
     async findOne(id: number) {
         const tag = await this.prisma.tag.findUnique({ where: { id } });
-        if (!tag) throw new NotFoundException('Etiqueta no encontrada');
+        if (!tag) throw new NotFoundException('Tag no encontrada');
         return new TagDto(tag);
     }
 
     async update(id: number, dto: UpdateTagDto) {
         const exists = await this.prisma.tag.isExists({ id });
-        if (!exists) throw new NotFoundException('Proveedor no encontrado');
-
+        if (!exists) throw new NotFoundException('Tag no encontrada');
         const updated = await this.prisma.tag.update({ where: { id }, data: dto });
         return new TagDto(updated);
     }
 
     async remove(id: number) {
-        const exists = await this.prisma.tag.findUnique({ where: { id } });
-        if (!exists) throw new NotFoundException('Etiqueta no encontrada');
-
+        const exists = await this.prisma.tag.isExists({ id });
+        if (!exists) throw new NotFoundException('Tag no encontrado');
         return await this.prisma.tag.delete({ where: { id } });
     }
 
-    // Asignar Tag a Producto
-    async assignTagToProduct(productId: number, tagId: number) {
-        return this.prisma.productTag.create({
-            data: { productId, tagId },
+    async getOrCreateTags(tagNames: string[]) {
+        if (!tagNames.length) return [];
+        const tags = tagNames.map(name => name.toLowerCase());
+        const existingTags = await this.prisma.tag.findMany({
+            where: { name: { in: tags } }
         });
-    }
-    // Remover Tag de un Producto
-    async removeTagFromProduct(productId: number, tagId: number) {
-        return this.prisma.productTag.deleteMany({
-            where: { productId, tagId },
-        });
+        const existingTagNames = existingTags.map(tag => tag.name);
+        const newTagNames = tags.filter(tag => !existingTagNames.includes(tag));
+        if (newTagNames.length > 0) {
+            await this.prisma.tag.createMany({
+                data: newTagNames.map(name => ({ name })),
+                skipDuplicates: true,
+            });
+        }
+        return existingTags.map(tag => tag.id);
     }
 
-    // Obtener Tags de un Producto
-    async getTagsByProduct(productId: number) {
-        return this.prisma.productTag.findMany({
-            where: { productId },
-            include: { tag: true },
-        });
-    }
 }

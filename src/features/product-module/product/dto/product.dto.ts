@@ -1,11 +1,12 @@
 import { ImageDto } from '@lib/commons/image.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Category, Image, Product, ProductPrice } from '@prisma/client';
-import { IsEnum, IsInt, IsNumber, IsString } from 'class-validator';
+import { Category, Image, Product, ProductPrice, ProductTag, Tag} from '@prisma/client';
+import { IsEnum, IsInt, IsNumber, IsString, IsArray } from 'class-validator';
 
 interface ProductWithImageAndPrice extends Product {
 	price: ProductPrice;
 	image: Image | null;
+	tags: (ProductTag & { tag: Tag })[];
 }
 
 export class ProductDto {
@@ -24,6 +25,7 @@ export class ProductDto {
 			: undefined;
 		this.category = data.category;
 		this.price = data.price.amount.toNumber();
+		this.tags = data.tags.map(t => t.tag.name);
 		this.createdAt = data.createdAt;
 		this.updatedAt = data.updatedAt;
 		this.deletedAt = data.deletedAt;
@@ -59,6 +61,10 @@ export class ProductDto {
 
 	@ApiPropertyOptional({ type: ImageDto })
 	image?: ImageDto;
+
+	@IsArray()
+	@ApiPropertyOptional({ type: [String] })
+	tags: string[];
 
 	@ApiProperty()
 	createdAt: Date;
