@@ -13,7 +13,7 @@ export class ProductService {
 	constructor(
 		private readonly db: PrismaService,
 		private readonly imgService: ImageService,
-		private readonly tagService: TagService,
+		private readonly tagService: TagService
 	) { }
 
 	async create(dto: CreateProductDto) {
@@ -21,7 +21,7 @@ export class ProductService {
 		const prodImg = productImg
 			? await this.imgService.create(productImg)
 			: null;
-		const tagIds = await this.tagService.getOrCreateTags(tags || []);
+		const tagsData = await this.tagService.processTags(tags || []);
 		const prod = await this.db.product.create({
 			data: {
 				...rest,
@@ -33,7 +33,7 @@ export class ProductService {
 						amount: new Decimal(price),
 					},
 				},
-				tags: { create: tagIds.map(tagId => ({ tagId })) },
+				tags: tagsData
 			},
 			include: {
 				price: true,
@@ -58,7 +58,7 @@ export class ProductService {
 			this.db.product.findMany({
 				...this.db.paginate(query),
 				where,
-				include: { price: true, image: true , tags: { include: { tag: true } },},
+				include: { price: true, image: true, tags: { include: { tag: true } }, },
 			}),
 			this.db.product.count({ where }),
 		]);
@@ -86,7 +86,7 @@ export class ProductService {
 	async update(id: number, dto: CreateProductDto) {
 		const prodToUpd = await this.db.product.findUnique({
 			where: { id },
-			include: { image: true, price: true, tags: true },
+			include: { image: true, price: true, tags: { include: { tag: true } } },
 		});
 
 		if (!prodToUpd) throw new HttpException('Producto no encontrado', 404);
@@ -95,11 +95,11 @@ export class ProductService {
 		const prodImg = await this.imgService.upsert(prodToUpd.image, productImg);
 		const isSamePrice = prodToUpd.price.amount.eq(price);
 
-		const newTagIds = await this.tagService.getOrCreateTags(tags || []);
-		const existingTagIds = prodToUpd.tags.map(t => t.tagId);
-		// Identificar etiquetas a eliminar y agregar
-		const tagsToDelete = existingTagIds.filter(tagId => !newTagIds.includes(tagId));
-		const tagsToAdd = newTagIds.filter(tagId => !existingTagIds.includes(tagId));
+		const prevTags = prodToUpd.tags.map(t => ({ id: t.tagId, name: t.tag?.name ?? '', }));
+		const newTags = (dto.tags ?? []).filter(newTag => !prevTags.some(tag => tag.name === newTag));
+		const tagsToRemove = prevTags.filter(tag => !(dto.tags ?? []).includes(tag.name)).map(tag => tag.id);
+
+		const updatedTags = await this.tagService.processTags(newTags);
 
 		const prod = await this.db.product.update({
 			where: { id },
@@ -110,8 +110,8 @@ export class ProductService {
 					? { connect: { id: prodToUpd.price.id } }
 					: { create: { amount: new Decimal(price) } },
 				tags: {
-					deleteMany: { tagId: { in: tagsToDelete } },
-					create: tagsToAdd.map(tagId => ({ tagId })),
+					deleteMany: { tagId: { in: tagsToRemove } },
+					...updatedTags,
 				},
 			},
 			include: {
