@@ -16,7 +16,6 @@ import { CreateVaccineDto } from './dto/create-vaccine.dto';
 import { UpdateVaccineDto } from './dto/update-vaccine.dto';
 import {
 	ApiBearerAuth,
-	ApiBody,
 	ApiConsumes,
 	ApiResponse,
 	ApiTags,
@@ -42,38 +41,11 @@ export class VaccineController {
 	@ApiConsumes('multipart/form-data')
 	@UseInterceptors(FileInterceptor('productImg'))
 	@ApiResponse({ type: VaccineDto })
-	@ApiBody({
-		schema: {
-			type: 'object',
-			properties: {
-				speciesId: { type: 'number' },
-				name: { type: 'string' },
-				manufacturerId: { type: 'number' },
-				cost: { type: 'number' },
-				iva: { type: 'number' },
-				price: { type: 'number' },
-				productImg: { type: 'string', format: 'binary' },
-			},
-		},
-	})
 	async create(
-		@Body() body: any,
+		@Body() createVaccineDto: CreateVaccineDto,
 		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
-		const createVaccineDto: CreateVaccineDto = {
-			speciesId: Number(body.speciesId),
-			name: body.name,
-			manufacturerId: Number(body.manufacturerId),
-			productData: {
-				name: body.name,
-				cost: Number(body.cost),
-				category: body.category,
-				iva: Number(body.iva),
-				price: Number(body.price),
-				productImg: img,
-			},
-		};
-
+		createVaccineDto.productImg = img;
 		return this.vaccineService.create(createVaccineDto);
 	}
 
@@ -99,41 +71,12 @@ export class VaccineController {
 	@ApiConsumes('multipart/form-data')
 	@UseInterceptors(FileInterceptor('productImg'))
 	@ApiResponse({ type: VaccineDto })
-	@ApiBody({
-		schema: {
-			type: 'object',
-			properties: {
-				speciesId: { type: 'number' },
-				name: { type: 'string' },
-				manufacturerId: { type: 'number' },
-				cost: { type: 'number' },
-				iva: { type: 'number' },
-				price: { type: 'number' },
-				productImg: { type: 'string', format: 'binary' },
-			},
-		},
-	})
 	async update(
 		@Param('id') id: string,
-		@Body() body: any,
+		@Body() updateVaccineDto: UpdateVaccineDto,
 		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
-		const updateVaccineDto: UpdateVaccineDto = {
-			speciesId: body.speciesId ? Number(body.speciesId) : undefined,
-			name: body.name,
-			manufacturerId: body.manufacturerId
-				? Number(body.manufacturerId)
-				: undefined,
-			productData: {
-				name: body.name,
-				cost: body.cost !== undefined ? Number(body.cost) : 0,
-				category: body.category,
-				iva: body.iva !== undefined ? Number(body.iva) : 0.1,
-				price: body.price !== undefined ? Number(body.price) : 0,
-				productImg: img,
-			},
-		};
-
+		updateVaccineDto.productImg = img;
 		return this.vaccineService.update(+id, updateVaccineDto);
 	}
 
