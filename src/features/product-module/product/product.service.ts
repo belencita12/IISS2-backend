@@ -95,9 +95,9 @@ export class ProductService {
 		const prodImg = await this.imgService.upsert(prodToUpd.image, productImg);
 		const isSamePrice = prodToUpd.price.amount.eq(price);
 
-		const prevTags = prodToUpd.tags.map(t => ({ id: t.tagId, name: t.tag?.name ?? '', }));
-		const newTags = (dto.tags ?? []).filter(newTag => !prevTags.some(tag => tag.name === newTag));
-		const tagsToRemove = prevTags.filter(tag => !(dto.tags ?? []).includes(tag.name)).map(tag => tag.id);
+		const prevTags = prodToUpd.tags;
+		const newTags = (dto.tags ?? []).filter(newTag => !prevTags.some(tag => tag.tag.name === newTag));
+		const tagsToRemove = prevTags.filter(tag => !(dto.tags ?? []).includes(tag.tag.name)).map(tag => tag.tagId);
 
 		const updatedTags = await this.tagService.processTags(newTags);
 
