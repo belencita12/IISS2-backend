@@ -3,14 +3,14 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Category, Image, Product, ProductPrice, ProductTag, Tag} from '@prisma/client';
 import { IsEnum, IsInt, IsNumber, IsString, IsArray } from 'class-validator';
 
-interface ProductWithImageAndPrice extends Product {
+export interface ProductEntity extends Product {
 	price: ProductPrice;
 	image: Image | null;
 	tags: (ProductTag & { tag: Tag })[];
 }
 
 export class ProductDto {
-	constructor(data: ProductWithImageAndPrice) {
+	constructor(data: ProductEntity) {
 		this.name = data.name;
 		this.id = data.id;
 		this.code = data.code;
