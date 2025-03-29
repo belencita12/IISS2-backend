@@ -8,6 +8,7 @@ import {
 	IsOptional,
 	IsPositive,
 	IsString,
+	IsArray
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -42,4 +43,9 @@ export class CreateProductDto {
 	@IsPositive()
 	@ApiProperty({ example: 40000 })
 	price: number;
+
+	@IsArray()
+	@Transform(({ value }) => Array.isArray(value) ? value : value.split(',').map(tag => tag.trim()))
+	@ApiPropertyOptional({ type: [String] })
+	tags?: string[];
 }

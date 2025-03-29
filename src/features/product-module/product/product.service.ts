@@ -6,19 +6,22 @@ import { ProductQueryDto } from './dto/product-query.dto';
 import { Prisma } from '@prisma/client';
 import { ImageService } from '@features/media-module/image/image.service';
 import { PrismaService } from '@features/prisma/prisma.service';
+import { TagService } from '../tag/tag.service';
 
 @Injectable()
 export class ProductService {
 	constructor(
 		private readonly db: PrismaService,
 		private readonly imgService: ImageService,
-	) {}
+		private readonly tagService: TagService
+	) { }
 
 	async create(dto: CreateProductDto) {
-		const { price, productImg, ...rest } = dto;
+		const { price, productImg, tags, ...rest } = dto;
 		const prodImg = productImg
 			? await this.imgService.create(productImg)
 			: null;
+		const tagsData = await this.tagService.processTags(tags || []);
 		const prod = await this.db.product.create({
 			data: {
 				...rest,
@@ -30,10 +33,12 @@ export class ProductService {
 						amount: new Decimal(price),
 					},
 				},
+				tags: tagsData
 			},
 			include: {
 				price: true,
 				image: true,
+				tags: { include: { tag: true } }
 			},
 		});
 		return new ProductDto(prod);
@@ -53,7 +58,7 @@ export class ProductService {
 			this.db.product.findMany({
 				...this.db.paginate(query),
 				where,
-				include: { price: true, image: true },
+				include: { price: true, image: true, tags: { include: { tag: true } }, },
 			}),
 			this.db.product.count({ where }),
 		]);
@@ -71,6 +76,7 @@ export class ProductService {
 			include: {
 				price: true,
 				image: true,
+				tags: { include: { tag: true } }
 			},
 		});
 		if (!prod) throw new HttpException('Producto no encontrado', 404);
@@ -80,14 +86,20 @@ export class ProductService {
 	async update(id: number, dto: CreateProductDto) {
 		const prodToUpd = await this.db.product.findUnique({
 			where: { id },
-			include: { image: true, price: true },
+			include: { image: true, price: true, tags: { include: { tag: true } } },
 		});
 
 		if (!prodToUpd) throw new HttpException('Producto no encontrado', 404);
 
-		const { price, productImg, ...rest } = dto;
+		const { price, productImg, tags, ...rest } = dto;
 		const prodImg = await this.imgService.upsert(prodToUpd.image, productImg);
 		const isSamePrice = prodToUpd.price.amount.eq(price);
+
+		const prevTags = prodToUpd.tags;
+		const newTags = (dto.tags ?? []).filter(newTag => !prevTags.some(tag => tag.tag.name === newTag));
+		const tagsToRemove = prevTags.filter(tag => !(dto.tags ?? []).includes(tag.tag.name)).map(tag => tag.tagId);
+
+		const updatedTags = await this.tagService.processTags(newTags);
 
 		const prod = await this.db.product.update({
 			where: { id },
@@ -97,10 +109,15 @@ export class ProductService {
 				price: isSamePrice
 					? { connect: { id: prodToUpd.price.id } }
 					: { create: { amount: new Decimal(price) } },
+				tags: {
+					deleteMany: { tagId: { in: tagsToRemove } },
+					...updatedTags,
+				},
 			},
 			include: {
 				price: true,
 				image: true,
+				tags: { include: { tag: true } }
 			},
 		});
 		if (!prod) throw new HttpException('Error al actualizar el producto', 500);
@@ -118,4 +135,5 @@ export class ProductService {
 		const nowString = Date.now().toString();
 		return `prod-${nowString}-${randomNumber}`;
 	}
+
 }

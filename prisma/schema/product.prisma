@@ -12,6 +12,7 @@ model Product {
     vaccine   Vaccine?
     StockDetails StockDetails[]
     movementDetails MovementDetail[]
+    tags  ProductTag[]
     
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
