@@ -53,7 +53,7 @@ export class ProductService {
 			category: query.category,
 			cost: { gte: query.minCost, lte: query.maxCost },
 			price: { amount: { gte: query.minPrice, lte: query.maxPrice } },
-		};
+			tags: query.tags ? {some: {tag: {name: { in: query.tags }}}} : undefined,};
 		const [data, total] = await Promise.all([
 			this.db.product.findMany({
 				...this.db.paginate(query),
