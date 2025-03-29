@@ -12,12 +12,9 @@ export class VaccineService {
 		private readonly prisma: PrismaService,
 		private readonly productService: ProductService,
 	) {}
-	async create(createVaccineDto: CreateVaccineDto, img?: Express.Multer.File) {
-		if (img && createVaccineDto.productData) {
-			createVaccineDto.productData.productImg = img;
-		}
-
-		const { speciesId, manufacturerId, productData, ...dto } = createVaccineDto;
+	async create(createVaccineDto: CreateVaccineDto) {
+		const { speciesId, manufacturerId, productImg, cost, iva, price, ...dto } =
+			createVaccineDto;
 
 		const [species, manufacturer] = await Promise.all([
 			this.prisma.species.findUnique({ where: { id: speciesId } }),
@@ -31,12 +28,12 @@ export class VaccineService {
 		}
 
 		const newProduct = await this.productService.create({
-			name: createVaccineDto.name,
-			category: productData?.category ?? 'VACCINE',
-			cost: productData?.cost ?? 0,
-			iva: productData?.iva ?? 0.1,
-			price: productData?.price ?? 0,
-			productImg: productData?.productImg,
+			name: dto.name,
+			category: 'VACCINE',
+			cost,
+			iva,
+			price,
+			productImg,
 		});
 
 		return this.prisma.vaccine.create({
@@ -97,19 +94,38 @@ export class VaccineService {
 
 		if (!existingVaccine) throw new NotFoundException('Vacuna no encontrada.');
 
-		const { productData, ...vaccineUpdateData } = updateVaccineDto;
+		const {
+			productImg,
+			speciesId,
+			manufacturerId,
+			cost,
+			iva,
+			price,
+			...vaccineUpdateData
+		} = updateVaccineDto;
 
-		if (productData)
+		if (productImg || updateVaccineDto.name || cost || iva || price) {
 			await this.productService.update(existingVaccine.product.id, {
-				...productData,
+				productImg,
+				name: updateVaccineDto.name ?? existingVaccine.product.name,
+				cost: cost ?? existingVaccine.product.cost.toNumber(),
+				category: 'VACCINE',
+				iva: iva ?? existingVaccine.product.iva,
+				price: price ?? existingVaccine.product.priceId,
 			});
+		}
 
-		const updatedVaccine = await this.prisma.vaccine.update({
+		return this.prisma.vaccine.update({
 			where: { id },
-			data: vaccineUpdateData,
+			data: {
+				...vaccineUpdateData,
+				species: speciesId ? { connect: { id: speciesId } } : undefined,
+				manufacturer: manufacturerId
+					? { connect: { id: manufacturerId } }
+					: undefined,
+				product: { connect: { id: existingVaccine.product.id } },
+			},
 		});
-
-		return updatedVaccine;
 	}
 
 	async remove(id: number) {
