@@ -124,7 +124,16 @@ export class EmployeeService {
 		const where: Prisma.EmployeeWhereInput = {
 			...baseWhere,
 			...this.getWhereByQuerySearch(dto.query),
-			positionId: dto.positionId,
+			position: {
+				id: dto.positionId,
+				name: dto.positionName ? { contains: dto.positionName } : undefined,
+			},
+			user: {
+				email: dto.email ? { contains: dto.email } : undefined,
+				fullName: dto.fullName ? { contains: dto.fullName } : undefined,
+				adress: dto.adress ? { contains: dto.adress } : undefined,
+				ruc: dto.ruc ? { contains: dto.ruc } : undefined,
+			},
 		};
 		const [data, total] = await Promise.all([
 			this.db.employee.findMany({

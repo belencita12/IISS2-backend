@@ -110,6 +110,16 @@ export class ClientService {
 			...baseWhere,
 			...this.filterQueryString(dto.query),
 			pets: petFilter,
+			user: {
+				fullName: dto.fullName ? { contains: dto.fullName } : undefined,
+				username: dto.username ? { contains: dto.username } : undefined,
+				phoneNumber: dto.phoneNumber
+					? { contains: dto.phoneNumber }
+					: undefined,
+				adress: dto.address ? { contains: dto.address } : undefined,
+				email: dto.email ? { contains: dto.email } : undefined,
+				ruc: dto.ruc ? { contains: dto.ruc } : undefined,
+			},
 		};
 
 		const [data, total] = await Promise.all([
