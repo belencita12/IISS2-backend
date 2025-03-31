@@ -126,13 +126,9 @@ export class EmployeeService {
 			...this.getWhereByQuerySearch(dto.query),
 			position: {
 				id: dto.positionId,
-				name: dto.positionName ? { contains: dto.positionName } : undefined,
-			},
-			user: {
-				email: dto.email ? { contains: dto.email } : undefined,
-				fullName: dto.fullName ? { contains: dto.fullName } : undefined,
-				adress: dto.adress ? { contains: dto.adress } : undefined,
-				ruc: dto.ruc ? { contains: dto.ruc } : undefined,
+				name: dto.positionName
+					? { contains: dto.positionName, mode: 'insensitive' }
+					: undefined,
 			},
 		};
 		const [data, total] = await Promise.all([
@@ -164,11 +160,17 @@ export class EmployeeService {
 			};
 		} else if (onlyNumbers.test(searchQuery)) {
 			querySearchWhere.user = {
-				ruc: { contains: searchQuery, mode: 'insensitive' },
+				OR: [
+					{ ruc: { contains: searchQuery, mode: 'insensitive' } },
+					{ phoneNumber: { contains: searchQuery, mode: 'insensitive' } },
+				],
 			};
 		} else {
 			querySearchWhere.user = {
-				fullName: { contains: searchQuery, mode: 'insensitive' },
+				OR: [
+					{ fullName: { contains: searchQuery, mode: 'insensitive' } },
+					{ adress: { contains: searchQuery, mode: 'insensitive' } },
+				],
 			};
 		}
 		return querySearchWhere;

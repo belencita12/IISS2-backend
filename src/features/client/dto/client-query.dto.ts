@@ -21,34 +21,4 @@ export class ClientQueryDto extends PaginationQueryDto {
 	@Type(() => Number)
 	@IsId()
 	petRaceId?: number;
-
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional()
-	address?: string;
-
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional()
-	phoneNumber?: string;
-
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional()
-	fullName?: string;
-
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional()
-	username?: string;
-
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional()
-	email?: string;
-
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional()
-	ruc?: string;
 }

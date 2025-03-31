@@ -20,24 +20,4 @@ export class EmployeeQueryDto extends PaginationQueryDto {
 	@IsString()
 	@ApiPropertyOptional()
 	positionName?: string;
-
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional()
-	email?: string;
-
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional()
-	fullName?: string;
-
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional()
-	adress?: string;
-
-	@IsOptional()
-	@IsString()
-	@ApiPropertyOptional()
-	ruc?: string;
 }
