@@ -35,7 +35,7 @@ export class TagService {
 	async remove(id: number) {
 		const exists = await this.db.tag.isExists({ id });
 		if (!exists) throw new NotFoundException('Tag no encontrado');
-		return await this.db.tag.delete({ where: { id } });
+		return await this.db.tag.softDelete({ id });
 	}
 
 	connectTags(tags?: string[]) {
