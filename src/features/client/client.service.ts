@@ -105,7 +105,6 @@ export class ClientService {
 						},
 					}
 				: undefined;
-
 		const where: Prisma.ClientWhereInput = {
 			...baseWhere,
 			...this.filterQueryString(dto.query),
@@ -138,11 +137,17 @@ export class ClientService {
 			};
 		} else if (onlyNumbers.test(searchQuery)) {
 			querySearchWhere.user = {
-				ruc: { contains: searchQuery, mode: 'insensitive' },
+				OR: [
+					{ ruc: { contains: searchQuery, mode: 'insensitive' } },
+					{ phoneNumber: { contains: searchQuery, mode: 'insensitive' } },
+				],
 			};
 		} else {
 			querySearchWhere.user = {
-				fullName: { contains: searchQuery, mode: 'insensitive' },
+				OR: [
+					{ fullName: { contains: searchQuery, mode: 'insensitive' } },
+					{ adress: { contains: searchQuery, mode: 'insensitive' } },
+				],
 			};
 		}
 		return querySearchWhere;

@@ -29,7 +29,7 @@ import { RolesGuard } from '@lib/guard/role.guard';
 @ApiTags('movement')
 @ApiBearerAuth('access-token')
 @UseGuards(RolesGuard)
-@Roles(Role.Admin)
+@Roles(Role.Admin, Role.Employee)
 export class MovementController {
 	constructor(private readonly movementService: MovementService) {}
 

@@ -28,6 +28,7 @@ import { configModuleOptions } from '@config/config-module.config';
 import { ClientModule } from './client/client.module';
 import { MediaModule } from './media-module/media/media.module';
 import { ProviderModule } from './provider/provider.module';
+import { TagModule } from './product-module/tag/tag.module';
 
 @Module({
 	imports: [
@@ -59,6 +60,7 @@ import { ProviderModule } from './provider/provider.module';
 		ClientModule,
 		MediaModule,
 		ProviderModule,
+		TagModule,
 	],
 })
 export class AppModule {}

@@ -1,7 +1,6 @@
-import { CreateProductDto } from '@features/product-module/product/dto/create-product.dto';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
-import { IsDefined, IsNumber, IsString, ValidateNested } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { IsDefined, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateVaccineDto {
 	@ApiProperty({ example: 1, required: true })
@@ -21,19 +20,22 @@ export class CreateVaccineDto {
 	@IsDefined()
 	manufacturerId: number;
 
-	@ApiProperty({
-		type: CreateProductDto,
-		example: {
-			name: 'Wiskas Cachorros 500gr',
-			cost: 10000,
-			category: 'VACCINE',
-			iva: 0.1,
-			price: 40000,
-		},
-		required: true,
-	})
-	@IsDefined()
-	@ValidateNested()
-	@Type(() => CreateProductDto)
-	productData: CreateProductDto;
+	@ApiProperty({ example: 10000 })
+	@Transform(({ value }) => Number(value))
+	@IsNumber()
+	cost: number;
+
+	@ApiProperty({ example: 0.1 })
+	@Transform(({ value }) => Number(value))
+	@IsNumber()
+	iva: number;
+
+	@ApiProperty({ example: 40000 })
+	@Transform(({ value }) => Number(value))
+	@IsNumber()
+	price: number;
+
+	@ApiPropertyOptional({ type: 'string', format: 'binary' })
+	@IsOptional()
+	productImg?: Express.Multer.File;
 }

@@ -23,7 +23,7 @@ export class CreateMovementDto {
 	@IsNumber()
 	@ApiProperty({
 		description: 'ID del encargado del movimiento.',
-		example: 5,
+		example: 2,
 	})
 	managerId: number;
 
@@ -39,7 +39,7 @@ export class CreateMovementDto {
 		description: 'Fecha del movimiento',
 		example: '2025-03-19T14:00:00.000Z',
 	})
-	dateMovement?: Date;
+	dateMovement: Date;
 
 	@IsNumber()
 	@IsOptional()

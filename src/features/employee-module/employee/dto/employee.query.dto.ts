@@ -15,4 +15,9 @@ export class EmployeeQueryDto extends PaginationQueryDto {
 	@IsPositive()
 	@ApiPropertyOptional()
 	positionId?: number;
+
+	@IsOptional()
+	@IsString()
+	@ApiPropertyOptional()
+	positionName?: string;
 }
