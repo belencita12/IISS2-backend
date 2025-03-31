@@ -3,7 +3,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { ProductDto } from './dto/product.dto';
 import Decimal from 'decimal.js';
 import { ProductQueryDto } from './dto/product-query.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, ProductTag, Tag } from '@prisma/client';
 import { ImageService } from '@features/media-module/image/image.service';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { TagService } from '../tag/tag.service';
@@ -13,15 +13,14 @@ export class ProductService {
 	constructor(
 		private readonly db: PrismaService,
 		private readonly imgService: ImageService,
-		private readonly tagService: TagService
-	) { }
+		private readonly tagService: TagService,
+	) {}
 
 	async create(dto: CreateProductDto) {
 		const { price, productImg, tags, ...rest } = dto;
 		const prodImg = productImg
 			? await this.imgService.create(productImg)
 			: null;
-		const tagsData = await this.tagService.processTags(tags || []);
 		const prod = await this.db.product.create({
 			data: {
 				...rest,
@@ -33,12 +32,12 @@ export class ProductService {
 						amount: new Decimal(price),
 					},
 				},
-				tags: tagsData
+				tags: this.tagService.connectTags(tags),
 			},
 			include: {
 				price: true,
 				image: true,
-				tags: { include: { tag: true } }
+				tags: { include: { tag: true } },
 			},
 		});
 		return new ProductDto(prod);
@@ -53,12 +52,15 @@ export class ProductService {
 			category: query.category,
 			cost: { gte: query.minCost, lte: query.maxCost },
 			price: { amount: { gte: query.minPrice, lte: query.maxPrice } },
-			tags: query.tags ? {some: {tag: {name: { in: query.tags }}}} : undefined,};
+			tags: query.tags
+				? { some: { tag: { name: { in: query.tags } } } }
+				: undefined,
+		};
 		const [data, total] = await Promise.all([
 			this.db.product.findMany({
 				...this.db.paginate(query),
 				where,
-				include: { price: true, image: true, tags: { include: { tag: true } }, },
+				include: { price: true, image: true, tags: { include: { tag: true } } },
 			}),
 			this.db.product.count({ where }),
 		]);
@@ -76,7 +78,7 @@ export class ProductService {
 			include: {
 				price: true,
 				image: true,
-				tags: { include: { tag: true } }
+				tags: { include: { tag: true } },
 			},
 		});
 		if (!prod) throw new HttpException('Producto no encontrado', 404);
@@ -91,33 +93,26 @@ export class ProductService {
 
 		if (!prodToUpd) throw new HttpException('Producto no encontrado', 404);
 
-		const { price, productImg, tags, ...rest } = dto;
+		const { price, productImg, tags = [], ...rest } = dto;
 		const prodImg = await this.imgService.upsert(prodToUpd.image, productImg);
 		const isSamePrice = prodToUpd.price.amount.eq(price);
 
 		const prevTags = prodToUpd.tags;
-		const newTags = (dto.tags ?? []).filter(newTag => !prevTags.some(tag => tag.tag.name === newTag));
-		const tagsToRemove = prevTags.filter(tag => !(dto.tags ?? []).includes(tag.tag.name)).map(tag => tag.tagId);
-
-		const updatedTags = await this.tagService.processTags(newTags);
 
 		const prod = await this.db.product.update({
 			where: { id },
 			data: {
 				...rest,
+				tags: this.processTagsUpdate(prevTags, tags),
 				image: prodImg ? { connect: { id: prodImg.id } } : undefined,
 				price: isSamePrice
 					? { connect: { id: prodToUpd.price.id } }
 					: { create: { amount: new Decimal(price) } },
-				tags: {
-					deleteMany: { tagId: { in: tagsToRemove } },
-					...updatedTags,
-				},
 			},
 			include: {
 				price: true,
 				image: true,
-				tags: { include: { tag: true } }
+				tags: { include: { tag: true } },
 			},
 		});
 		if (!prod) throw new HttpException('Error al actualizar el producto', 500);
@@ -136,4 +131,23 @@ export class ProductService {
 		return `prod-${nowString}-${randomNumber}`;
 	}
 
+	private processTagsUpdate(
+		prevTags: (ProductTag & { tag: Tag })[],
+		dtoTags: string[],
+	) {
+		const newTags = dtoTags.filter(
+			(newTag) => !prevTags.some((tag) => tag.tag.name === newTag),
+		);
+
+		const tagToDel = prevTags
+			.filter((tag) => !dtoTags.includes(tag.tag.name))
+			.map((t) => t.tagId);
+
+		return {
+			create: newTags.map((t) => ({
+				tag: { connect: { name: t } },
+			})),
+			deleteMany: { tagId: { in: tagToDel } },
+		};
+	}
 }
