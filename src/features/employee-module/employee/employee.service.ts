@@ -124,7 +124,12 @@ export class EmployeeService {
 		const where: Prisma.EmployeeWhereInput = {
 			...baseWhere,
 			...this.getWhereByQuerySearch(dto.query),
-			positionId: dto.positionId,
+			position: {
+				id: dto.positionId,
+				name: dto.positionName
+					? { contains: dto.positionName, mode: 'insensitive' }
+					: undefined,
+			},
 		};
 		const [data, total] = await Promise.all([
 			this.db.employee.findMany({
@@ -155,11 +160,17 @@ export class EmployeeService {
 			};
 		} else if (onlyNumbers.test(searchQuery)) {
 			querySearchWhere.user = {
-				ruc: { contains: searchQuery, mode: 'insensitive' },
+				OR: [
+					{ ruc: { contains: searchQuery, mode: 'insensitive' } },
+					{ phoneNumber: { contains: searchQuery, mode: 'insensitive' } },
+				],
 			};
 		} else {
 			querySearchWhere.user = {
-				fullName: { contains: searchQuery, mode: 'insensitive' },
+				OR: [
+					{ fullName: { contains: searchQuery, mode: 'insensitive' } },
+					{ adress: { contains: searchQuery, mode: 'insensitive' } },
+				],
 			};
 		}
 		return querySearchWhere;

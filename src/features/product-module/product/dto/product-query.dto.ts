@@ -8,7 +8,9 @@ import {
 	IsOptional,
 	IsPositive,
 	IsString,
+	IsArray
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class ProductQueryDto extends PaginationQueryDto {
 	@ApiPropertyOptional()
@@ -53,4 +55,13 @@ export class ProductQueryDto extends PaginationQueryDto {
 	@IsNumber()
 	@IsPositive()
 	maxPrice?: number;
+
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsArray()
+	@IsString({ each: true })
+	@Transform(({ value }) => Array.isArray(value) ? value : value.split(',').map(tag => tag.trim()))
+	tags?: string[];
 }
+

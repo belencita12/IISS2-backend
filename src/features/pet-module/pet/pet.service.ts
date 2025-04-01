@@ -72,9 +72,9 @@ export class PetService {
 	}
 
 	async findOne(id: number, user: TokenPayload) {
-		const { roles, id: userId } = user;
+		const { roles, clientId } = user;
 		const pet = await this.prisma.pet.findUnique({
-			where: { id, clientId: roles.includes(Role.User) ? userId : undefined },
+			where: { id, clientId: roles.includes(Role.User) ? clientId : undefined },
 			include: { species: true, race: true, profileImg: true },
 		});
 		if (!pet) throw new NotFoundException(`Mascota no encontrada`);
