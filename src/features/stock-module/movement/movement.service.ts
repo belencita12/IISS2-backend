@@ -58,8 +58,8 @@ export class MovementService {
 				await this.stockValidation.updateStockQuantities(
 					prisma,
 					detail.productId,
-					dto.originStockId!,
-					dto.destinationStockId!,
+					dto.originStockId,
+					dto.destinationStockId,
 					detail.quantity,
 					dto.type,
 				);
