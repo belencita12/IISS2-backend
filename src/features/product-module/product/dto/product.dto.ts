@@ -32,6 +32,7 @@ export class ProductDto {
 			: undefined;
 		this.category = data.category;
 		this.price = data.price.amount.toNumber();
+		this.quantity = data.quantity;
 		this.tags = data.tags ? data.tags.map((t) => t.tag.name) : [];
 		this.createdAt = data.createdAt;
 		this.updatedAt = data.updatedAt;
@@ -68,6 +69,10 @@ export class ProductDto {
 
 	@ApiPropertyOptional({ type: ImageDto })
 	image?: ImageDto;
+
+	@IsNumber()
+	@ApiProperty({ example: 20 })
+	quantity: number;
 
 	@IsArray()
 	@ApiPropertyOptional({ type: [String] })
