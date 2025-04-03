@@ -1,30 +1,16 @@
 import { CreatePurchaseDetailDto } from '@features/purchase-module/purchase-detail/dto/create-purchase-detail.dto';
+import { IsId } from '@lib/decorators/is-id.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-	IsArray,
-	IsDate,
-	IsNotEmpty,
-	IsNumber,
-	IsOptional,
-	ValidateNested,
-} from 'class-validator';
+import { IsArray, IsDate, IsOptional, ValidateNested } from 'class-validator';
 
 export class CreatePurchaseDto {
-	@IsNotEmpty()
-	@IsNumber()
-	@ApiProperty({
-		description: 'ID del proveedor relacionado',
-		example: 2,
-	})
+	@IsId()
+	@ApiProperty({ example: 1 })
 	providerId: number;
 
-	@IsNotEmpty()
-	@IsNumber()
-	@ApiProperty({
-		description: 'ID del deposito relacionado.',
-		example: 3,
-	})
+	@IsId()
+	@ApiProperty({ example: 1 })
 	stockId: number;
 
 	@IsOptional()

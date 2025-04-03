@@ -28,9 +28,10 @@ export class PurchaseDetailService {
 		const unitCost = new Decimal(product.cost);
 		const quantityDec = new Decimal(quantity);
 		const ivaPercentage = new Decimal(product.iva);
-		const partialAmount = unitCost.mul(quantityDec);
+		const partialAmount = unitCost.mul(quantity);
 		const ivaAmount = partialAmount.mul(ivaPercentage);
 		const partialAmountVAT = partialAmount.add(ivaAmount);
+
 		const purchaseDetail = await this.prisma.purchaseDetail.create({
 			data: {
 				purchaseId,
@@ -50,6 +51,7 @@ export class PurchaseDetailService {
 				},
 			},
 		});
+
 		await this.stockValidation.updateStockQuantities(
 			this.prisma,
 			productId,
@@ -58,31 +60,14 @@ export class PurchaseDetailService {
 			quantity,
 			MovementType.INBOUND,
 		);
+
 		await this.updatePurchaseTotals(purchaseId);
+
 		return purchaseDetail;
 	}
 
 	async findAll(dto: PurchaseDetailQueryDto) {
-		const { baseWhere } = this.prisma.getBaseWhere(dto);
-		const where: Prisma.PurchaseDetailWhereInput = {
-			...baseWhere,
-			...(dto.purchaseId && { purchaseId: dto.purchaseId }),
-			...(dto.productId && { productId: dto.productId }),
-		};
-		const [data, total] = await Promise.all([
-			this.prisma.purchaseDetail.findMany({
-				include: { product: { include: { price: true, image: true } } },
-				...this.prisma.paginate(dto),
-				where,
-			}),
-			this.prisma.purchaseDetail.count({ where }),
-		]);
-		return this.prisma.getPagOutput({
-			page: dto.page,
-			size: dto.size,
-			total,
-			data: data.map((s) => new PurchaseDetailDto(s)),
-		});
+		return await this.filter(dto);
 	}
 
 	async findOne(id: number) {
@@ -100,6 +85,40 @@ export class PurchaseDetailService {
 		if (!exists) throw new NotFoundException('Detalle compra no encontrado');
 		await this.prisma.purchaseDetail.softDelete({ id });
 	}
+
+	private async filter(dto: PurchaseDetailQueryDto) {
+		const { baseWhere } = this.prisma.getBaseWhere(dto);
+		const where: Prisma.PurchaseDetailWhereInput = {
+			...baseWhere,
+			...(dto.purchaseId && { purchaseId: dto.purchaseId }),
+			...(dto.productName && {
+				product: { name: { contains: dto.productName, mode: 'insensitive' } },
+			}),
+		};
+		const [data, total] = await Promise.all([
+			this.prisma.purchaseDetail.findMany({
+				include: {
+					product: {
+						include: {
+							price: true,
+							image: true,
+							tags: { include: { tag: true } },
+						},
+					},
+				},
+				...this.prisma.paginate(dto),
+				where,
+			}),
+			this.prisma.purchaseDetail.count({ where }),
+		]);
+		return this.prisma.getPagOutput({
+			page: dto.page,
+			size: dto.size,
+			total,
+			data: data.map((s) => new PurchaseDetailDto(s)),
+		});
+	}
+
 	private async updatePurchaseTotals(purchaseId: number) {
 		const purchaseDetails = await this.prisma.purchaseDetail.findMany({
 			where: { purchaseId },

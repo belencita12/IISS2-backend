@@ -18,7 +18,7 @@ import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.de
 import { PurchaseQueryDto } from './dto/purchase-query.dto';
 
 @Controller('purchase')
-@ApiTags('purchase')
+@ApiTags('Purchase')
 @ApiBearerAuth('access-token')
 @UseGuards(RolesGuard)
 @Roles(Role.Admin)
