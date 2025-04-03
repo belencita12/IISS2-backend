@@ -79,7 +79,6 @@ export class MovementService {
 		const { baseWhere } = this.prisma.getBaseWhere(dto);
 		const where: Prisma.MovementWhereInput = {
 			...baseWhere,
-			managerId: dto.managerId,
 			type: dto.type,
 			dateMovement:
 				dto.fromDate && dto.toDate
@@ -89,10 +88,11 @@ export class MovementService {
 						: dto.toDate
 							? { lte: dto.toDate }
 							: undefined,
-			originStockId: dto.originStockId ? Number(dto.originStockId) : undefined,
-			destinationStockId: dto.destinationStockId
-				? Number(dto.destinationStockId)
+			manager: dto.managerRuc
+				? { user: { ruc: { contains: dto.managerRuc, mode: 'insensitive' } } }
 				: undefined,
+			originStockId: dto.originStockId,
+			destinationStockId: dto.destinationStockId,
 		};
 
 		const [data, total] = await Promise.all([
