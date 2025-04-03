@@ -29,6 +29,7 @@ import { ClientModule } from './client/client.module';
 import { MediaModule } from './media-module/media/media.module';
 import { ProviderModule } from './provider/provider.module';
 import { TagModule } from './product-module/tag/tag.module';
+import { MovementDetailModule } from './stock-module/movement-detail/movement-detail.module';
 
 @Module({
 	imports: [
@@ -61,6 +62,7 @@ import { TagModule } from './product-module/tag/tag.module';
 		MediaModule,
 		ProviderModule,
 		TagModule,
+		MovementDetailModule,
 	],
 })
 export class AppModule {}
