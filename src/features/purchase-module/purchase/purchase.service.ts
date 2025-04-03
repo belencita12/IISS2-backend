@@ -14,6 +14,8 @@ export class PurchaseService {
 		private readonly purchaseDetailService: PurchaseDetailService,
 	) {}
 	async create(dto: CreatePurchaseDto) {
+		const { details, ...data } = dto;
+
 		const isStock = await this.db.stock.isExists({ id: dto.stockId });
 		if (!isStock) throw new NotFoundException('Depósito no encontrado');
 
@@ -21,11 +23,11 @@ export class PurchaseService {
 		if (!isProvider) throw new NotFoundException('Proveedor no encontrado');
 
 		const { id: purchaseId } = await this.db.purchase.create({
-			data: { ...dto, ivaTotal: 0, total: 0 },
+			data: { ...data, ivaTotal: 0, total: 0 },
 			select: { id: true },
 		});
 
-		if (dto.details) await this.processPurchaseDetails(dto.details, purchaseId);
+		if (details) await this.processPurchaseDetails(details, purchaseId);
 
 		const purchase = await this.db.purchase.findUnique({
 			where: { id: purchaseId },
