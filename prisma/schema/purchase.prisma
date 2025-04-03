@@ -1,0 +1,17 @@
+model Purchase {
+    id         Int      @id @default(autoincrement())
+    providerId Int
+    stockId    Int
+    ivaTotal   Float
+    total      Decimal
+    date       DateTime
+
+    provider Provider         @relation(fields: [providerId], references: [id])
+    stock    Stock            @relation(fields: [stockId], references: [id])
+    
+    detail   PurchaseDetail[]
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?  
+}

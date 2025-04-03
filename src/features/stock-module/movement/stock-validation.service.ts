@@ -58,8 +58,8 @@ export class StockValidationService {
 	async updateStockQuantities(
 		prisma: any,
 		productId: number,
-		originStockId: number,
-		destinationStockId: number,
+		originStockId: number | undefined,
+		destinationStockId: number | undefined,
 		quantity: number,
 		type: MovementType,
 	) {
@@ -67,19 +67,19 @@ export class StockValidationService {
 			return this.handleInbound(
 				prisma,
 				productId,
-				destinationStockId,
+				destinationStockId!,
 				quantity,
 			);
 		if (type === MovementType.TRANSFER)
 			return this.handleTransfer(
 				prisma,
 				productId,
-				originStockId,
-				destinationStockId,
+				originStockId!,
+				destinationStockId!,
 				quantity,
 			);
 		if (type === MovementType.OUTBOUND)
-			return this.handleOutbound(prisma, productId, originStockId, quantity);
+			return this.handleOutbound(prisma, productId, originStockId!, quantity);
 	}
 
 	private async handleTransfer(
