@@ -34,12 +34,10 @@ export class CreateMovementDto {
 	})
 	type: MovementType;
 
+	@IsOptional()
 	@IsDateString()
-	@ApiPropertyOptional({
-		description: 'Fecha del movimiento',
-		example: '2025-03-19T14:00:00.000Z',
-	})
-	dateMovement: Date;
+	@ApiPropertyOptional({ example: '2025-03-19T14:00:00.000Z' })
+	dateMovement: Date = new Date();
 
 	@IsNumber()
 	@IsOptional()

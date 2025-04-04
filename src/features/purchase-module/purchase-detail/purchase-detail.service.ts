@@ -55,10 +55,10 @@ export class PurchaseDetailService {
 		await this.stockValidation.updateStockQuantities(
 			this.prisma,
 			productId,
-			undefined,
-			purchase.stockId,
 			quantity,
 			MovementType.INBOUND,
+			undefined,
+			purchase.stockId,
 		);
 
 		await this.updatePurchaseTotals(purchaseId);
