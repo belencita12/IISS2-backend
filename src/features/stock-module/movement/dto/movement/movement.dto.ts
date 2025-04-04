@@ -1,75 +1,69 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MovementType } from '@prisma/client';
-import { Expose, Type } from 'class-transformer';
-import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
+import { EmployeeDto } from '@features/employee-module/employee/dto/employee.dto';
+import { StockDto } from '@features/stock-module/stock/dto/stock.dto';
+import { ApiProperty, ApiPropertyOptional, PickType } from '@nestjs/swagger';
+import { Movement, MovementType, Stock, User } from '@prisma/client';
+import { IsNumber, IsString } from 'class-validator';
+
+export class MinStockDto extends PickType(StockDto, ['id', 'name']) {}
+
+export class MinEmployeeDto extends PickType(EmployeeDto, [
+	'fullName',
+	'id',
+	'ruc',
+]) {}
+
+export interface MovementEntity extends Movement {
+	originStock: Stock | null;
+	destinationStock: Stock | null;
+	manager: { user: User };
+}
 
 export class MovementDto {
 	@IsNumber()
-	@ApiProperty({ description: 'ID del movimiento', example: 1 })
+	@ApiProperty({ example: 1 })
 	id: number;
 
 	@IsString()
-	@ApiPropertyOptional({
-		description: 'Descripción del movimiento realizado.',
-		example: 'Transferencia de inventario entre almacenes',
-	})
+	@ApiPropertyOptional({ example: 'Transferencia de inventario' })
 	description?: string;
 
 	@IsNumber()
-	@ApiProperty({
-		description: 'ID del encargado del movimiento.',
-		example: 5,
-	})
-	managerId: number;
+	@ApiProperty({ example: 5 })
+	manager: MinEmployeeDto;
 
-	@ApiProperty({
-		description: 'Tipo de movimiento',
-		enum: MovementType,
-	})
+	@ApiProperty({ enum: MovementType })
 	type: MovementType;
 
-	@IsOptional()
-	@IsDateString()
-	@Type(() => Date)
-	@ApiPropertyOptional({
-		description: 'Fecha para filtrar los movimientos (formato ISO 8601)',
-		example: '2025-03-19T00:00:00.000Z',
-	})
+	@ApiProperty({ example: '2025-03-19T00:00:00.000Z' })
 	dateMovement: Date;
 
-	@IsNumber()
-	@IsOptional()
-	@ApiPropertyOptional({
-		description: 'ID del stock de origen',
-		example: 1,
-	})
-	originStockId?: number;
+	@ApiPropertyOptional({ example: 1 })
+	originStock?: MinStockDto;
 
-	@IsNumber()
-	@IsOptional()
-	@ApiProperty({
-		description: 'ID del stock de destino',
-		example: 2,
-	})
-	destinationStockId?: number;
+	@ApiProperty({ example: 2 })
+	destinationStock?: MinStockDto;
 
-	@Expose()
-	@IsDateString()
-	@ApiProperty()
-	createdAt: Date;
-
-	@Expose()
-	@IsDateString()
-	@ApiProperty()
-	updatedAt: Date;
-
-	@Expose()
-	@IsOptional()
-	@IsDateString()
-	@ApiPropertyOptional()
-	deletedAt: Date | null;
-
-	constructor(partial: Partial<MovementDto>) {
-		Object.assign(this, partial);
+	constructor(data: MovementEntity) {
+		this.id = data.id;
+		this.description = data.description || undefined;
+		this.manager = {
+			fullName: data.manager.user.fullName,
+			id: data.manager.user.id,
+			ruc: data.manager.user.ruc,
+		};
+		this.type = data.type;
+		this.dateMovement = data.dateMovement;
+		this.originStock = data.originStock
+			? {
+					id: data.originStock.id,
+					name: data.originStock.name,
+				}
+			: undefined;
+		this.destinationStock = data.destinationStock
+			? {
+					id: data.destinationStock.id,
+					name: data.destinationStock.name,
+				}
+			: undefined;
 	}
 }
