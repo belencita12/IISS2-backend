@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '@features/prisma/prisma.service';
+import {
+	ExtendedTransaction,
+	PrismaService,
+} from '@features/prisma/prisma.service';
 import { PurchaseQueryDto } from './dto/purchase-query.dto';
 import { PurchaseDto } from './dto/purchase.dto';
 import { CreatePurchaseDetailDto } from '../purchase-detail/dto/create-purchase-detail.dto';
@@ -11,17 +14,21 @@ import { ProductInfoDto } from './dto/product-info.dto';
 export class PurchaseService {
 	constructor(private readonly db: PrismaService) {}
 	async create(dto: CreatePurchaseDto) {
-		const { details, ...data } = dto;
+		return this.db.$transaction(async (tx: ExtendedTransaction) => {
+			const { details, ...data } = dto;
 
-		const isStock = await this.db.stock.isExists({ id: dto.stockId });
-		if (!isStock) throw new NotFoundException('Depósito no encontrado');
+			const isStock = await tx.stock.isExists({ id: dto.stockId });
+			if (!isStock) throw new NotFoundException('Depósito no encontrado');
 
-		const isProvider = await this.db.provider.isExists({ id: dto.providerId });
-		if (!isProvider) throw new NotFoundException('Proveedor no encontrado');
+			const isProvider = await tx.provider.isExists({
+				id: dto.providerId,
+			});
+			if (!isProvider) throw new NotFoundException('Proveedor no encontrado');
 
-		const purchase = await this.processPurchase(details, data);
+			const purchase = await this.processPurchase(details, data);
 
-		return new PurchaseDto(purchase);
+			return new PurchaseDto(purchase);
+		});
 	}
 
 	async findAll(dto: PurchaseQueryDto) {
@@ -30,6 +37,13 @@ export class PurchaseService {
 			...baseWhere,
 			stockId: dto.stockId,
 			providerId: dto.providerId,
+			total:
+				dto.totalMin || dto.totalMax
+					? {
+							gte: dto.totalMin,
+							lte: dto.totalMax,
+						}
+					: undefined,
 		};
 		const [data, total] = await Promise.all([
 			this.db.purchase.findMany({

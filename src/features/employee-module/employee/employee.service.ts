@@ -7,7 +7,6 @@ import { AuthService } from '@features/auth-module/auth/auth.service';
 import { ImageService } from '@features/media-module/image/image.service';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { genPassword, genUsername } from '@lib/utils/encrypt';
-import { onlyNumbers } from '@lib/utils/reg-exp';
 
 @Injectable()
 export class EmployeeService {
@@ -124,12 +123,7 @@ export class EmployeeService {
 		const where: Prisma.EmployeeWhereInput = {
 			...baseWhere,
 			...this.getWhereByQuerySearch(dto.query),
-			position: {
-				id: dto.positionId,
-				name: dto.positionName
-					? { contains: dto.positionName, mode: 'insensitive' }
-					: undefined,
-			},
+			position: dto.positionId ? { id: dto.positionId } : undefined,
 		};
 		const [data, total] = await Promise.all([
 			this.db.employee.findMany({
@@ -158,7 +152,7 @@ export class EmployeeService {
 			querySearchWhere.user = {
 				email: { contains: searchQuery, mode: 'insensitive' },
 			};
-		} else if (onlyNumbers.test(searchQuery)) {
+		} else if (/\d/.test(searchQuery)) {
 			querySearchWhere.user = {
 				OR: [
 					{ ruc: { contains: searchQuery, mode: 'insensitive' } },
