@@ -52,6 +52,13 @@ export class PurchaseService {
 			...baseWhere,
 			stockId: dto.stockId,
 			providerId: dto.providerId,
+			total:
+				dto.totalMin || dto.totalMax
+					? {
+							gte: dto.totalMin,
+							lte: dto.totalMax,
+						}
+					: undefined,
 		};
 		const [data, total] = await Promise.all([
 			this.db.purchase.findMany({
