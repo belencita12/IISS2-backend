@@ -5,32 +5,30 @@ import {
 } from '@nestjs/common';
 import { MovementType } from '@prisma/client';
 import { PrismaService } from '@features/prisma/prisma.service';
+import { CreateMovementDetailDto } from './dto/movement-detail/create-movement-detail.dto';
+import { CreateMovementDto } from './dto/movement/create-movement.dto';
 
 @Injectable()
 export class StockValidationService {
-	constructor(private prisma: PrismaService) {}
+	constructor(private db: PrismaService) {}
 
 	async validateStockExistence(
 		originStockId?: number,
 		destinationStockId?: number,
 	) {
 		if (originStockId) {
-			const originStock = await this.prisma.stock.findUnique({
-				where: { id: originStockId },
+			const originStock = await this.db.stock.isExists({
+				id: originStockId,
 			});
 			if (!originStock)
-				throw new NotFoundException(
-					`Stock origen ${originStockId} no encontrado`,
-				);
+				throw new NotFoundException('Deposito origen no encontrado');
 		}
 		if (destinationStockId) {
-			const destinationStock = await this.prisma.stock.findUnique({
-				where: { id: destinationStockId },
+			const destinationStock = await this.db.stock.isExists({
+				id: destinationStockId,
 			});
 			if (!destinationStock)
-				throw new NotFoundException(
-					`Stock destino ${destinationStockId} no encontrado`,
-				);
+				throw new NotFoundException('Deposito destino no encontrado');
 		}
 	}
 
@@ -40,46 +38,67 @@ export class StockValidationService {
 		quantity: number,
 		type: MovementType,
 	) {
-		if (type === MovementType.INBOUND) return;
+		if (type === 'INBOUND') return;
 
-		const stockDetail = await this.prisma.stockDetails.findFirst({
-			where: { stockId, productId },
+		const stockDetail = await this.db.stockDetails.findFirst({
+			where: {
+				stockId,
+				productId,
+				amount: { gte: quantity },
+			},
 		});
+
 		if (!stockDetail)
 			throw new BadRequestException(
-				`Producto ${productId} no existe en stock ${stockId}`,
-			);
-		if (stockDetail.amount < quantity)
-			throw new BadRequestException(
-				`Stock insuficiente: ${stockDetail.amount} disponible, ${quantity} solicitado`,
+				`Stock insuficiente o producto ${productId} no existe en deposito ${stockId} `,
 			);
 	}
 
 	async updateStockQuantities(
 		prisma: any,
 		productId: number,
-		originStockId: number,
-		destinationStockId: number,
 		quantity: number,
 		type: MovementType,
+		ogStockId?: number,
+		destStockId?: number,
 	) {
 		if (type === MovementType.INBOUND)
-			return this.handleInbound(
-				prisma,
-				productId,
-				destinationStockId,
-				quantity,
-			);
-		if (type === MovementType.TRANSFER)
+			return this.handleInbound(prisma, productId, destStockId!, quantity);
+		else if (type === MovementType.TRANSFER)
 			return this.handleTransfer(
 				prisma,
 				productId,
-				originStockId,
-				destinationStockId,
+				ogStockId!,
+				destStockId!,
 				quantity,
 			);
-		if (type === MovementType.OUTBOUND)
-			return this.handleOutbound(prisma, productId, originStockId, quantity);
+		else if (type === MovementType.OUTBOUND)
+			return this.handleOutbound(prisma, productId, ogStockId!, quantity);
+	}
+
+	async validateAndProcessDetail(
+		prisma: any,
+		movId: number,
+		movDto: CreateMovementDto,
+		detail: Omit<CreateMovementDetailDto, 'movementId'>,
+	) {
+		await this.validateStockAvailability(
+			detail.productId,
+			movDto.originStockId!,
+			detail.quantity,
+			movDto.type,
+		);
+		await this.updateStockQuantities(
+			prisma,
+			detail.productId,
+			detail.quantity,
+			movDto.type,
+			movDto.originStockId,
+			movDto.destinationStockId,
+		);
+		await prisma.movementDetail.create({
+			data: { movementId: movId, ...detail },
+		});
 	}
 
 	private async handleTransfer(
@@ -125,36 +144,28 @@ export class StockValidationService {
 	private async handleInbound(
 		prisma: any,
 		productId: number,
-		destinationStockId: number,
+		destStockId: number,
 		quantity: number,
 	) {
-		const productExists = await prisma.product.findUnique({
-			where: { id: productId },
-		});
-		if (!productExists)
-			throw new BadRequestException(`Producto ${productId} no encontrado.`);
-
-		const stockExists = await prisma.stock.findUnique({
-			where: { id: destinationStockId },
-		});
-		if (!stockExists)
-			throw new BadRequestException(
-				`Stock ${destinationStockId} no encontrado.`,
-			);
+		const isProdExists = await prisma.product.isExists({ id: productId });
+		if (!isProdExists) throw new BadRequestException('Producto no encontrado');
 
 		const stockDetail = await prisma.stockDetails.findFirst({
-			where: { stockId: destinationStockId, productId },
+			where: { stockId: destStockId, productId },
+			select: { id: true },
 		});
 
-		if (!stockDetail)
+		if (!stockDetail.id) {
 			await prisma.stockDetails.create({
-				data: { stockId: destinationStockId, productId, amount: quantity },
+				data: { stockId: destStockId, productId, amount: quantity },
 			});
-		else
-			await prisma.stockDetails.updateMany({
-				where: { stockId: destinationStockId, productId },
+		} else {
+			console.log('Se actualizo stcok');
+			await prisma.stockDetails.update({
+				where: { id: stockDetail.id },
 				data: { amount: { increment: quantity } },
 			});
+		}
 	}
 
 	private async handleOutbound(

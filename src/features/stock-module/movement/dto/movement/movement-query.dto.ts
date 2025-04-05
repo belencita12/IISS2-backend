@@ -2,16 +2,19 @@ import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MovementType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsNumber, IsOptional } from 'class-validator';
+import {
+	IsDate,
+	IsEnum,
+	IsNumber,
+	IsOptional,
+	IsString,
+} from 'class-validator';
 
 export class MovementQueryDto extends PaginationQueryDto {
-	@IsNumber()
 	@IsOptional()
-	@Type(() => Number)
-	@ApiPropertyOptional({
-		description: 'ID del encargado del movimiento.',
-	})
-	managerId?: number;
+	@IsString()
+	@ApiPropertyOptional()
+	managerRuc?: string;
 
 	@IsOptional()
 	@IsEnum(MovementType)

@@ -29,6 +29,9 @@ import { ClientModule } from './client/client.module';
 import { MediaModule } from './media-module/media/media.module';
 import { ProviderModule } from './provider/provider.module';
 import { TagModule } from './product-module/tag/tag.module';
+import { PurchaseDetailModule } from './purchase-module/purchase-detail/purchase-detail.module';
+import { PurchaseModule } from './purchase-module/purchase/purchase.module';
+import { MovementDetailModule } from './stock-module/movement-detail/movement-detail.module';
 
 @Module({
 	imports: [
@@ -61,6 +64,9 @@ import { TagModule } from './product-module/tag/tag.module';
 		MediaModule,
 		ProviderModule,
 		TagModule,
+		PurchaseModule,
+		PurchaseDetailModule,
+		MovementDetailModule,
 	],
 })
 export class AppModule {}

@@ -6,7 +6,8 @@ model Stock {
 
   movementsFrom   Movement[] @relation("StockOrigin")
   movementsTo     Movement[] @relation("StockDestination")
-  
+  Purchase Purchase[]
+
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   deletedAt DateTime?
