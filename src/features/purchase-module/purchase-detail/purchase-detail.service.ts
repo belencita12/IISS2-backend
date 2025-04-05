@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { PrismaService } from '@features/prisma/prisma.service';
+import {
+	ExtendedTransaction,
+	PrismaService,
+} from '@features/prisma/prisma.service';
 import { PurchaseDetailQueryDto } from './dto/purchase-detail-query.dto';
 import { MovementType, Prisma } from '@prisma/client';
 import { PurchaseDetailDto } from './dto/purchase-detail.dto';
@@ -13,13 +16,18 @@ export class PurchaseDetailService {
 		private prisma: PrismaService,
 		private stockValidation: StockValidationService,
 	) {}
-	async create(productId: number, quantity: number, purchaseId: number) {
-		const purchase = await this.prisma.purchase.findUnique({
+	async create(
+		tx: ExtendedTransaction,
+		productId: number,
+		quantity: number,
+		purchaseId: number,
+	) {
+		const purchase = await tx.purchase.findUnique({
 			where: { id: purchaseId },
 		});
 		if (!purchase) throw new NotFoundException('Compra no encontrada');
 
-		const product = await this.prisma.product.findUnique({
+		const product = await tx.product.findUnique({
 			where: { id: productId },
 			include: { price: true, image: true },
 		});
@@ -32,7 +40,7 @@ export class PurchaseDetailService {
 		const ivaAmount = partialAmount.mul(ivaPercentage);
 		const partialAmountVAT = partialAmount.add(ivaAmount);
 
-		const purchaseDetail = await this.prisma.purchaseDetail.create({
+		const purchaseDetail = await tx.purchaseDetail.create({
 			data: {
 				purchaseId,
 				productId,
@@ -43,7 +51,7 @@ export class PurchaseDetailService {
 			},
 		});
 
-		await this.prisma.product.update({
+		await tx.product.update({
 			where: { id: productId },
 			data: {
 				quantity: {
@@ -53,7 +61,7 @@ export class PurchaseDetailService {
 		});
 
 		await this.stockValidation.updateStockQuantities(
-			this.prisma,
+			tx,
 			productId,
 			undefined,
 			purchase.stockId,
@@ -61,7 +69,7 @@ export class PurchaseDetailService {
 			MovementType.INBOUND,
 		);
 
-		await this.updatePurchaseTotals(purchaseId);
+		await this.updatePurchaseTotals(tx, purchaseId);
 
 		return purchaseDetail;
 	}
@@ -119,8 +127,11 @@ export class PurchaseDetailService {
 		});
 	}
 
-	private async updatePurchaseTotals(purchaseId: number) {
-		const purchaseDetails = await this.prisma.purchaseDetail.findMany({
+	private async updatePurchaseTotals(
+		tx: ExtendedTransaction,
+		purchaseId: number,
+	) {
+		const purchaseDetails = await tx.purchaseDetail.findMany({
 			where: { purchaseId },
 			include: { product: true },
 		});
@@ -138,7 +149,7 @@ export class PurchaseDetailService {
 			},
 			{ totalIva: new Decimal(0), total: new Decimal(0) },
 		);
-		await this.prisma.purchase.update({
+		await tx.purchase.update({
 			where: { id: purchaseId },
 			data: {
 				ivaTotal: totalIva.toNumber(),
