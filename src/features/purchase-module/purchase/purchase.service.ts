@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '@features/prisma/prisma.service';
+import {
+	ExtendedTransaction,
+	PrismaService,
+} from '@features/prisma/prisma.service';
 import { PurchaseQueryDto } from './dto/purchase-query.dto';
 import { PurchaseDto } from './dto/purchase.dto';
 import { PurchaseDetailService } from '../purchase-detail/purchase-detail.service';
@@ -14,29 +17,33 @@ export class PurchaseService {
 		private readonly purchaseDetailService: PurchaseDetailService,
 	) {}
 	async create(dto: CreatePurchaseDto) {
-		const { details, ...data } = dto;
+		return this.db.$transaction(async (tx: ExtendedTransaction) => {
+			const { details, ...data } = dto;
 
-		const isStock = await this.db.stock.isExists({ id: dto.stockId });
-		if (!isStock) throw new NotFoundException('Depósito no encontrado');
+			const isStock = await tx.stock.isExists({ id: dto.stockId });
+			if (!isStock) throw new NotFoundException('Depósito no encontrado');
 
-		const isProvider = await this.db.provider.isExists({ id: dto.providerId });
-		if (!isProvider) throw new NotFoundException('Proveedor no encontrado');
+			const isProvider = await tx.provider.isExists({
+				id: dto.providerId,
+			});
+			if (!isProvider) throw new NotFoundException('Proveedor no encontrado');
 
-		const { id: purchaseId } = await this.db.purchase.create({
-			data: { ...data, ivaTotal: 0, total: 0 },
-			select: { id: true },
+			const { id: purchaseId } = await tx.purchase.create({
+				data: { ...data, ivaTotal: 0, total: 0 },
+				select: { id: true },
+			});
+
+			if (details) await this.processPurchaseDetails(tx, details, purchaseId);
+
+			const purchase = await tx.purchase.findUnique({
+				where: { id: purchaseId },
+				include: { provider: true, stock: true },
+			});
+
+			if (!purchase) throw new Error('Error al crear la compra');
+
+			return new PurchaseDto(purchase);
 		});
-
-		if (details) await this.processPurchaseDetails(details, purchaseId);
-
-		const purchase = await this.db.purchase.findUnique({
-			where: { id: purchaseId },
-			include: { provider: true, stock: true },
-		});
-
-		if (!purchase) throw new Error('Error al crear la compra');
-
-		return new PurchaseDto(purchase);
 	}
 
 	async findAll(dto: PurchaseQueryDto) {
@@ -45,6 +52,13 @@ export class PurchaseService {
 			...baseWhere,
 			stockId: dto.stockId,
 			providerId: dto.providerId,
+			total:
+				dto.totalMin || dto.totalMax
+					? {
+							gte: dto.totalMin,
+							lte: dto.totalMax,
+						}
+					: undefined,
 		};
 		const [data, total] = await Promise.all([
 			this.db.purchase.findMany({
@@ -72,11 +86,13 @@ export class PurchaseService {
 	}
 
 	private async processPurchaseDetails(
+		tx: ExtendedTransaction,
 		details: CreatePurchaseDetailDto[],
 		purchaseId: number,
 	) {
 		for (const detail of details) {
 			await this.purchaseDetailService.create(
+				tx,
 				detail.productId,
 				detail.quantity,
 				purchaseId,
