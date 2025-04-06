@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { Prisma } from '@prisma/client';
 import {
@@ -7,15 +11,12 @@ import {
 } from '@features/prisma/prisma.service';
 import { PurchaseQueryDto } from './dto/purchase-query.dto';
 import { PurchaseDto } from './dto/purchase.dto';
-import { PurchaseDetailService } from '../purchase-detail/purchase-detail.service';
 import { CreatePurchaseDetailDto } from '../purchase-detail/dto/create-purchase-detail.dto';
+import { ProductInfoDto } from './dto/product-info.dto';
 
 @Injectable()
 export class PurchaseService {
-	constructor(
-		private readonly db: PrismaService,
-		private readonly purchaseDetailService: PurchaseDetailService,
-	) {}
+	constructor(private readonly db: PrismaService) {}
 	async create(dto: CreatePurchaseDto) {
 		return this.db.$transaction(async (tx: ExtendedTransaction) => {
 			const { details, ...data } = dto;
@@ -28,19 +29,7 @@ export class PurchaseService {
 			});
 			if (!isProvider) throw new NotFoundException('Proveedor no encontrado');
 
-			const { id: purchaseId } = await tx.purchase.create({
-				data: { ...data, ivaTotal: 0, total: 0 },
-				select: { id: true },
-			});
-
-			if (details) await this.processPurchaseDetails(tx, details, purchaseId);
-
-			const purchase = await tx.purchase.findUnique({
-				where: { id: purchaseId },
-				include: { provider: true, stock: true },
-			});
-
-			if (!purchase) throw new Error('Error al crear la compra');
+			const purchase = await this.processPurchase(details, data);
 
 			return new PurchaseDto(purchase);
 		});
@@ -85,18 +74,123 @@ export class PurchaseService {
 		return new PurchaseDto(purchase);
 	}
 
-	private async processPurchaseDetails(
-		tx: ExtendedTransaction,
+	private async processPurchase(
 		details: CreatePurchaseDetailDto[],
-		purchaseId: number,
+		purchase: Omit<CreatePurchaseDto, 'details'>,
 	) {
-		for (const detail of details) {
-			await this.purchaseDetailService.create(
-				tx,
-				detail.productId,
-				detail.quantity,
-				purchaseId,
+		return await this.db.$transaction(async (tx) => {
+			const productsId = details.map((d) => d.productId);
+			const productMap = await this.validateDetails(productsId, details);
+
+			const { ivaTotal, total, detail, stockDetailData, productsData } =
+				this.calculateDetails(details, productMap, purchase.stockId);
+
+			await Promise.all(stockDetailData.map((d) => tx.stockDetails.upsert(d)));
+			await Promise.all(productsData.map((d) => tx.product.update(d)));
+			const newPurchase = await tx.purchase.create({
+				data: {
+					...purchase,
+					ivaTotal,
+					total,
+					detail,
+				},
+				include: { provider: true, stock: true },
+			});
+
+			return newPurchase;
+		});
+	}
+
+	private calculateDetails(
+		details: CreatePurchaseDetailDto[],
+		productMap: Map<number, ProductInfoDto>,
+		stockId: number,
+	) {
+		let ivaTotal = 0;
+		let total = 0;
+		const detailsData: Prisma.PurchaseDetailCreateManyPurchaseInput[] = [];
+		const productsData: Prisma.ProductUpdateArgs[] = [];
+		const stockDetailData: Prisma.StockDetailsUpsertArgs[] = [];
+
+		for (const d of details) {
+			const p = productMap.get(d.productId)!;
+			const partialAmount = p.cost.mul(d.quantity);
+
+			const ivaAmount = partialAmount.mul(p.iva);
+			const totalDetail = partialAmount.add(ivaAmount);
+
+			ivaTotal += ivaAmount.toNumber();
+			total += totalDetail.toNumber();
+
+			productsData.push({
+				where: { id: p.id },
+				data: { quantity: { increment: d.quantity } },
+			});
+
+			stockDetailData.push({
+				where: { stockId_productId: { productId: p.id, stockId } },
+				update: { amount: { increment: d.quantity } },
+				create: { productId: p.id, stockId, amount: d.quantity },
+			});
+
+			detailsData.push({
+				productId: p.id,
+				unitCost: p.cost.toNumber(),
+				partialAmount: partialAmount.toNumber(),
+				partialAmountVAT: totalDetail.toNumber(),
+				quantity: d.quantity,
+			});
+		}
+
+		return {
+			ivaTotal,
+			total,
+			productsData,
+			stockDetailData,
+			detail: {
+				createMany: {
+					data: detailsData,
+				},
+			},
+		};
+	}
+
+	private async validateDetails(
+		prodId: number[],
+		details: CreatePurchaseDetailDto[],
+	) {
+		if (this.hasDuplicated(details))
+			throw new BadRequestException('Existen productos duplicados');
+
+		const products = await this.db.product.findMany({
+			where: { id: { in: prodId } },
+			select: {
+				id: true,
+				name: true,
+				iva: true,
+				cost: true,
+			},
+		});
+
+		if (products.length !== details.length) {
+			const notFounds = products.filter(
+				(p) => !details.some((d) => d.productId === p.id),
+			);
+			const notFoundNames = notFounds.map((p) => p.name);
+			throw new NotFoundException(
+				`Productos ${notFoundNames.join(', ')} no encontrados`,
 			);
 		}
+
+		return new Map(products.map((p) => [p.id, p]));
+	}
+
+	private hasDuplicated(details: CreatePurchaseDetailDto[]) {
+		const seen = new Set<number>();
+		for (const d of details) {
+			if (seen.has(d.productId)) return true;
+			seen.add(d.productId);
+		}
+		return false;
 	}
 }
