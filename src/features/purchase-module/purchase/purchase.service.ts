@@ -29,7 +29,7 @@ export class PurchaseService {
 			});
 			if (!isProvider) throw new NotFoundException('Proveedor no encontrado');
 
-			const purchase = await this.processPurchase(details, data);
+			const purchase = await this.processPurchase(tx, details, data);
 
 			return new PurchaseDto(purchase);
 		});
@@ -75,30 +75,29 @@ export class PurchaseService {
 	}
 
 	private async processPurchase(
+		tx: ExtendedTransaction,
 		details: CreatePurchaseDetailDto[],
 		purchase: Omit<CreatePurchaseDto, 'details'>,
 	) {
-		return await this.db.$transaction(async (tx) => {
-			const productsId = details.map((d) => d.productId);
-			const productMap = await this.validateDetails(productsId, details);
+		const productsId = details.map((d) => d.productId);
+		const productMap = await this.validateDetails(tx, productsId, details);
 
-			const { ivaTotal, total, detail, stockDetailData, productsData } =
-				this.calculateDetails(details, productMap, purchase.stockId);
+		const { ivaTotal, total, detail, stockDetailData, productsData } =
+			this.calculateDetails(details, productMap, purchase.stockId);
 
-			await Promise.all(stockDetailData.map((d) => tx.stockDetails.upsert(d)));
-			await Promise.all(productsData.map((d) => tx.product.update(d)));
-			const newPurchase = await tx.purchase.create({
-				data: {
-					...purchase,
-					ivaTotal,
-					total,
-					detail,
-				},
-				include: { provider: true, stock: true },
-			});
-
-			return newPurchase;
+		await Promise.all(stockDetailData.map((d) => tx.stockDetails.upsert(d)));
+		await Promise.all(productsData.map((d) => tx.product.update(d)));
+		const newPurchase = await tx.purchase.create({
+			data: {
+				...purchase,
+				ivaTotal,
+				total,
+				detail,
+			},
+			include: { provider: true, stock: true },
 		});
+
+		return newPurchase;
 	}
 
 	private calculateDetails(
@@ -156,13 +155,14 @@ export class PurchaseService {
 	}
 
 	private async validateDetails(
+		tx: ExtendedTransaction,
 		prodId: number[],
 		details: CreatePurchaseDetailDto[],
 	) {
 		if (this.hasDuplicated(details))
 			throw new BadRequestException('Existen productos duplicados');
 
-		const products = await this.db.product.findMany({
+		const products = await tx.product.findMany({
 			where: { id: { in: prodId } },
 			select: {
 				id: true,
