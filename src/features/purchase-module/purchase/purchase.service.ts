@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { Prisma } from '@prisma/client';
 import {
@@ -120,26 +124,13 @@ export class PurchaseService {
 
 			productsData.push({
 				where: { id: p.id },
-				data: {
-					quantity: { increment: d.quantity },
-				},
+				data: { quantity: { increment: d.quantity } },
 			});
 
 			stockDetailData.push({
-				where: {
-					stockId_productId: {
-						productId: p.id,
-						stockId,
-					},
-				},
-				update: {
-					amount: { increment: d.quantity },
-				},
-				create: {
-					productId: p.id,
-					stockId,
-					amount: d.quantity,
-				},
+				where: { stockId_productId: { productId: p.id, stockId } },
+				update: { amount: { increment: d.quantity } },
+				create: { productId: p.id, stockId, amount: d.quantity },
 			});
 
 			detailsData.push({
@@ -168,6 +159,9 @@ export class PurchaseService {
 		prodId: number[],
 		details: CreatePurchaseDetailDto[],
 	) {
+		if (this.hasDuplicated(details))
+			throw new BadRequestException('Existen productos duplicados');
+
 		const products = await this.db.product.findMany({
 			where: { id: { in: prodId } },
 			select: {
@@ -183,9 +177,20 @@ export class PurchaseService {
 				(p) => !details.some((d) => d.productId === p.id),
 			);
 			const notFoundNames = notFounds.map((p) => p.name);
-			throw new Error(`Productos ${notFoundNames.join(', ')} no encontrados`);
+			throw new NotFoundException(
+				`Productos ${notFoundNames.join(', ')} no encontrados`,
+			);
 		}
 
 		return new Map(products.map((p) => [p.id, p]));
+	}
+
+	private hasDuplicated(details: CreatePurchaseDetailDto[]) {
+		const seen = new Set<number>();
+		for (const d of details) {
+			if (seen.has(d.productId)) return true;
+			seen.add(d.productId);
+		}
+		return false;
 	}
 }
