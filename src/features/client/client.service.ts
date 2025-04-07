@@ -55,12 +55,13 @@ export class ClientService {
 	}
 
 	async update(id: number, dto: UpdateClientDto) {
+		const { profileImg, ...data } = dto;
 		const client = await this.db.client.findUnique({
 			where: { id },
 			select: { user: { select: { image: true, fullName: true } } },
 		});
 		if (!client) throw new NotFoundException('Cliente no encontrado');
-		const newImg = await this.img.upsert(client.user.image, dto.profileImg);
+		const newImg = await this.img.upsert(client.user.image, profileImg);
 		const newUsername =
 			dto.fullName && dto.fullName !== client.user.fullName
 				? genUsername(dto.fullName)
@@ -72,7 +73,7 @@ export class ClientService {
 				user: {
 					update: {
 						data: {
-							...dto,
+							...data,
 							username: newUsername,
 							image: newImg?.id ? { connect: { id: newImg.id } } : undefined,
 						},
