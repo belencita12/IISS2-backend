@@ -1,0 +1,12 @@
+model Provider {
+  id           Int        @id @default(autoincrement())
+  businessName String     @unique
+  description  String?
+  phoneNumber  String
+  ruc          String     @unique
+  Purchase     Purchase[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}

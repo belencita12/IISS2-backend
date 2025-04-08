@@ -44,14 +44,9 @@ class EnvironmentVariables {
 	JWT_SECRET: string = 'secret';
 
 	@IsString({ each: true })
-	@Transform(({ value }) => value.split(','))
+	@Transform(({ value }) => (value ? value.split(',') : '*'))
 	@IsOptional()
-	CORS_ORIGIN: string[] = ['*'];
-
-	@IsEnum(PrismaLogLevels, { each: true })
-	@Transform(({ value }) => value.split(','))
-	@IsOptional()
-	PRISMA_LOG_LEVEL: PrismaLogLevels[] = [];
+	CORS_ORIGIN: string[] | string = '*';
 
 	@IsNumber()
 	@IsOptional()
@@ -80,6 +75,20 @@ class EnvironmentVariables {
 
 	@IsString()
 	FE_HOST: string;
+
+	@IsString()
+	SUPABASE_URL: string;
+
+	@IsString()
+	SUPABASE_KEY: string;
+
+	@IsNumber()
+	@IsOptional()
+	DEFAULT_PREVIEW_SIZE_PX: number = 64;
+
+	@IsString()
+	@IsOptional()
+	SUPABASE_BUCKET: string = 'images';
 }
 
 export type EnvType = InstanceType<typeof EnvironmentVariables>;

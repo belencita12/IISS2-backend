@@ -1,0 +1,12 @@
+model Race {
+  id        Int       @id @default(autoincrement())
+  name      String
+  speciesId Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  pets      Pet[]
+  species   Species   @relation(fields: [speciesId], references: [id])
+
+  @@unique([name, speciesId])
+}

@@ -1,0 +1,29 @@
+model WorkPosition {
+    id   Int    @id @default(autoincrement())
+    name String @unique @db.VarChar(64)
+
+    shifts    WorkShift[]
+    employees Employee[]
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+}
+
+model WorkShift {
+    id Int @id @default(autoincrement())
+
+    workPositionId Int
+    workPosition   WorkPosition @relation(fields: [workPositionId], references: [id], onDelete: NoAction)
+
+    weekDay Int
+
+    startTime String
+    endTime   String
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+
+    @@unique([workPositionId, weekDay, startTime, endTime])
+}

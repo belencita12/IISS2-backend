@@ -19,7 +19,13 @@ export const setUpSwagger = ({
 	path,
 }: SwaggerConfig) => {
 	const config = new DocumentBuilder()
-		.addBearerAuth()
+		.addBearerAuth({ 
+			type: 'http', 
+			scheme: 'bearer', 
+			bearerFormat: 'JWT' 
+		  },
+			'access-token'
+		)
 		.setTitle(title || 'Example Title')
 		.setDescription(description || 'Swagger Api example description')
 		.setVersion(version || '1.0');

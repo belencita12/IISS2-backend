@@ -1,16 +1,12 @@
-//user.e2e-spec.ts
 import * as request from 'supertest';
 import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { UserController } from '@/user/user.controller';
-import { UserService } from '@/user/user.service';
-import { UserDto } from '@/user/dto/user.dto';
-import {
-	userMock,
-	paginatedResultMock,
-	expUser,
-	expPagMock,
-} from '@test-lib/mock/user';
+import { UserController } from '@/features/user/user.controller';
+import { UserService } from '@/features/user/user.service';
+import { UserDto } from '@/features/user/dto/user.dto';
+import { userMock, paginatedResultMock, expUser } from '@test-lib/mock/user';
+import { RolesGuard } from '@/lib/guard/role.guard';
+import { AutoPassGuardMock, expCommonPagMock } from '@test-lib/mock/commons';
 
 const userService = {
 	update: jest.fn().mockImplementation((id, body) => ({
@@ -33,7 +29,10 @@ describe('UserController (e2e)', () => {
 		const moduleRef = await Test.createTestingModule({
 			controllers: [UserController],
 			providers: [{ provide: UserService, useValue: userService }],
-		}).compile();
+		})
+			.overrideGuard(RolesGuard)
+			.useValue(AutoPassGuardMock)
+			.compile();
 		app = moduleRef.createNestApplication();
 		app.useGlobalPipes(new ValidationPipe({ transform: true }));
 		await app.init();
@@ -63,7 +62,7 @@ describe('UserController (e2e)', () => {
 		});
 
 		assertResponse(response, {
-			...expPagMock,
+			...expCommonPagMock,
 			currentPage: 1,
 			size: 20,
 		});
@@ -71,9 +70,9 @@ describe('UserController (e2e)', () => {
 
 	it('/POST user', async () => {
 		const body = {
-			username: 'testuser',
+			fullName: 'testuser',
 			email: 'test@example.com',
-			password: 'securepassword123'
+			password: 'securepassword123',
 		};
 		const url = '/user';
 		const response = await request(app.getHttpServer())
@@ -84,7 +83,7 @@ describe('UserController (e2e)', () => {
 		expect(response.body).toEqual(
 			expect.objectContaining({
 				...expUser,
-				username: body.username,
+				fullName: body.fullName,
 				email: body.email,
 				createdAt: expect.any(String),
 				updatedAt: expect.any(String),
@@ -96,20 +95,15 @@ describe('UserController (e2e)', () => {
 		const invalidBody = {
 			username: 'testuser',
 			email: 'invalid-email',
-			password: '123'
+			password: '123',
 		};
 		const url = '/user';
-		await request(app.getHttpServer())
-			.post(url)
-			.send(invalidBody)
-			.expect(400);
+		await request(app.getHttpServer()).post(url).send(invalidBody).expect(400);
 	});
 
 	it('/GET user/:id', async () => {
 		const url = '/user/1';
-		const response = await request(app.getHttpServer())
-			.get(url)
-			.expect(200);
+		const response = await request(app.getHttpServer()).get(url).expect(200);
 
 		expect(userService.findOne).toHaveBeenCalledWith(1);
 		assertResponse(response, {
@@ -134,8 +128,8 @@ describe('UserController (e2e)', () => {
 			.expect(200);
 
 		expect(userService.update).toHaveBeenCalledWith(1, body);
-		assertResponse(response, { 
-			id: 1, 
+		assertResponse(response, {
+			id: 1,
 			username: 'updateduser',
 		});
 	});

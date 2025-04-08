@@ -1,0 +1,27 @@
+model Pet {
+  id          Int               @id @default(autoincrement())
+  name        String
+  clientId    Int
+  client      Client            @relation(fields: [clientId], references: [id])
+  speciesId   Int
+  species     Species           @relation(fields: [speciesId], references: [id])
+  raceId      Int
+  race        Race              @relation(fields: [raceId], references: [id])
+  weight      Float
+  sex         Sex
+  dateOfBirth DateTime
+  imageId     Int?
+  profileImg  Image?            @relation(fields: [imageId], references: [id])
+  vaccines    VaccineRegistry[]
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([name, clientId])
+}
+
+enum Sex {
+  M
+  F
+}

@@ -1,0 +1,11 @@
+model Client {
+    id     Int  @id @default(autoincrement())
+    userId Int  @unique
+    user   User @relation(fields: [userId], references: [id], onDelete: NoAction)
+
+    pets Pet[]
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+}

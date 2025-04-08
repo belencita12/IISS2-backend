@@ -1,22 +1,19 @@
 import * as request from 'supertest';
 import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { RoleService } from '@/role/role.service';
-import { RoleController } from '@/role/role.controller';
-import { RoleDto } from '@/role/dto/role.dto';
-import {
-	roleMock,
-	paginatedResultMock,
-	expRole,
-	expPagMock,
-} from '@test-lib/mock/role';
+import { RoleService } from '@/features/role/role.service';
+import { RoleController } from '@/features/role/role.controller';
+import { RoleDto } from '@/features/role/dto/role.dto';
+import { roleMock, pagRolesResultMock, expRole } from '@test-lib/mock/role';
+import { AutoPassGuardMock, expCommonPagMock } from '@test-lib/mock/commons';
+import { RolesGuard } from '@/lib/guard/role.guard';
 
 const roleService = {
 	update: jest.fn().mockResolvedValue(roleMock),
 	remove: jest.fn().mockResolvedValue({ id: 1, deletedAt: new Date() }),
 	create: jest.fn().mockResolvedValue(roleMock),
 	findAll: jest.fn().mockImplementation(({ page: currentPage, size }) => ({
-		...paginatedResultMock,
+		...pagRolesResultMock,
 		currentPage,
 		size,
 	})),
@@ -28,7 +25,10 @@ describe('RoleController (e2e)', () => {
 		const moduleRef = await Test.createTestingModule({
 			controllers: [RoleController],
 			providers: [{ provide: RoleService, useValue: roleService }],
-		}).compile();
+		})
+			.overrideGuard(RolesGuard)
+			.useValue(AutoPassGuardMock)
+			.compile();
 		app = moduleRef.createNestApplication();
 		app.useGlobalPipes(new ValidationPipe({ transform: true }));
 		await app.init();
@@ -58,7 +58,7 @@ describe('RoleController (e2e)', () => {
 		});
 
 		assertResponse(response, {
-			...expPagMock,
+			...expCommonPagMock,
 			currentPage: 1,
 			size: 20,
 		});

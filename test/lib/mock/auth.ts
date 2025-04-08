@@ -1,9 +1,9 @@
-import { SignInDto } from '@/auth/dto/sign-in.dto';
-import { SignUpDto } from '@/auth/dto/sign-up.dto';
+import { SignInDto } from '@/features/auth/dto/sign-in.dto';
+import { SignUpDto } from '@/features/auth/dto/sign-up.dto';
 import * as bcrypt from 'bcrypt';
 import { userMock } from './user';
-import { UserDto } from '@/user/dto/user.dto';
-import { TokenPayload } from '@/auth/types/auth.types';
+import { UserDto } from '@/features/user/dto/user.dto';
+import { TokenPayload } from '@/features/auth/types/auth.types';
 
 export const signInBodyMock: SignInDto = {
 	email: 'test@example.com',
@@ -20,7 +20,8 @@ export const getUserHashed = async () => {
 	const hash = await bcrypt.hash(signInBodyMock.password, 10);
 	return {
 		id: 1,
-		username: 'testuser',
+		fullName: 'testuser',
+		username: 'testuser@123',
 		email: 'test@example.com',
 		roles: [{ name: 'ADMIN' }],
 		deletedAt: null,
@@ -35,7 +36,7 @@ export const signInResMock = {
 };
 
 export const signUpBodyMock: SignUpDto = {
-	username: 'testuser',
+	fullName: 'testuser',
 	email: 'test@example.com',
 	password: 'securepassword123',
 };

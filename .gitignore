@@ -15,9 +15,6 @@ lerna-debug.log*
 # OS
 .DS_Store
 
-#prisma
-migrations
-
 # Tests
 /coverage
 /.nyc_output
@@ -27,12 +24,13 @@ migrations
 .project
 .classpath
 .c9/
-*.launch
+*.launch/
 .settings/
 *.sublime-workspace
 
 # IDE - VSCode
 .vscode/*
+.vscode
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json

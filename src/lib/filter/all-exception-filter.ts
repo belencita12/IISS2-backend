@@ -8,6 +8,7 @@ import {
 	Logger,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Catch()
 export class AllExceptionFilter implements ExceptionFilter {
@@ -18,14 +19,34 @@ export class AllExceptionFilter implements ExceptionFilter {
 	catch(ex: unknown, host: ArgumentsHost): void {
 		const { httpAdapter } = this.httpAdapterHost;
 		const ctx = host.switchToHttp();
-		const httpStatus =
+		const path: string = httpAdapter.getRequestUrl(ctx.getRequest());
+		let httpStatus =
 			ex instanceof HttpException
 				? ex.getStatus()
 				: HttpStatus.INTERNAL_SERVER_ERROR;
 
-		let message: string = 'Internal Server Error';
+		let message: string =
+			ex instanceof HttpException ? ex.message : 'Internal Server Error';
 
 		this.logger.error(ex);
+
+		if (ex instanceof PrismaClientKnownRequestError) {
+			if (ex.code === 'P2002') {
+				if (path.startsWith('/auth') || path.startsWith('/user')) {
+					message =
+						'Las credenciales ya están en uso. Intente con datos diferentes';
+					httpStatus = HttpStatus.UNAUTHORIZED;
+				} else {
+					message =
+						'Uno o más campos ya están en uso. Intente con datos diferentes';
+					httpStatus = HttpStatus.BAD_REQUEST;
+				}
+			} else if (ex.code === 'P2025') {
+				message =
+					'No se han encontrado uno o más registro para concretar la operación';
+				httpStatus = HttpStatus.NOT_FOUND;
+			}
+		}
 
 		if (ex instanceof BadRequestException) {
 			const response = ex.getResponse();
@@ -34,13 +55,11 @@ export class AllExceptionFilter implements ExceptionFilter {
 				: response['message'];
 		}
 
-		if (ex instanceof HttpException) message = ex.message;
-
 		const responseBody = {
 			statusCode: httpStatus,
 			timestamp: new Date().toISOString(),
 			message,
-			path: httpAdapter.getRequestUrl(ctx.getRequest()),
+			path: path,
 		};
 
 		httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);

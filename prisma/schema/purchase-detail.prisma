@@ -1,0 +1,16 @@
+model PurchaseDetail {
+    id               Int     @id @default(autoincrement())
+    purchaseId       Int
+    productId        Int
+    unitCost         Decimal
+    partialAmount    Decimal
+    partialAmountVAT Decimal
+    quantity         Int
+
+    purchase   Purchase @relation(fields: [purchaseId], references: [id])
+    product Product @relation(fields: [productId], references: [id])
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?  
+}
