@@ -1,5 +1,6 @@
 import { ProviderDto } from '@features/provider/dto/provider.dto';
 import { StockDto } from '@features/stock-module/stock/dto/stock.dto';
+import { toDate } from '@lib/utils/date';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Provider, Purchase, Stock } from '@prisma/client';
 
@@ -18,8 +19,8 @@ export class PurchaseDto {
 	@ApiProperty({ example: 1000000 })
 	total: number;
 
-	@ApiPropertyOptional()
-	date: Date;
+	@ApiPropertyOptional({ example: '2025-05-24' })
+	date: string;
 
 	@ApiProperty({ type: ProviderDto })
 	provider: ProviderDto;
@@ -33,6 +34,6 @@ export class PurchaseDto {
 		this.total = data.total.toNumber();
 		this.provider = new ProviderDto(data.provider);
 		this.stock = new StockDto(data.stock);
-		this.date = data.date;
+		this.date = toDate(data.date);
 	}
 }
