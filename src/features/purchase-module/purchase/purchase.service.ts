@@ -18,21 +18,28 @@ import { ProductInfoDto } from './dto/product-info.dto';
 export class PurchaseService {
 	constructor(private readonly db: PrismaService) {}
 	async create(dto: CreatePurchaseDto) {
-		return this.db.$transaction(async (tx: ExtendedTransaction) => {
-			const { details, ...data } = dto;
+		if (this.hasDuplicated(dto.details)) {
+			throw new BadRequestException('Existen productos duplicados');
+		}
 
-			const isStock = await tx.stock.isExists({ id: dto.stockId });
-			if (!isStock) throw new NotFoundException('Depósito no encontrado');
+		const isStock = await this.db.stock.isExists({ id: dto.stockId });
+		if (!isStock) throw new NotFoundException('Depósito no encontrado');
 
-			const isProvider = await tx.provider.isExists({
-				id: dto.providerId,
-			});
-			if (!isProvider) throw new NotFoundException('Proveedor no encontrado');
-
-			const purchase = await this.processPurchase(tx, details, data);
-
-			return new PurchaseDto(purchase);
+		const isProvider = await this.db.provider.isExists({
+			id: dto.providerId,
 		});
+
+		if (!isProvider) throw new NotFoundException('Proveedor no encontrado');
+		return this.db.$transaction(
+			async (tx: ExtendedTransaction) => {
+				const { details, ...data } = dto;
+
+				const purchase = await this.processPurchase(tx, details, data);
+
+				return new PurchaseDto(purchase);
+			},
+			{ timeout: 15000 },
+		);
 	}
 
 	async findAll(dto: PurchaseQueryDto) {
@@ -159,9 +166,6 @@ export class PurchaseService {
 		prodId: number[],
 		details: CreatePurchaseDetailDto[],
 	) {
-		if (this.hasDuplicated(details))
-			throw new BadRequestException('Existen productos duplicados');
-
 		const products = await tx.product.findMany({
 			where: { id: { in: prodId } },
 			select: {
