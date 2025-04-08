@@ -1,5 +1,6 @@
 import { EmployeeDto } from '@features/employee-module/employee/dto/employee.dto';
 import { StockDto } from '@features/stock-module/stock/dto/stock.dto';
+import { toDate } from '@lib/utils/date';
 import { ApiProperty, ApiPropertyOptional, PickType } from '@nestjs/swagger';
 import { Movement, MovementType, Stock, User } from '@prisma/client';
 import { IsNumber, IsString } from 'class-validator';
@@ -34,8 +35,8 @@ export class MovementDto {
 	@ApiProperty({ enum: MovementType })
 	type: MovementType;
 
-	@ApiProperty({ example: '2025-03-19T00:00:00.000Z' })
-	dateMovement: Date;
+	@ApiProperty({ example: '2025-03-19' })
+	dateMovement: string;
 
 	@ApiPropertyOptional({ example: 1 })
 	originStock?: MinStockDto;
@@ -52,7 +53,7 @@ export class MovementDto {
 			ruc: data.manager.user.ruc,
 		};
 		this.type = data.type;
-		this.dateMovement = data.dateMovement;
+		this.dateMovement = toDate(data.dateMovement);
 		this.originStock = data.originStock
 			? {
 					id: data.originStock.id,

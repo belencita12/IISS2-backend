@@ -26,6 +26,7 @@ export class SpeciesService {
 		const [data, total] = await Promise.all([
 			this.prisma.species.findMany({
 				...this.prisma.paginate(dto),
+				where,
 			}),
 			this.prisma.species.count({ where }),
 		]);

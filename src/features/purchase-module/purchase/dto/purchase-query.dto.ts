@@ -16,4 +16,14 @@ export class PurchaseQueryDto extends PaginationQueryDto {
 	@IsId()
 	@ApiPropertyOptional()
 	providerId?: number;
+
+	@IsOptional()
+	@Type(() => Number)
+	@ApiPropertyOptional()
+	totalMin?: number;
+
+	@IsOptional()
+	@Type(() => Number)
+	@ApiPropertyOptional()
+	totalMax?: number;
 }

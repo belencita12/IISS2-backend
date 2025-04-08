@@ -4,6 +4,10 @@ import { PagOutputParams } from '@lib/types/pagination';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient, Prisma } from '@prisma/client';
 
+export type ExtendedTransaction = Parameters<
+	Parameters<ReturnType<typeof extendPrismaClient>['$transaction']>[0]
+>[0];
+
 const ExtendedPrismaClient = class {
 	constructor() {
 		return extendPrismaClient();
