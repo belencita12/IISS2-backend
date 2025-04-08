@@ -4,7 +4,10 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { MovementType } from '@prisma/client';
-import { PrismaService } from '@features/prisma/prisma.service';
+import {
+	ExtendedTransaction,
+	PrismaService,
+} from '@features/prisma/prisma.service';
 import { CreateMovementDetailDto } from './dto/movement-detail/create-movement-detail.dto';
 import { CreateMovementDto } from './dto/movement/create-movement.dto';
 
@@ -55,7 +58,7 @@ export class StockValidationService {
 	}
 
 	async updateStockQuantities(
-		prisma: any,
+		tx: ExtendedTransaction,
 		productId: number,
 		quantity: number,
 		type: MovementType,
@@ -63,21 +66,21 @@ export class StockValidationService {
 		destStockId?: number,
 	) {
 		if (type === MovementType.INBOUND)
-			return this.handleInbound(prisma, productId, destStockId!, quantity);
+			return this.handleInbound(tx, productId, destStockId!, quantity);
 		else if (type === MovementType.TRANSFER)
 			return this.handleTransfer(
-				prisma,
+				tx,
 				productId,
 				ogStockId!,
 				destStockId!,
 				quantity,
 			);
 		else if (type === MovementType.OUTBOUND)
-			return this.handleOutbound(prisma, productId, ogStockId!, quantity);
+			return this.handleOutbound(tx, productId, ogStockId!, quantity);
 	}
 
 	async validateAndProcessDetail(
-		prisma: any,
+		tx: ExtendedTransaction,
 		movId: number,
 		movDto: CreateMovementDto,
 		detail: Omit<CreateMovementDetailDto, 'movementId'>,
@@ -89,14 +92,14 @@ export class StockValidationService {
 			movDto.type,
 		);
 		await this.updateStockQuantities(
-			prisma,
+			tx,
 			detail.productId,
 			detail.quantity,
 			movDto.type,
 			movDto.originStockId,
 			movDto.destinationStockId,
 		);
-		await prisma.movementDetail.create({
+		await tx.movementDetail.create({
 			data: { movementId: movId, ...detail },
 		});
 	}
@@ -142,30 +145,32 @@ export class StockValidationService {
 	}
 
 	private async handleInbound(
-		prisma: any,
+		tx: ExtendedTransaction,
 		productId: number,
 		destStockId: number,
 		quantity: number,
 	) {
-		const isProdExists = await prisma.product.isExists({ id: productId });
+		const isProdExists = await tx.product.isExists({ id: productId });
 		if (!isProdExists) throw new BadRequestException('Producto no encontrado');
 
-		const stockDetail = await prisma.stockDetails.findFirst({
-			where: { stockId: destStockId, productId },
-			select: { id: true },
+		await tx.stockDetails.upsert({
+			where: {
+				stockId_productId: {
+					stockId: destStockId,
+					productId: productId,
+				},
+			},
+			update: {
+				amount: {
+					increment: quantity,
+				},
+			},
+			create: {
+				stockId: destStockId,
+				productId: productId,
+				amount: quantity,
+			},
 		});
-
-		if (!stockDetail.id) {
-			await prisma.stockDetails.create({
-				data: { stockId: destStockId, productId, amount: quantity },
-			});
-		} else {
-			console.log('Se actualizo stcok');
-			await prisma.stockDetails.update({
-				where: { id: stockDetail.id },
-				data: { amount: { increment: quantity } },
-			});
-		}
 	}
 
 	private async handleOutbound(
