@@ -1,5 +1,4 @@
 import {
-	Controller,
 	Get,
 	Post,
 	Body,
@@ -14,31 +13,24 @@ import {
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductDto } from './dto/product.dto';
-import {
-	ApiTags,
-	ApiBearerAuth,
-	ApiBody,
-	ApiResponse,
-	ApiConsumes,
-} from '@nestjs/swagger';
+import { ApiBody, ApiResponse, ApiConsumes } from '@nestjs/swagger';
 import { ProductQueryDto } from './dto/product-query.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
 import { RolesGuard } from '@lib/guard/role.guard';
 import { IdValidationPipe } from '@lib/pipes/id-validation.pipe';
 import { ImgValidator } from '@lib/pipes/file-validator.pipe';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
+import { Role } from '@lib/constants/role.enum';
 
-@Controller('product')
-@ApiTags('Product')
-@ApiBearerAuth('access-token')
+@AppController({ name: 'product', tag: 'Product' })
 @UseGuards(RolesGuard)
-@Roles(Role.Admin)
 export class ProductController {
 	constructor(private readonly productService: ProductService) {}
 
 	@Post()
+	@Roles(Role.Admin)
 	@ApiConsumes('multipart/form-data')
 	@UseInterceptors(FileInterceptor('productImg'))
 	@ApiResponse({ type: ProductDto })
@@ -51,12 +43,14 @@ export class ProductController {
 	}
 
 	@Get()
+	@Roles(Role.Admin, Role.Employee, Role.User)
 	@ApiPaginatedResponse(ProductDto)
 	findAll(@Query() query: ProductQueryDto) {
 		return this.productService.findAll(query);
 	}
 
 	@Get(':id')
+	@Roles(Role.Admin, Role.Employee, Role.User)
 	@ApiResponse({ type: ProductDto })
 	findOne(@Param('id', IdValidationPipe) id: number) {
 		return this.productService.findOne(id);
@@ -67,6 +61,7 @@ export class ProductController {
 	@UseInterceptors(FileInterceptor('productImg'))
 	@ApiBody({ type: CreateProductDto })
 	@ApiResponse({ type: ProductDto })
+	@Roles(Role.Admin)
 	update(
 		@Param('id', IdValidationPipe) id: number,
 		@Body() dto: CreateProductDto,
@@ -79,6 +74,7 @@ export class ProductController {
 	}
 
 	@Delete(':id')
+	@Roles(Role.Admin)
 	remove(@Param('id', IdValidationPipe) id: number) {
 		return this.productService.remove(id);
 	}

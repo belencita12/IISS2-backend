@@ -1,31 +1,17 @@
-import {
-	Controller,
-	Get,
-	Post,
-	Body,
-	Patch,
-	Param,
-	Delete,
-	Query,
-	UseGuards,
-} from '@nestjs/common';
+import { Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { TagService } from './tag.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { TagDto } from './dto/tag.dto';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Role } from '@lib/constants/role.enum';
-import { Roles } from '@lib/decorators/roles.decorators';
-import { RolesGuard } from '@lib/guard/role.guard';
+import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { IdValidationPipe } from '@lib/pipes/id-validation.pipe';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
 import { TagQueryDto } from './dto/tag-query.dto';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
+import { AdminOnly } from '@lib/decorators/auth/admin-only.decorator';
 
-@Controller('tags')
-@ApiTags('Tags')
-@ApiBearerAuth('access-token')
-@UseGuards(RolesGuard)
-@Roles(Role.Admin)
+@AppController({ name: 'tag', tag: 'Tag' })
+@AdminOnly()
 export class TagController {
 	constructor(private readonly tagService: TagService) {}
 

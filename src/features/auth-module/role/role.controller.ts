@@ -1,30 +1,16 @@
-import {
-	Body,
-	Controller,
-	Delete,
-	Get,
-	Param,
-	Patch,
-	Post,
-	Query,
-	UseGuards,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { RoleQueryDto } from './dto/role-query.dto';
 import { RoleDto } from './dto/role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
-import { RolesGuard } from '@lib/guard/role.guard';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
+import { AdminOnly } from '@lib/decorators/auth/admin-only.decorator';
 
-@UseGuards(RolesGuard)
-@Roles(Role.Admin)
-@Controller('role')
-@ApiTags('Role')
-@ApiBearerAuth('access-token')
+@AppController({ name: 'role', tag: 'Role' })
+@AdminOnly()
 export class RoleController {
 	constructor(private readonly roleService: RoleService) {}
 

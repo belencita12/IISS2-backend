@@ -1,5 +1,4 @@
 import {
-	Controller,
 	Get,
 	Post,
 	Body,
@@ -14,28 +13,22 @@ import {
 import { VaccineService } from './vaccine.service';
 import { CreateVaccineDto } from './dto/create-vaccine.dto';
 import { UpdateVaccineDto } from './dto/update-vaccine.dto';
-import {
-	ApiBearerAuth,
-	ApiConsumes,
-	ApiResponse,
-	ApiTags,
-} from '@nestjs/swagger';
+import { ApiConsumes, ApiResponse } from '@nestjs/swagger';
 import { VaccineDto } from './dto/vaccine.dto';
 import { VaccineQueryDto } from './dto/vaccine-query.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { RolesGuard } from '@lib/guard/role.guard';
 import { ImgValidator } from '@lib/pipes/file-validator.pipe';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@ApiBearerAuth('access-token')
-@ApiTags('vaccine')
-@Controller('vaccine')
+@AppController({ name: 'vaccine', tag: 'Vaccine' })
+@UseGuards(RolesGuard)
 export class VaccineController {
 	constructor(private readonly vaccineService: VaccineService) {}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Post()
 	@ApiConsumes('multipart/form-data')
@@ -49,7 +42,6 @@ export class VaccineController {
 		return this.vaccineService.create(createVaccineDto);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin, Role.User)
 	@Get()
 	@ApiPaginatedResponse(VaccineQueryDto)
@@ -57,7 +49,6 @@ export class VaccineController {
 		return this.vaccineService.findAll(query);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin, Role.User)
 	@Get(':id')
 	@ApiResponse({ type: VaccineDto })
@@ -65,7 +56,6 @@ export class VaccineController {
 		return this.vaccineService.findOne(+id);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Patch(':id')
 	@ApiConsumes('multipart/form-data')
@@ -80,7 +70,6 @@ export class VaccineController {
 		return this.vaccineService.update(+id, updateVaccineDto);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Delete(':id')
 	@ApiResponse({ type: VaccineDto })

@@ -1,6 +1,6 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
-import { IsTimeFormat } from '@lib/decorators/is-time-format';
-import { IsWeekDay } from '@lib/decorators/is-week-day';
+import { IsTimeFormat } from '@lib/decorators/validation/is-time-format';
+import { IsWeekDay } from '@lib/decorators/validation/is-week-day';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsOptional, IsString } from 'class-validator';

@@ -19,16 +19,14 @@ export const setUpSwagger = ({
 	path,
 }: SwaggerConfig) => {
 	const config = new DocumentBuilder()
-		.addBearerAuth({ 
-			type: 'http', 
-			scheme: 'bearer', 
-			bearerFormat: 'JWT' 
-		  },
-			'access-token'
-		)
 		.setTitle(title || 'Example Title')
 		.setDescription(description || 'Swagger Api example description')
-		.setVersion(version || '1.0');
+		.setVersion(version || '1.0')
+		.addBearerAuth({
+			type: 'http',
+			scheme: 'bearer',
+			bearerFormat: 'JWT',
+		});
 	if (tag) tag.forEach((tag) => config.addTag(tag));
 	const doc = config.build();
 	const documentFactory = () => SwaggerModule.createDocument(app, doc);

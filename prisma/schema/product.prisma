@@ -13,8 +13,9 @@ model Product {
     StockDetails    StockDetails[]
     movementDetails MovementDetail[]
     tags            ProductTag[]
+    invoiceDetails  InvoiceDetail[]
 
-    quantity    Int @default(0)
+    quantity Int @default(0)
 
     purchase  PurchaseDetail[]
     createdAt DateTime         @default(now())

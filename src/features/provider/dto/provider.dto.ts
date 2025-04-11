@@ -1,4 +1,4 @@
-import { IsId } from '@lib/decorators/is-id.decorator';
+import { IsId } from '@lib/decorators/validation/is-id.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Provider } from '@prisma/client';
 import { IsString, IsOptional, IsNotEmpty, IsPhoneNumber } from 'class-validator';

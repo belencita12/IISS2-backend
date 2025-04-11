@@ -1,4 +1,4 @@
-import { IsRuc } from '@lib/decorators/is-ruc';
+import { IsRuc } from '@lib/decorators/validation/is-ruc';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsPhoneNumber } from 'class-validator';
 
