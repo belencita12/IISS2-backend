@@ -1,5 +1,4 @@
 import {
-	Controller,
 	Get,
 	Post,
 	Body,
@@ -15,13 +14,7 @@ import {
 import { Request as Req } from 'express';
 import { PetService } from './pet.service';
 import { CreatePetDto } from './dto/create-pet.dto';
-import {
-	ApiBearerAuth,
-	ApiBody,
-	ApiConsumes,
-	ApiResponse,
-	ApiTags,
-} from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiResponse } from '@nestjs/swagger';
 import { PetDto } from './dto/pet.dto';
 import { PetQueryDto } from './dto/pet-query.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -29,17 +22,16 @@ import { UpdatePetDto } from './dto/update-pet.dto';
 import { AuthGuard } from '@features/auth-module/auth/guard/auth.guard';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
 import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { ImgValidator } from '@lib/pipes/file-validator.pipe';
 import { IsOwnerGuard } from '@lib/guard/is-owner.guard';
 import { Resource } from '@lib/decorators/resource.decorator';
-import { CurrentUser } from '@lib/decorators/current-user.decoratot';
+import { CurrentUser } from '@lib/decorators/auth/current-user.decoratot';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
 @UseGuards(AuthGuard)
-@ApiTags('Pet')
-@Controller('pet')
-@ApiBearerAuth('access-token')
+@AppController({ name: 'pet', tag: 'Pet' })
 export class PetController {
 	constructor(private readonly petService: PetService) {}
 

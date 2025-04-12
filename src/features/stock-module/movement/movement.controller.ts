@@ -1,5 +1,4 @@
 import {
-	Controller,
 	Get,
 	Post,
 	Body,
@@ -10,24 +9,17 @@ import {
 	ParseIntPipe,
 } from '@nestjs/common';
 import { MovementService } from './movement.service';
-import {
-	ApiBearerAuth,
-	ApiBody,
-	ApiOperation,
-	ApiResponse,
-	ApiTags,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreateMovementDto } from './dto/movement/create-movement.dto';
 import { MovementDto } from './dto/movement/movement.dto';
 import { MovementQueryDto } from './dto/movement/movement-query.dto';
 import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { RolesGuard } from '@lib/guard/role.guard';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@Controller('movement')
-@ApiTags('movement')
-@ApiBearerAuth('access-token')
+@AppController({ name: 'movement', tag: 'Movement' })
 @UseGuards(RolesGuard)
 @Roles(Role.Admin, Role.Employee)
 export class MovementController {

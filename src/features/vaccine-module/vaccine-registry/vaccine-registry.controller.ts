@@ -1,5 +1,4 @@
 import {
-	Controller,
 	Get,
 	Post,
 	Body,
@@ -12,26 +11,23 @@ import {
 import { VaccineRegistryService } from './vaccine-registry.service';
 import { CreateVaccineRegistryDto } from './dto/create-vaccine-registry.dto';
 import { UpdateVaccineRegistryDto } from './dto/update-vaccine-registry.dto';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { VaccineRegistryDto } from './dto/vaccine-registry.dto';
 import { VaccineRegistryQueryDto } from './dto/vaccine-registry-query.dto';
 import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { RolesGuard } from '@lib/guard/role.guard';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@ApiBearerAuth('access-token')
-@ApiTags('vaccine-registry')
-@Controller('vaccine-registry')
+@AppController({ name: 'vaccine-registry', tag: 'Vaccine Registry' })
 @UseGuards(RolesGuard)
-@Roles(Role.Admin)
 export class VaccineRegistryController {
 	constructor(
 		private readonly vaccineRegistryService: VaccineRegistryService,
 	) {}
 
-	@UseGuards(RolesGuard)
-	@Roles(Role.Admin)
+	@Roles(Role.Admin, Role.Employee)
 	@Post()
 	@ApiResponse({ type: VaccineRegistryDto })
 	@ApiBody({ type: CreateVaccineRegistryDto })
@@ -39,15 +35,13 @@ export class VaccineRegistryController {
 		return this.vaccineRegistryService.create(createVaccineRegistryDto);
 	}
 
-	@UseGuards(RolesGuard)
-	@Roles(Role.Admin, Role.User)
+	@Roles(Role.Admin, Role.User, Role.Employee)
 	@Get()
 	@ApiPaginatedResponse(VaccineRegistryDto)
 	findAll(@Query() query: VaccineRegistryQueryDto) {
 		return this.vaccineRegistryService.findAll(query);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin, Role.User)
 	@Get(':id')
 	@ApiResponse({ type: VaccineRegistryDto })
@@ -55,7 +49,6 @@ export class VaccineRegistryController {
 		return this.vaccineRegistryService.findOne(+id);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Patch(':id')
 	@ApiResponse({ type: VaccineRegistryDto })

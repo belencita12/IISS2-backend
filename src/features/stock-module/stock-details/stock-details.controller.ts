@@ -1,5 +1,4 @@
 import {
-	Controller,
 	Get,
 	Post,
 	Body,
@@ -12,19 +11,18 @@ import {
 import { StockDetailsService } from './stock-details.service';
 import { CreateStockDetailsDto } from './dto/create-stock-detail.dto';
 import { UpdateStockDetailsDto } from './dto/update-stock-detail.dto';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { StockDetailsDto } from './dto/stock-details.dto';
 import { StockDetailsQueryDto } from './dto/stock-details-query.dto';
 import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { RolesGuard } from '@lib/guard/role.guard';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@Controller('stock-details')
-@ApiTags('stock-details')
-@ApiBearerAuth('access-token')
+@AppController({ name: 'stock-detail', tag: 'Stock Detail' })
 @UseGuards(RolesGuard)
-@Roles(Role.Admin)
+@Roles(Role.Admin, Role.Employee)
 export class StockDetailsController {
 	constructor(private readonly stockDetailsService: StockDetailsService) {}
 

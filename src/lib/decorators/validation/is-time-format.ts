@@ -1,6 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { IsString, Matches } from 'class-validator';
-import { timeFormat } from '../utils/reg-exp';
+import { timeFormat } from '../../utils/reg-exp';
 
 export function IsTimeFormat(): PropertyDecorator {
 	return applyDecorators(

@@ -1,7 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { hash } from '../../lib/utils/encrypt';
 import { DefaultArgs } from '@prisma/client/runtime/library';
-import { dogImgs, productsImgs, uploadImg } from './images';
 
 type PrismaTransactionClient = Omit<
 	PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
@@ -161,9 +160,6 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 		orderBy: { name: 'asc' },
 	});
 	const clients = await db.client.findMany();
-	const goldenImg = await uploadImg(dogImgs[0], db);
-	const labradorImg = await uploadImg(dogImgs[1], db);
-	const mestizoImg = await uploadImg(dogImgs[2], db);
 
 	const [client1, client2, client3] = clients;
 	const [race1, race2, race3] = race;
@@ -213,7 +209,6 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 				weight: 5.5,
 				sex: 'M',
 				dateOfBirth,
-				imageId: labradorImg.id,
 			},
 			{
 				name: 'Chulo',
@@ -223,7 +218,6 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 				weight: 5.5,
 				sex: 'M',
 				dateOfBirth,
-				imageId: labradorImg.id,
 			},
 			{
 				name: 'Zoco',
@@ -233,7 +227,6 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 				weight: 7.5,
 				sex: 'M',
 				dateOfBirth,
-				imageId: goldenImg.id,
 			},
 			{
 				name: 'Frufru',
@@ -243,7 +236,6 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 				weight: 3.5,
 				sex: 'M',
 				dateOfBirth,
-				imageId: mestizoImg.id,
 			},
 		],
 	});
@@ -278,11 +270,6 @@ export const seedWorkPositions = async (db: PrismaTransactionClient) => {
 };
 
 export const seedProducts = async (db: PrismaTransactionClient) => {
-	const prod1Img = await uploadImg(productsImgs[0], db);
-	const prod2Img = await uploadImg(productsImgs[1], db);
-	const prod3Img = await uploadImg(productsImgs[2], db);
-	const prod4Img = await uploadImg(productsImgs[3], db);
-
 	const productsData: Prisma.ProductCreateInput[] = [
 		{
 			name: 'Desparasitante Perro',
@@ -290,16 +277,12 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			code: `PROD-${genRandomStr()}`,
 			cost: 20000,
 			iva: 0.1,
-			image: {
-				connect: {
-					id: prod1Img.id,
-				},
-			},
 			price: {
 				create: {
 					amount: 24000,
 				},
 			},
+			quantity: 12,
 		},
 		{
 			name: 'Desparasitante Gato',
@@ -307,16 +290,12 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			code: `PROD-${genRandomStr()}`,
 			cost: 24000,
 			iva: 0.1,
-			image: {
-				connect: {
-					id: prod2Img.id,
-				},
-			},
 			price: {
 				create: {
 					amount: 28000,
 				},
 			},
+			quantity: 10,
 		},
 		{
 			name: 'Pelota Juguete Perro',
@@ -324,16 +303,12 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			code: `PROD-${genRandomStr()}`,
 			cost: 18000,
 			iva: 0.1,
-			image: {
-				connect: {
-					id: prod3Img.id,
-				},
-			},
 			price: {
 				create: {
 					amount: 20000,
 				},
 			},
+			quantity: 15,
 		},
 		{
 			name: 'Shampoo Perro 1Lt',
@@ -341,11 +316,6 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			code: `PROD-${genRandomStr()}`,
 			cost: 12000,
 			iva: 0.1,
-			image: {
-				connect: {
-					id: prod4Img.id,
-				},
-			},
 			price: {
 				create: {
 					amount: 15000,

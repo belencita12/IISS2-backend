@@ -1,5 +1,4 @@
 import {
-	Controller,
 	Get,
 	Post,
 	Body,
@@ -12,21 +11,20 @@ import {
 import { SpeciesService } from './species.service';
 import { CreateSpeciesDto } from './dto/create-species.dto';
 import { UpdateSpeciesDto } from './dto/update-species.dto';
-import { ApiTags, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiResponse, ApiBody } from '@nestjs/swagger';
 import { SpeciesDto } from './dto/species.dto';
 import { SpeciesQueryDto } from './dto/species-query.dto';
 import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { RolesGuard } from '@lib/guard/role.guard';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@Controller('species')
-@ApiTags('Species')
-@ApiBearerAuth('access-token')
+@UseGuards(RolesGuard)
+@AppController({ name: 'species', tag: 'Species' })
 export class SpeciesController {
 	constructor(private readonly speciesService: SpeciesService) {}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Post()
 	@ApiResponse({ type: SpeciesDto })
@@ -35,7 +33,6 @@ export class SpeciesController {
 		return this.speciesService.create(createSpeciesDto);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin, Role.User)
 	@Get()
 	@ApiPaginatedResponse(SpeciesDto)
@@ -43,7 +40,6 @@ export class SpeciesController {
 		return this.speciesService.findAll(query);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin, Role.User)
 	@Get(':id')
 	@ApiResponse({ type: SpeciesDto })
@@ -51,7 +47,6 @@ export class SpeciesController {
 		return this.speciesService.findOne(+id);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Patch(':id')
 	@ApiResponse({ type: SpeciesDto })
@@ -62,7 +57,6 @@ export class SpeciesController {
 		return this.speciesService.update(+id, updateSpeciesDto);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Delete(':id')
 	@ApiResponse({ type: SpeciesDto })
