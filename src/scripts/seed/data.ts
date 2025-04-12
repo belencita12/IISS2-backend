@@ -1,7 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { hash } from '../../lib/utils/encrypt';
 import { DefaultArgs } from '@prisma/client/runtime/library';
-import { dogImgs, productsImgs, uploadImg } from './images';
 
 type PrismaTransactionClient = Omit<
 	PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
@@ -283,6 +282,7 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 					amount: 24000,
 				},
 			},
+			quantity: 12,
 		},
 		{
 			name: 'Desparasitante Gato',
@@ -295,6 +295,7 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 					amount: 28000,
 				},
 			},
+			quantity: 10,
 		},
 		{
 			name: 'Pelota Juguete Perro',
@@ -307,6 +308,7 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 					amount: 20000,
 				},
 			},
+			quantity: 15,
 		},
 		{
 			name: 'Shampoo Perro 1Lt',

@@ -24,6 +24,7 @@ export class InvoiceService {
 		const invoice = await this.db.$transaction(async (tx) => {
 			const { invoiceData, productData, stockDetailData, total, totalVat } =
 				await this.processDetails(tx, details, data.stockId);
+			this.validateTotalPayed(total, data.totalPayed);
 			await this.handleUpdateStock(tx, stockDetailData, productData);
 			return await tx.invoice.create({
 				include: { client: { include: { user: true } }, stock: true },
@@ -186,5 +187,13 @@ export class InvoiceService {
 		}
 
 		return { invoiceData, productData, stockDetailData, total, totalVat };
+	}
+
+	private validateTotalPayed(total: Decimal, totalPayed: number) {
+		const isTotalPayedValid = total.gte(totalPayed);
+		if (!isTotalPayedValid)
+			throw new BadRequestException(
+				'Lo pagado por la factura no puede ser mayor al total de la misma',
+			);
 	}
 }
