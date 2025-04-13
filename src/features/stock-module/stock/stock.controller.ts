@@ -10,7 +10,7 @@ import { AdminOnly } from '@lib/decorators/auth/admin-only.decorator';
 import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
 @AdminOnly()
-@AppController({ name: 'sotck', tag: 'Stock' })
+@AppController({ name: 'stock', tag: 'Stock' })
 export class StockController {
 	constructor(private readonly stockService: StockService) {}
 
