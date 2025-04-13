@@ -143,6 +143,17 @@ export class MovementService {
 				: undefined,
 			originStockId: dto.originStockId,
 			destinationStockId: dto.destinationStockId,
+			details: dto.productName
+				? {
+						some: {
+							product: {
+								name: dto.productName
+									? { contains: dto.productName, mode: 'insensitive' }
+									: undefined,
+							},
+						},
+					}
+				: undefined,
 		};
 
 		const [data, total] = await Promise.all([
@@ -153,6 +164,11 @@ export class MovementService {
 					manager: { include: { user: true } },
 					originStock: true,
 					destinationStock: true,
+					details: {
+						include: {
+							product: true,
+						},
+					},
 				},
 			}),
 			this.db.movement.count({ where }),

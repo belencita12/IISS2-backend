@@ -56,4 +56,9 @@ export class MovementQueryDto extends PaginationQueryDto {
 		description: 'ID del stock de destino',
 	})
 	destinationStockId?: number;
+
+	@IsOptional()
+	@IsString()
+	@ApiPropertyOptional()
+	productName?: string;
 }
