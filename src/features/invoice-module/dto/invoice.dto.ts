@@ -48,6 +48,9 @@ export class InvoiceDto {
 	@ApiProperty()
 	ruc: string;
 
+	@ApiProperty()
+	clientName: string;
+
 	@ApiProperty({ enum: InvoiceType })
 	@IsEnum(InvoiceType)
 	type: InvoiceType;
@@ -59,6 +62,7 @@ export class InvoiceDto {
 	constructor(data: InvoiceEnity) {
 		this.id = data.id;
 		this.ruc = data.client.user.ruc;
+		this.clientName = data.client.user.fullName;
 		this.invoiceNumber = data.invoiceNumber;
 		this.stamped = data.stamped;
 		this.issueDate = data.issueDate;
