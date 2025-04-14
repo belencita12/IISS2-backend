@@ -1,6 +1,7 @@
 import {
 	Validate,
 	ValidationArguments,
+	ValidationOptions,
 	ValidatorConstraint,
 	ValidatorConstraintInterface,
 } from 'class-validator';
@@ -18,5 +19,5 @@ export class IsMultipleOfConstraint implements ValidatorConstraintInterface {
 	}
 }
 
-export const IsMultipleOf = (multiple: number) =>
-	Validate(IsMultipleOfConstraint, [multiple]);
+export const IsMultipleOf = (multiple: number, options?: ValidationOptions) =>
+	Validate(IsMultipleOfConstraint, [multiple], options);

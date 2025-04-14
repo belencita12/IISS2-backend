@@ -16,4 +16,4 @@ export const onlyNumbers = /^[\d-]+$/;
 /**
  * Slug format for service-type. Ex: meet-30-min
  */
-export const serviceTypeSlugFormat = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const serviceTypeSlugFormat = /^[a-z0-9ñ]+(?:-[a-z0-9ñ]+)*$/;

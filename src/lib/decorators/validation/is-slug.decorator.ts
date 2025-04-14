@@ -6,6 +6,6 @@ export const IsSlug = () =>
 	applyDecorators(
 		IsString({ message: 'Debe proveerse una cadena de texto' }),
 		Matches(serviceTypeSlugFormat, {
-			message: 'Utilice un formato valido. Ej: reunion-15-min',
+			message: 'Slug no sigue un formato valido. Ej: reunion-15-min',
 		}),
 	);

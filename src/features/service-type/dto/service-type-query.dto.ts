@@ -1,7 +1,14 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
+import { IsTag } from '@lib/decorators/validation/is-tag.decorator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString } from 'class-validator';
+import {
+	IsInt,
+	IsNumber,
+	IsOptional,
+	IsPositive,
+	IsString,
+} from 'class-validator';
 
 export class ServiceTypeQueryDto extends PaginationQueryDto {
 	@IsOptional()
@@ -20,4 +27,23 @@ export class ServiceTypeQueryDto extends PaginationQueryDto {
 	@IsInt()
 	@ApiPropertyOptional()
 	toDuration?: number;
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@Type(() => Number)
+	@IsNumber()
+	@IsPositive()
+	minPrice?: number;
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@Type(() => Number)
+	@IsNumber()
+	@IsPositive()
+	maxPrice?: number;
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsTag()
+	tags?: string[];
 }
