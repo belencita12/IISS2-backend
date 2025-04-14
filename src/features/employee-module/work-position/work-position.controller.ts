@@ -1,30 +1,16 @@
-import {
-	Controller,
-	Get,
-	Post,
-	Body,
-	Patch,
-	Param,
-	Delete,
-	Query,
-	UseGuards,
-} from '@nestjs/common';
+import { Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { WorkPositionService } from './work-position.service';
 import { CreateWorkPositionDto } from './dto/work-position/create-work-position.dto';
 import { UpdateWorkPositionDto } from './dto/work-position/update-work-position.dto';
 import { WorkPositionQueryDto } from './dto/work-position/work-position-query.dto';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { WorkPositionDto } from './dto/work-position/work-position.dto';
-import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
-import { RolesGuard } from '@lib/guard/role.guard';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { AdminOnly } from '@lib/decorators/auth/admin-only.decorator';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@Controller('work-position')
-@ApiTags('WorkPosition')
-@ApiBearerAuth('access-token')
-@UseGuards(RolesGuard)
-@Roles(Role.Admin)
+@AdminOnly()
+@AppController({ name: 'work-position', tag: 'Work Position' })
 export class WorkPositionController {
 	constructor(private readonly workPositionService: WorkPositionService) {}
 

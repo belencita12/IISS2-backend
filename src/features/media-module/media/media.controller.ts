@@ -1,12 +1,10 @@
-import { Controller, Delete, Param, UseGuards } from '@nestjs/common';
+import { Delete, Param, UseGuards } from '@nestjs/common';
 import { MediaService } from './media.service';
 import { DelImgGuard } from '@lib/guard/del-img.guard';
 import { IdValidationPipe } from '@lib/pipes/id-validation.pipe';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@Controller('media')
-@ApiTags('Media')
-@ApiBearerAuth('access-token')
+@AppController({ name: 'media', tag: 'Media' })
 export class MediaController {
 	constructor(private readonly media: MediaService) {}
 

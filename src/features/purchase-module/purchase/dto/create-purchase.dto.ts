@@ -1,5 +1,5 @@
 import { CreatePurchaseDetailDto } from '@features/purchase-module/purchase-detail/dto/create-purchase-detail.dto';
-import { IsId } from '@lib/decorators/is-id.decorator';
+import { IsId } from '@lib/decorators/validation/is-id.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsDate, IsOptional, ValidateNested } from 'class-validator';

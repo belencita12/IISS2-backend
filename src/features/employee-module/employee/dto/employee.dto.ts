@@ -1,6 +1,6 @@
 import { ShortWorkPositionDto } from '@features/employee-module/work-position/dto/work-position/short-work-position.dto';
 import { ImageDto } from '@lib/commons/image.dto';
-import { IsId } from '@lib/decorators/is-id.decorator';
+import { IsId } from '@lib/decorators/validation/is-id.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Employee, User, WorkPosition, Image } from '@prisma/client';
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';

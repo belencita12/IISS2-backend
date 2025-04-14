@@ -27,10 +27,10 @@ export class MovementService {
 			dto.destinationStockId,
 		);
 
-		const movId = await this.db.$transaction(async (tx) => {
-			const manager = await tx.employee.isExists({ id: dto.managerId });
-			if (!manager) throw new BadRequestException('Empleado no encontrado');
+		const manager = await this.db.employee.isExists({ id: dto.managerId });
+		if (!manager) throw new BadRequestException('Empleado no encontrado');
 
+		const movId = await this.db.$transaction(async (tx) => {
 			const { id: movId } = await tx.movement.create({
 				data: {
 					...data,

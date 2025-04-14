@@ -1,6 +1,5 @@
 import {
 	Body,
-	Controller,
 	Post,
 	UseGuards,
 	Request,
@@ -9,13 +8,7 @@ import {
 	Query,
 	Put,
 } from '@nestjs/common';
-import {
-	ApiBearerAuth,
-	ApiBody,
-	ApiQuery,
-	ApiResponse,
-	ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
@@ -25,15 +18,14 @@ import { Request as Req } from 'express';
 import { TokenPayload } from './types/auth.types';
 import { ResetPassTokenDto, ResetPasswordDto } from './dto/reset-password.dto';
 import { RegisterClientDto } from './dto/register-client.dto';
-import { Public } from '@lib/decorators/public.decorator';
+import { Public } from '@lib/decorators/auth/public.decorator';
 import { UserDto } from '@features/auth-module/user/dto/user.dto';
 import { Role } from '@lib/constants/role.enum';
-import { Roles } from '@lib/decorators/roles.decorators';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { RolesGuard } from '@lib/guard/role.guard';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@ApiTags('Auth')
-@ApiBearerAuth('access-token')
-@Controller('auth')
+@AppController({ name: 'auth', tag: 'Auth' })
 export class AuthController {
 	constructor(private readonly authService: AuthService) {}
 

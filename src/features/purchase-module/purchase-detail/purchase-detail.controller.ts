@@ -1,18 +1,14 @@
-import { Controller, Get, Param, UseGuards, Query } from '@nestjs/common';
+import { Get, Param, Query } from '@nestjs/common';
 import { PurchaseDetailService } from './purchase-detail.service';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { RolesGuard } from '@lib/guard/role.guard';
-import { Roles } from '@lib/decorators/roles.decorators';
-import { Role } from '@lib/constants/role.enum';
+import { ApiResponse } from '@nestjs/swagger';
 import { PurchaseDetailDto } from './dto/purchase-detail.dto';
 import { PurchaseDetailQueryDto } from './dto/purchase-detail-query.dto';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { AdminOnly } from '@lib/decorators/auth/admin-only.decorator';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@Controller('purchase-detail')
-@ApiTags('purchase-detail')
-@ApiBearerAuth('access-token')
-@UseGuards(RolesGuard)
-@Roles(Role.Admin)
+@AdminOnly()
+@AppController({ name: 'purchase-detail', tag: 'Purchase Detail' })
 export class PurchaseDetailController {
 	constructor(private readonly purchaseDetailService: PurchaseDetailService) {}
 	@Get()
