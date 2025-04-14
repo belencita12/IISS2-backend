@@ -27,7 +27,7 @@ export class InvoiceService {
 			this.validateTotalPayed(total, data.totalPayed);
 			await this.handleUpdateStock(tx, stockDetailData, productData);
 			return await tx.invoice.create({
-				include: { client: { include: { user: true } }, stock: true },
+				include: { client: { include: { user: true } } },
 				data: {
 					...data,
 					totalPayed: data.type === 'CASH' ? total : data.totalPayed,
@@ -47,7 +47,7 @@ export class InvoiceService {
 		const [data, count] = await Promise.all([
 			this.db.invoice.findMany({
 				...this.db.paginate(dto),
-				include: { client: { include: { user: true } }, stock: true },
+				include: { client: { include: { user: true } } },
 				where,
 			}),
 			this.db.invoice.count({ where }),
@@ -62,7 +62,7 @@ export class InvoiceService {
 
 	async findOne(id: number) {
 		const invoice = await this.db.invoice.findUnique({
-			include: { client: { include: { user: true } }, stock: true },
+			include: { client: { include: { user: true } } },
 			where: { id },
 		});
 		if (!invoice) throw new NotFoundException('Factura no encontrada');
