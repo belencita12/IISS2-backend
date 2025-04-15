@@ -1,30 +1,16 @@
-import {
-	Controller,
-	Get,
-	Post,
-	Body,
-	Patch,
-	Param,
-	Delete,
-	UseGuards,
-	Query,
-} from '@nestjs/common';
+import { Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { VaccineBatchService } from './vaccine-batch.service';
 import { CreateVaccineBatchDto } from './dto/create-vaccine-batch.dto';
 import { UpdateVaccineBatchDto } from './dto/update-vaccine-batch.dto';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { VaccineBatchDto } from './dto/vaccine-batch.dto';
 import { VaccineBatchQueryDto } from './dto/vaccine-batch-query.dto';
-import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
-import { RolesGuard } from '@lib/guard/role.guard';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { AdminOnly } from '@lib/decorators/auth/admin-only.decorator';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@ApiBearerAuth('access-token')
-@ApiTags('vaccine-batch')
-@Controller('vaccine-batch')
-@UseGuards(RolesGuard)
-@Roles(Role.Admin)
+@AppController({ name: 'vaccine-batch', tag: 'Vaccine Batch' })
+@AdminOnly()
 export class VaccineBatchController {
 	constructor(private readonly vaccineBatchService: VaccineBatchService) {}
 

@@ -1,30 +1,16 @@
-import {
-	Controller,
-	Get,
-	Post,
-	Body,
-	Patch,
-	Param,
-	Delete,
-	Query,
-	UseGuards,
-} from '@nestjs/common';
+import { Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ProductPriceService } from './product-price.service';
 import { CreateProductPriceDto } from './dto/create-product-price.dto';
 import { ProductPriceQueryDto } from './dto/product-price-query.dto';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { ProductPriceDto } from './dto/product-price.dto';
-import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
-import { RolesGuard } from '@lib/guard/role.guard';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
 import { IdValidationPipe } from '@lib/pipes/id-validation.pipe';
+import { AdminOnly } from '@lib/decorators/auth/admin-only.decorator';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@Controller('product-price')
-@ApiTags('ProductPrice')
-@ApiBearerAuth('access-token')
-@UseGuards(RolesGuard)
-@Roles(Role.Admin)
+@AdminOnly()
+@AppController({ name: 'product-price', tag: 'Product Price' })
 export class ProductPriceController {
 	constructor(private readonly productPriceService: ProductPriceService) {}
 

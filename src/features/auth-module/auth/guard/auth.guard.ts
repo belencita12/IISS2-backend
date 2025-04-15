@@ -10,7 +10,7 @@ import { TokenPayload } from '../types/auth.types';
 import { Reflector } from '@nestjs/core';
 import { EnvService } from '@features/global-module/env/env.service';
 import { UserService } from '@features/auth-module/user/user.service';
-import { IS_PUBLIC_KEY } from '@lib/decorators/public.decorator';
+import { IS_PUBLIC_KEY } from '@lib/decorators/auth/public.decorator';
 
 @Injectable()
 export class AuthGuard implements CanActivate {

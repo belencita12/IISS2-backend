@@ -32,6 +32,7 @@ import { TagModule } from './product-module/tag/tag.module';
 import { PurchaseDetailModule } from './purchase-module/purchase-detail/purchase-detail.module';
 import { PurchaseModule } from './purchase-module/purchase/purchase.module';
 import { MovementDetailModule } from './stock-module/movement-detail/movement-detail.module';
+import { InvoiceModule } from './invoice-module/invoice.module';
 
 @Module({
 	imports: [
@@ -67,6 +68,7 @@ import { MovementDetailModule } from './stock-module/movement-detail/movement-de
 		PurchaseModule,
 		PurchaseDetailModule,
 		MovementDetailModule,
+		InvoiceModule,
 	],
 })
 export class AppModule {}
