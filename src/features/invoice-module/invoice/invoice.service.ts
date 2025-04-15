@@ -176,7 +176,7 @@ export class InvoiceService {
 			invoiceData.push({
 				partialAmount,
 				partialAmountVAT,
-				productId: currentSD.id,
+				productId: currentSD.product.id,
 				quantity: d.quantity,
 				unitCost: currentSD.product.price.amount,
 			});
