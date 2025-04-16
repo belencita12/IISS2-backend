@@ -21,20 +21,7 @@ export class StockDetailsService {
 	}
 
 	async findAll(dto: StockDetailsQueryDto) {
-		const { baseWhere } = this.prisma.getBaseWhere(dto);
-		const where: Prisma.StockDetailsWhereInput = {
-			...baseWhere,
-			stockId: dto.stockId,
-			productId: dto.productId,
-		};
-		const [data, total] = await Promise.all([
-			this.prisma.stockDetails.findMany({
-				include: { product: { include: { price: true, image: true } } },
-				...this.prisma.paginate(dto),
-				where,
-			}),
-			this.prisma.stockDetails.count({ where }),
-		]);
+		const [data, total] = await this.findManyAndCount(dto);
 		return this.prisma.getPagOutput({
 			page: dto.page,
 			size: dto.size,
@@ -80,5 +67,26 @@ export class StockDetailsService {
 		const exists = await this.prisma.stockDetails.isExists({ id });
 		if (!exists) throw new NotFoundException('Detalle deposito no encontrado');
 		await this.prisma.stockDetails.softDelete({ id });
+	}
+
+	async findManyAndCount(dto: StockDetailsQueryDto) {
+		const { baseWhere } = this.prisma.getBaseWhere(dto);
+		const where: Prisma.StockDetailsWhereInput = {
+			...baseWhere,
+			stockId: dto.stockId,
+			productId: dto.productId,
+			amount:
+				dto.fromAmount || dto.toAmount
+					? { gte: dto.fromAmount, lte: dto.toAmount }
+					: undefined,
+		};
+		return await Promise.all([
+			this.prisma.stockDetails.findMany({
+				include: { product: { include: { price: true, image: true } } },
+				...this.prisma.paginate(dto),
+				where,
+			}),
+			this.prisma.stockDetails.count({ where }),
+		]);
 	}
 }

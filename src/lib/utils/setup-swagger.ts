@@ -3,6 +3,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 export type SwaggerConfig = {
 	app: INestApplication;
+	isProduction: boolean;
 	tag?: string[];
 	title?: string;
 	description?: string;
@@ -12,12 +13,14 @@ export type SwaggerConfig = {
 
 export const setUpSwagger = ({
 	app,
+	isProduction,
 	tag,
 	title,
 	description,
 	version,
 	path,
 }: SwaggerConfig) => {
+	if (isProduction) return;
 	const config = new DocumentBuilder()
 		.setTitle(title || 'Example Title')
 		.setDescription(description || 'Swagger Api example description')

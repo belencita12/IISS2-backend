@@ -6,9 +6,15 @@ import { getCorsConfig } from './config/cors.config';
 import { AllExceptionFilter } from './lib/filter/all-exception-filter';
 import { EnvService } from './features/global-module/env/env.service';
 import { configLoggerLevel } from '@config/logger-level.config';
+import { disableHeaders } from '@config/disable-headers';
+import { configHelmetHeaders } from '@config/config-helmet-headers';
+import { Environment } from '@config/env.config';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule, { bufferLogs: true });
+	const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+		bufferLogs: true,
+	});
 
 	// Config validation
 	app.useGlobalPipes(
@@ -26,19 +32,27 @@ async function bootstrap() {
 	const httpAdapter = app.get(HttpAdapterHost);
 	app.useGlobalFilters(new AllExceptionFilter(httpAdapter));
 
+	//config helment headers
+	configHelmetHeaders(app);
+
+	//disable some headers
+	disableHeaders(app, ['x-powered-by']);
+
+	// Get env values
+	const env = app.get(EnvService);
+	const IS_PROD = env.get('NODE_ENV') === Environment.Production;
+	const PORT = env.get('PORT');
+	const ORIGIN = env.get('CORS_ORIGIN');
+
 	// Config swagger
 	setUpSwagger({
 		app,
+		isProduction: IS_PROD,
 		title: 'Nico Pets',
 		description: 'Swagger Api for Nico Pets',
 		path: 'api',
 		version: '1.0',
 	});
-
-	// Get env values
-	const env = app.get(EnvService);
-	const PORT = env.get('PORT');
-	const ORIGIN = env.get('CORS_ORIGIN');
 
 	// Config Logger by enviroment
 	configLoggerLevel(env, app);

@@ -12,3 +12,8 @@ export const rucFormat = /^\d{6,9}-[1-9]$/;
  * Only numbers RegExp [0-9]
  */
 export const onlyNumbers = /^[\d-]+$/;
+
+/**
+ * Slug format for service-type. Ex: meet-30-min
+ */
+export const serviceTypeSlugFormat = /^[a-z0-9ñ]+(?:-[a-z0-9ñ]+)*$/;

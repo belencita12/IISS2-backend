@@ -35,6 +35,7 @@ import { MovementDetailModule } from './stock-module/movement-detail/movement-de
 import { InvoiceModule } from './invoice-module/invoice.module';
 import { PaymentMethodModule } from './payment-method-module/payment-method/payment-method.module';
 import { InvoicePaymentMethodModule } from './payment-method-module/invoice-payment-method/invoice-payment-method.module';
+import { ServiceTypeModule } from './service-type/service-type.module';
 
 @Module({
 	imports: [
@@ -73,6 +74,7 @@ import { InvoicePaymentMethodModule } from './payment-method-module/invoice-paym
 		InvoiceModule,
 		PaymentMethodModule,
 		InvoicePaymentMethodModule,
+		ServiceTypeModule,
 	],
 })
 export class AppModule {}

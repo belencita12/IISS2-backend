@@ -4,7 +4,7 @@ import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { TagDto } from './dto/tag.dto';
 import { TagQueryDto } from './dto/tag-query.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, ProductTag, Tag } from '@prisma/client';
 
 @Injectable()
 export class TagService {
@@ -50,6 +50,23 @@ export class TagService {
 					})),
 				}
 			: undefined;
+	}
+
+	handleUpdateTags(prevTags: (ProductTag & { tag: Tag })[], dtoTags: string[]) {
+		const newTags = dtoTags.filter(
+			(newTag) => !prevTags.some((tag) => tag.tag.name === newTag),
+		);
+
+		const tagToDel = prevTags
+			.filter((tag) => !dtoTags.includes(tag.tag.name))
+			.map((t) => t.tagId);
+
+		return {
+			create: newTags.map((t) => ({
+				tag: { connect: { name: t } },
+			})),
+			deleteMany: { tagId: { in: tagToDel } },
+		};
 	}
 
 	private async filterTags(query: TagQueryDto) {
