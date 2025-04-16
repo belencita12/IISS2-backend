@@ -1,0 +1,19 @@
+model PaymentMethod {
+    id             Int                    @id @default(autoincrement())
+    name           String                 @unique
+    description    String?
+    paymentMethods InvoicePaymentMethod[]
+    createdAt DateTime
+    deletedAt DateTime?  @default(now())
+}
+
+model InvoicePaymentMethod {
+    id        Int           @id @default(autoincrement())
+    methodId  Int
+    method    PaymentMethod @relation(fields: [methodId], references: [id])
+    invoiceId Int
+    invoice   Invoice       @relation(fields: [invoiceId], references: [id])
+    amount    Float
+    createdAt DateTime
+    deletedAt DateTime?
+}

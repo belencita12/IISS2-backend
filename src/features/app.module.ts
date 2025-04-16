@@ -33,6 +33,8 @@ import { PurchaseDetailModule } from './purchase-module/purchase-detail/purchase
 import { PurchaseModule } from './purchase-module/purchase/purchase.module';
 import { MovementDetailModule } from './stock-module/movement-detail/movement-detail.module';
 import { InvoiceModule } from './invoice-module/invoice.module';
+import { PaymentMethodModule } from './payment-method-module/payment-method/payment-method.module';
+import { InvoicePaymentMethodModule } from './payment-method-module/invoice-payment-method/invoice-payment-method.module';
 
 @Module({
 	imports: [
@@ -69,6 +71,8 @@ import { InvoiceModule } from './invoice-module/invoice.module';
 		PurchaseDetailModule,
 		MovementDetailModule,
 		InvoiceModule,
+		PaymentMethodModule,
+		InvoicePaymentMethodModule,
 	],
 })
 export class AppModule {}
