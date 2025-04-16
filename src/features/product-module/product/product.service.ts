@@ -120,9 +120,18 @@ export class ProductService {
 	}
 
 	async remove(id: number) {
-		const exists = await this.db.product.isExists({ id });
-		if (!exists) throw new HttpException('Producto no encontrado', 404);
-		await this.db.product.softDelete({ id });
+		const product = await this.db.product.findUnique({
+			where: { id },
+			select: { id: true },
+		});
+		if (!product) throw new HttpException('Producto no encontrado', 404);
+		await this.db.$transaction(async (tx) => {
+			await tx.product.softDelete({ id });
+			await tx.stockDetails.updateMany({
+				where: { productId: product.id },
+				data: { deletedAt: new Date() },
+			});
+		});
 	}
 
 	private genProdCode() {
