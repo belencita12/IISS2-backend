@@ -114,7 +114,7 @@ export class InvoiceService {
 
 		if (stockDetails.length !== productsId.length)
 			throw new NotFoundException(
-				'Uno o mas de los productos de la lista no existe o no se encuentra en el deposito definido',
+				'Uno o mas de los productos de la lista no existe o no se encuentra en el deposito',
 			);
 
 		return this.buildInvoiceDetailsData(stockDetails, stockId, details);
@@ -130,7 +130,7 @@ export class InvoiceService {
 	}
 
 	private buildInvoiceDetailsData(
-		productsMap: StockDetailInfo[],
+		products: StockDetailInfo[],
 		stockId: number,
 		details: CreateInvoiceDetailDto[],
 	) {
@@ -142,7 +142,7 @@ export class InvoiceService {
 		let totalVat: Decimal = new Decimal(0);
 
 		for (const d of details) {
-			const currentSD = productsMap.find((p) => p.product.id === d.productId)!;
+			const currentSD = products.find((p) => p.product.id === d.productId)!;
 
 			if (currentSD.amount < d.quantity) {
 				throw new BadRequestException(
@@ -176,7 +176,7 @@ export class InvoiceService {
 			invoiceData.push({
 				partialAmount,
 				partialAmountVAT,
-				productId: currentSD.id,
+				productId: currentSD.product.id,
 				quantity: d.quantity,
 				unitCost: currentSD.product.price.amount,
 			});
