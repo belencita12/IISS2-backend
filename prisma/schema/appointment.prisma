@@ -1,0 +1,38 @@
+model Appointment {
+    id Int @id
+
+    designatedDate DateTime
+    completedDate  DateTime?
+    details        String?
+
+    serviceId Int
+    petId     Int
+
+    cancelation AppointmentCancelation?
+    status      AppointmentStatus       @default(PENDING)
+    pet         Pet                     @relation(fields: [petId], references: [id])
+    service     ServiceType             @relation(fields: [serviceId], references: [id])
+    employee    Employee[]              @relation("EmplyeeAppointment")
+
+    deletedAt DateTime?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+}
+
+enum AppointmentStatus {
+    PENDING
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+model AppointmentCancelation {
+    id Int @id
+
+    details       String
+    managerId     Int
+    appointmentId Int    @unique
+
+    employee    Employee    @relation(fields: [managerId], references: [id])
+    appointment Appointment @relation(fields: [appointmentId], references: [id])
+}

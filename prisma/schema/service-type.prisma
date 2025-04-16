@@ -5,7 +5,12 @@ model ServiceType {
     description String
     durationMin Int
     productId   Int     @unique
-    product     Product @relation(fields: [productId], references: [id])
+    maxColabs   Int?
+    isPublic    Boolean @default(false)
+
+    product Product @relation(fields: [productId], references: [id])
+
+    appointments Appointment[]
 
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
