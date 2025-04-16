@@ -147,9 +147,7 @@ export class MovementService {
 				? {
 						some: {
 							product: {
-								name: dto.productName
-									? { contains: dto.productName, mode: 'insensitive' }
-									: undefined,
+								name: { contains: dto.productName, mode: 'insensitive' },
 							},
 						},
 					}
