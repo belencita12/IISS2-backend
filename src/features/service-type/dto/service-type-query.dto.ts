@@ -1,46 +1,32 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
+import { IsTag } from '@lib/decorators/validation/is-tag.decorator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Category } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
-	IsEnum,
+	IsInt,
 	IsNumber,
 	IsOptional,
 	IsPositive,
 	IsString,
-	IsArray,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
 
-export class ProductQueryDto extends PaginationQueryDto {
-	@ApiPropertyOptional()
+export class ServiceTypeQueryDto extends PaginationQueryDto {
 	@IsOptional()
 	@IsString()
+	@ApiPropertyOptional()
 	name?: string;
 
-	@ApiPropertyOptional()
-	@IsOptional()
-	@IsString()
-	code?: string;
-
-	@ApiPropertyOptional({ enum: Category })
-	@IsOptional()
-	@IsEnum(Category)
-	category?: Category;
-
-	@ApiPropertyOptional()
 	@IsOptional()
 	@Type(() => Number)
-	@IsNumber()
-	@IsPositive()
-	minCost?: number;
-
+	@IsInt()
 	@ApiPropertyOptional()
+	fromDuration?: number;
+
 	@IsOptional()
 	@Type(() => Number)
-	@IsNumber()
-	@IsPositive()
-	maxCost?: number;
+	@IsInt()
+	@ApiPropertyOptional()
+	toDuration?: number;
 
 	@ApiPropertyOptional()
 	@IsOptional()
@@ -58,10 +44,6 @@ export class ProductQueryDto extends PaginationQueryDto {
 
 	@ApiPropertyOptional()
 	@IsOptional()
-	@IsArray()
-	@IsString({ each: true })
-	@Transform(({ value }) =>
-		Array.isArray(value) ? value : value.split(',').map((tag) => tag.trim()),
-	)
+	@IsTag()
 	tags?: string[];
 }
