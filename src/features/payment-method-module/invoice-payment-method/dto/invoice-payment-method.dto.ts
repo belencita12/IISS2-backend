@@ -1,21 +1,36 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { InvoicePaymentMethod, PaymentMethod } from '@prisma/client';
+export interface invoicePaymentMethodEntity extends InvoicePaymentMethod{
+    method: PaymentMethod
+}
+
+
 
 export class InvoicePaymentMethodDto {
-    @ApiProperty({ example: 1 })
-    id: number;
+	constructor(entity: invoicePaymentMethodEntity) {
+		this.id = entity.id;
+		this.method = entity.method.name;
+		this.invoiceId = entity.invoiceId;
+		this.amount = entity.amount;
+		this.createdAt = entity.createdAt;
+		this.deletedAt = entity.deletedAt;
+	}
 
-    @ApiProperty({ example: 2 })
-    methodId: number;
+	@ApiProperty()
+	id: number;
 
-    @ApiProperty({ example: 10 })
-    invoiceId: number;
+	@ApiProperty()
+	method: string;
 
-    @ApiProperty({ example: 1500.75 })
-    amount: number;
+	@ApiProperty()
+	invoiceId: number;
 
-    @ApiProperty({ example: '2024-04-15T10:00:00.000Z' })
-    createdAt: Date;
+	@ApiProperty()
+	amount: number;
 
-    @ApiProperty({ example: null, required: false })
-    deletedAt?: Date | null;
+	@ApiProperty()
+	createdAt: Date;
+
+	@ApiPropertyOptional()
+	deletedAt?: Date | null;
 }

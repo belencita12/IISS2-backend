@@ -17,6 +17,7 @@ import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { Role } from '@lib/constants/role.enum';
 import { RolesGuard } from '@lib/guard/role.guard';
 import { AppController } from '@lib/decorators/router/app-controller.decorator';
+import { InvoicePaymentMethodQueryDto } from './dto/invoice-payment-method.query.dto';
 
 @AppController({ name: 'invoice-payment-method', tag: 'Invoice Payment Method' })
 @UseGuards(RolesGuard)
@@ -34,13 +35,11 @@ export class InvoicePaymentMethodController {
     }
 
     @Get('/')
-    @Roles(Role.Employee, Role.Admin)
-    @ApiResponse({ type: [InvoicePaymentMethodDto] })
-    find(@Query('invoiceId') invoiceId?: string) {
-        return this.invoicePaymentMethodService.find(
-            invoiceId ? +invoiceId : undefined,
-        );
-    }
+	@Roles(Role.Employee, Role.Admin)
+	@ApiResponse({ type: [InvoicePaymentMethodDto] })
+	find(@Query() query: InvoicePaymentMethodQueryDto) {
+		return this.invoicePaymentMethodService.find(query);
+	}
 
     @Get(':id')
     @Roles(Role.Employee, Role.Admin)

@@ -2,124 +2,128 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '@features/prisma/prisma.service';
 import { CreateInvoicePaymentMethodDto } from './dto/create-invoce-payment-method';
 import { UpdateInvoicePaymentMethodDto } from './dto/update-invoice-payment-method';
+import { InvoicePaymentMethodDto } from './dto/invoice-payment-method.dto';
+import { InvoicePaymentMethodQueryDto } from './dto/invoice-payment-method.query.dto';
 
 @Injectable()
 export class InvoicePaymentMethodService {
     constructor(private readonly prisma: PrismaService) { }
-
-    async create(data: CreateInvoicePaymentMethodDto) {
-        const { invoiceId, methodId, amount } = data;
-        const invoice = await this.prisma.invoice.findUnique({ where: { id: invoiceId } });
-        if (!invoice) {
-            throw new NotFoundException(`La factura con ID ${invoiceId} no existe`);
+    async create(data: CreateInvoicePaymentMethodDto): Promise<InvoicePaymentMethodDto> {
+        const [methodExists, invoiceExists] = await Promise.all([
+            this.prisma.paymentMethod.findFirst({ where: { id: data.methodId, deletedAt: null } }),
+            this.prisma.invoice.findUnique({ where: { id: data.invoiceId } }),
+        ]);
+    
+        if (!methodExists) {
+            throw new NotFoundException('El método de pago no existe o fue eliminado');
         }
-
-        const method = await this.prisma.paymentMethod.findUnique({ where: { id: methodId } });
-        if (!method || method.deletedAt) {
-            throw new NotFoundException(`El método de pago con ID ${methodId} no existe o fue eliminado`);
+    
+        if (!invoiceExists) {
+            throw new NotFoundException('La factura no existe');
         }
-
-        const existing = await this.prisma.invoicePaymentMethod.findFirst({
-            where: {
-                invoiceId,
-                methodId,
-                deletedAt: null,
-            },
-        });
-
-        if (existing) {
-            throw new BadRequestException(`Ya existe una relación activa entre esta factura y este método de pago`);
-        }
-
-        return await this.prisma.invoicePaymentMethod.create({
-            data: {
-                invoiceId,
-                methodId,
-                amount,
-                createdAt: new Date(),
-            },
-            include: {
-                method: true,
-                invoice: true,
-            },
-        });
-    }
-
-    async find(invoiceId?: number) {
-        return await this.prisma.invoicePaymentMethod.findMany({
-            where: {
-                invoiceId,
-                deletedAt: null,
-            },
-            include: {
-                method: true,
-                invoice: true,
-            },
-        });
-    }
-
-    async findOne(id: number) {
-        const result = await this.prisma.invoicePaymentMethod.findFirst({
-            where: {
-                id,
-                deletedAt: null,
-            },
-            include: {
-                method: true,
-                invoice: true,
-            },
-        });
-
-        if (!result) {
-            throw new NotFoundException(`No se encontró una relación activa con ID ${id}`);
-        }
-
-        return result;
-    }
-
-    async update(id: number, data: UpdateInvoicePaymentMethodDto) {
-        const record = await this.prisma.invoicePaymentMethod.findUnique({ where: { id } });
-
-        if (!record || record.deletedAt) {
-            throw new NotFoundException(`La relación con ID ${id} no existe o fue eliminada`);
-        }
-
-        if (data.invoiceId) {
-            const invoice = await this.prisma.invoice.findUnique({ where: { id: data.invoiceId } });
-            if (!invoice) {
-                throw new NotFoundException(`La factura con ID ${data.invoiceId} no existe o fue eliminada`);
-            }
-        }
-
-        if (data.methodId) {
-            const method = await this.prisma.paymentMethod.findUnique({ where: { id: data.methodId } });
-            if (!method || method.deletedAt) {
-                throw new NotFoundException(`El método de pago con ID ${data.methodId} no existe o fue eliminado`);
-            }
-        }
-
-        return await this.prisma.invoicePaymentMethod.update({
-            where: { id },
+    
+        const created = await this.prisma.invoicePaymentMethod.create({
             data,
             include: {
                 method: true,
                 invoice: true,
             },
         });
+        return new InvoicePaymentMethodDto(created);
+    }
+    
+
+    async find(dto: InvoicePaymentMethodQueryDto) {
+        const { baseWhere } = this.prisma.getBaseWhere(dto);
+
+        const where = {
+            ...baseWhere,
+            ...(dto.invoiceId && { invoiceId: dto.invoiceId }),
+            ...(dto.methodId && { methodId: dto.methodId }),
+            ...(dto.amountMin !== undefined || dto.amountMax !== undefined
+                ? {
+                    amount: {
+                        ...(dto.amountMin !== undefined ? { gte: dto.amountMin } : {}),
+                        ...(dto.amountMax !== undefined ? { lte: dto.amountMax } : {}),
+                    },
+                }
+                : {}),
+        };
+
+        const [data, total] = await Promise.all([
+            this.prisma.invoicePaymentMethod.findMany({
+                where,
+                ...this.prisma.paginate(dto),
+                include: {
+                    method: true,
+                },
+            }),
+            this.prisma.invoicePaymentMethod.count({ where }),
+        ]);
+
+        return this.prisma.getPagOutput({
+            data: data.map((item) => new InvoicePaymentMethodDto(item)),
+            page: dto.page,
+            size: dto.size,
+            total,
+        });
+    }
+
+
+    async findOne(id: number) {
+        const data = await this.prisma.invoicePaymentMethod.findUnique({
+            where: {
+                id
+            },
+            include: {
+                method: true,
+                invoice: true,
+            },
+        });
+
+        if (!data) {
+            throw new NotFoundException(`No se encontró la relación`);
+        }
+
+        return new InvoicePaymentMethodDto(data);
+    }
+
+    async update(id: number, data: UpdateInvoicePaymentMethodDto) {
+        const record = await this.prisma.invoicePaymentMethod.findUnique({ where: { id } });
+
+        if (!record) {
+            throw new NotFoundException(`La relación no existe o fue eliminada`);
+        }
+
+        if (data.invoiceId) {
+            const invoice = await this.prisma.invoice.findUnique({ where: { id: data.invoiceId } });
+            if (!invoice) {
+                throw new NotFoundException(`La factura no existe o fue eliminada`);
+            }
+        }
+
+        if (data.methodId) {
+            const method = await this.prisma.paymentMethod.findUnique({ where: { id: data.methodId } });
+            if (!method || method.deletedAt) {
+                throw new NotFoundException(`El método de pago no existe o fue eliminado`);
+            }
+        }
+
+        const dataMod = await this.prisma.invoicePaymentMethod.update({
+            where: { id },
+            data,
+            include: {
+                method: true,
+            },
+        });
+        return new InvoicePaymentMethodDto(dataMod)
     }
 
     async remove(id: number) {
         const record = await this.prisma.invoicePaymentMethod.findUnique({ where: { id } });
-
-        if (!record || record.deletedAt) {
-            throw new NotFoundException(`La relación con ID ${id} no existe o ya fue eliminada`);
+        if (!record) {
+            throw new NotFoundException(`La relación no existe o ya fue eliminada`);
         }
-
-        return await this.prisma.invoicePaymentMethod.update({
-            where: { id },
-            data: {
-                deletedAt: new Date(),
-            },
-        });
+        return await this.prisma.invoicePaymentMethod.softDelete({ id });
     }
 }

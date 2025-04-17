@@ -6,6 +6,7 @@ import {
   Patch,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { PaymentMethodService } from './payment-method.service';
 import { CreatePaymentMethodDto } from './dto/create-payment-method.dto';
@@ -16,6 +17,8 @@ import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { Role } from '@lib/constants/role.enum';
 import { AppController } from '@lib/decorators/router/app-controller.decorator';
 import { PaymentMethodDto } from './dto/payment-method.dto';
+import { PaymentMethod } from '@prisma/client';
+import { PaymentMethodQueryDto } from './dto/payment-method.query.dto';
 
 @AppController({ name: 'payment-method', tag: 'Payment Method' })
 @UseGuards(RolesGuard)
@@ -33,8 +36,8 @@ export class PaymentMethodController {
   @Get()
   @Roles(Role.Employee, Role.Admin)
   @ApiResponse({ type: [PaymentMethodDto] })
-  findAll() {
-    return this.paymentMethodService.findAll();
+  findAll(@Query() query: PaymentMethodQueryDto) {
+    return this.paymentMethodService.findAll(query);
   }
 
   @Get(':id')

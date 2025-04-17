@@ -1,18 +1,27 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PaymentMethod } from '@prisma/client';
+import { IsDateString } from 'class-validator';
 
 export class PaymentMethodDto {
-    @ApiProperty({ example: 1 })
-    id: number;
+	constructor(paymentMethod: PaymentMethod) {
+		this.id = paymentMethod.id;
+		this.name = paymentMethod.name;
+	}
 
-    @ApiProperty({ example: 'Tarjeta de crédito' })
-    name: string;
+	@ApiProperty()
+	id: number;
 
-    @ApiProperty({ example: 'Pago mediante tarjeta de crédito', required: false })
-    description?: string;
+	@ApiProperty()
+	name: string;
 
-    @ApiProperty({ example: '2024-04-15T10:00:00.000Z' })
-    createdAt: Date;
+	@ApiPropertyOptional()
+	description?: string;
 
-    @ApiProperty({ example: null, required: false })
-    deletedAt?: Date | null;
+    @IsDateString()
+	@ApiProperty()
+	createdAt: Date;
+
+    @IsDateString()
+	@ApiPropertyOptional()
+	deletedAt?: Date | null;
 }
