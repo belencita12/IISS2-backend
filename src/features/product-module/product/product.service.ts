@@ -3,7 +3,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { ProductDto } from './dto/product.dto';
 import Decimal from 'decimal.js';
 import { ProductQueryDto } from './dto/product-query.dto';
-import { Prisma, ProductTag, Tag } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { ImageService } from '@features/media-module/image/image.service';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { TagService } from '../tag/tag.service';
@@ -103,7 +103,7 @@ export class ProductService {
 			where: { id },
 			data: {
 				...rest,
-				tags: this.processTagsUpdate(prevTags, tags),
+				tags: this.tagService.handleUpdateTags(prevTags, tags),
 				image: prodImg ? { connect: { id: prodImg.id } } : undefined,
 				price: isSamePrice
 					? { connect: { id: prodToUpd.price.id } }
@@ -120,34 +120,23 @@ export class ProductService {
 	}
 
 	async remove(id: number) {
-		const exists = await this.db.product.isExists({ id });
-		if (!exists) throw new HttpException('Producto no encontrado', 404);
-		await this.db.product.softDelete({ id });
+		const product = await this.db.product.findUnique({
+			where: { id },
+			select: { id: true },
+		});
+		if (!product) throw new HttpException('Producto no encontrado', 404);
+		await this.db.$transaction(async (tx) => {
+			await tx.product.softDelete({ id });
+			await tx.stockDetails.updateMany({
+				where: { productId: product.id },
+				data: { deletedAt: new Date() },
+			});
+		});
 	}
 
 	private genProdCode() {
-		const randomNumber = Math.floor(Math.random() * 10000);
+		const randomNumber = Math.floor(Math.random() * 1000);
 		const nowString = Date.now().toString();
 		return `prod-${nowString}-${randomNumber}`;
-	}
-
-	private processTagsUpdate(
-		prevTags: (ProductTag & { tag: Tag })[],
-		dtoTags: string[],
-	) {
-		const newTags = dtoTags.filter(
-			(newTag) => !prevTags.some((tag) => tag.tag.name === newTag),
-		);
-
-		const tagToDel = prevTags
-			.filter((tag) => !dtoTags.includes(tag.tag.name))
-			.map((t) => t.tagId);
-
-		return {
-			create: newTags.map((t) => ({
-				tag: { connect: { name: t } },
-			})),
-			deleteMany: { tagId: { in: tagToDel } },
-		};
 	}
 }

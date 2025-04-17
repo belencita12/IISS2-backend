@@ -9,8 +9,8 @@ export class CreateInvoiceDto extends OmitType(InvoiceDto, [
 	'id',
 	'total',
 	'totalVat',
-	'stock',
 	'ruc',
+	'clientName',
 ]) {
 	@ApiProperty({ type: [CreateInvoiceDetailDto] })
 	@ValidateNested({ each: true })

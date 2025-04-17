@@ -1,7 +1,7 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsNumber, IsOptional, IsPositive } from 'class-validator';
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, Min } from 'class-validator';
 
 export class StockDetailsQueryDto extends PaginationQueryDto {
 	@IsOptional()
@@ -22,10 +22,19 @@ export class StockDetailsQueryDto extends PaginationQueryDto {
 
 	@IsOptional()
 	@Type(() => Number)
-	@IsNumber()
-	@Min(0)
+	@IsInt()
+	@IsPositive()
 	@ApiPropertyOptional({
-		description: 'Filtrar por cantidad en detalles',
+		description: 'Filtrar desde cierta cantidad de productos en el deposito',
 	})
-	amount?: number;
+	fromAmount?: number;
+
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@IsPositive()
+	@ApiPropertyOptional({
+		description: 'Filtrar hasta cierta cantidad de productos en el deposito',
+	})
+	toAmount?: number;
 }

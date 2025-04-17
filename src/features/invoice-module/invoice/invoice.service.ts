@@ -27,7 +27,7 @@ export class InvoiceService {
 			this.validateTotalPayed(total, data.totalPayed);
 			await this.handleUpdateStock(tx, stockDetailData, productData);
 			return await tx.invoice.create({
-				include: { client: { include: { user: true } }, stock: true },
+				include: { client: { include: { user: true } } },
 				data: {
 					...data,
 					totalPayed: data.type === 'CASH' ? total : data.totalPayed,
@@ -47,7 +47,7 @@ export class InvoiceService {
 		const [data, count] = await Promise.all([
 			this.db.invoice.findMany({
 				...this.db.paginate(dto),
-				include: { client: { include: { user: true } }, stock: true },
+				include: { client: { include: { user: true } } },
 				where,
 			}),
 			this.db.invoice.count({ where }),
@@ -62,7 +62,7 @@ export class InvoiceService {
 
 	async findOne(id: number) {
 		const invoice = await this.db.invoice.findUnique({
-			include: { client: { include: { user: true } }, stock: true },
+			include: { client: { include: { user: true } } },
 			where: { id },
 		});
 		if (!invoice) throw new NotFoundException('Factura no encontrada');
@@ -114,14 +114,10 @@ export class InvoiceService {
 
 		if (stockDetails.length !== productsId.length)
 			throw new NotFoundException(
-				'Uno o mas de los productos de la lista no existe o fue eliminado',
+				'Uno o mas de los productos de la lista no existe o no se encuentra en el deposito',
 			);
 
-		const productsHash = new Map<number, StockDetailInfo>(
-			stockDetails.map((sd) => [sd.id, sd]),
-		);
-
-		return this.buildInvoiceDetailsData(productsHash, stockId, details);
+		return this.buildInvoiceDetailsData(stockDetails, stockId, details);
 	}
 
 	private async handleUpdateStock(
@@ -134,7 +130,7 @@ export class InvoiceService {
 	}
 
 	private buildInvoiceDetailsData(
-		productsMap: Map<number, StockDetailInfo>,
+		products: StockDetailInfo[],
 		stockId: number,
 		details: CreateInvoiceDetailDto[],
 	) {
@@ -146,7 +142,7 @@ export class InvoiceService {
 		let totalVat: Decimal = new Decimal(0);
 
 		for (const d of details) {
-			const currentSD = productsMap.get(d.productId)!;
+			const currentSD = products.find((p) => p.product.id === d.productId)!;
 
 			if (currentSD.amount < d.quantity) {
 				throw new BadRequestException(
@@ -180,7 +176,7 @@ export class InvoiceService {
 			invoiceData.push({
 				partialAmount,
 				partialAmountVAT,
-				productId: currentSD.id,
+				productId: currentSD.product.id,
 				quantity: d.quantity,
 				unitCost: currentSD.product.price.amount,
 			});

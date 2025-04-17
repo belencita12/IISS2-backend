@@ -33,6 +33,7 @@ import { PurchaseDetailModule } from './purchase-module/purchase-detail/purchase
 import { PurchaseModule } from './purchase-module/purchase/purchase.module';
 import { MovementDetailModule } from './stock-module/movement-detail/movement-detail.module';
 import { InvoiceModule } from './invoice-module/invoice.module';
+import { ServiceTypeModule } from './service-type/service-type.module';
 
 @Module({
 	imports: [
@@ -69,6 +70,7 @@ import { InvoiceModule } from './invoice-module/invoice.module';
 		PurchaseDetailModule,
 		MovementDetailModule,
 		InvoiceModule,
+		ServiceTypeModule,
 	],
 })
 export class AppModule {}

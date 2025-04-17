@@ -1,7 +1,6 @@
-import { StockDto } from '@features/stock-module/stock/dto/stock.dto';
 import { IsPositiveNumber } from '@lib/decorators/validation/is-money.decorator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Client, Invoice, InvoiceType, Stock, User } from '@prisma/client';
+import { Client, Invoice, InvoiceType, User } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
 	IsDateString,
@@ -13,7 +12,6 @@ import {
 
 export interface InvoiceEnity extends Invoice {
 	client: Client & { user: User };
-	stock: Stock;
 }
 
 export class InvoiceDto {
@@ -22,9 +20,6 @@ export class InvoiceDto {
 
 	@ApiProperty()
 	total: number;
-
-	@ApiProperty()
-	stock: StockDto;
 
 	@ApiProperty()
 	@Type(() => Number)
@@ -48,6 +43,9 @@ export class InvoiceDto {
 	@ApiProperty()
 	ruc: string;
 
+	@ApiProperty()
+	clientName: string;
+
 	@ApiProperty({ enum: InvoiceType })
 	@IsEnum(InvoiceType)
 	type: InvoiceType;
@@ -59,6 +57,7 @@ export class InvoiceDto {
 	constructor(data: InvoiceEnity) {
 		this.id = data.id;
 		this.ruc = data.client.user.ruc;
+		this.clientName = data.client.user.fullName;
 		this.invoiceNumber = data.invoiceNumber;
 		this.stamped = data.stamped;
 		this.issueDate = data.issueDate;

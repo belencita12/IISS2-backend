@@ -48,6 +48,6 @@ export class InvoiceController {
 	@Delete(':id')
 	@Roles(Role.Admin)
 	remove(@Param('id') id: string) {
-		this.invoiceService.remove(+id);
+		return this.invoiceService.remove(+id);
 	}
 }
