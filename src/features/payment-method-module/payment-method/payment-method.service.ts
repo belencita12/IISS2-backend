@@ -24,9 +24,7 @@ export class PaymentMethodService {
   
     return await this.prisma.paymentMethod.create({
       data: {
-        ...createPaymentMethodDto,
-        createdAt: new Date(), 
-        deletedAt: null,
+        ...createPaymentMethodDto
       },
     });
   }

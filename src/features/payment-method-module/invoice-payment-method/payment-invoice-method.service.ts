@@ -26,7 +26,6 @@ export class InvoicePaymentMethodService {
             data,
             include: {
                 method: true,
-                invoice: true,
             },
         });
         return new InvoicePaymentMethodDto(created);
@@ -77,7 +76,6 @@ export class InvoicePaymentMethodService {
             },
             include: {
                 method: true,
-                invoice: true,
             },
         });
 

@@ -14,7 +14,7 @@ model InvoicePaymentMethod {
     method    PaymentMethod @relation(fields: [methodId], references: [id])
     invoiceId Int
     invoice   Invoice       @relation(fields: [invoiceId], references: [id])
-    amount    Float
+    amount    Int
     deletedAt DateTime?
     createdAt DateTime      @default(now())
     updatedAt DateTime      @updatedAt

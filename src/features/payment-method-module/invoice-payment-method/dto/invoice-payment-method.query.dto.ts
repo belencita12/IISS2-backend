@@ -1,17 +1,18 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNumber, IsOptional, Min } from 'class-validator';
+import {IsNumber, IsOptional, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
+import { IsId } from '@lib/decorators/validation/is-id.decorator';
 
 export class InvoicePaymentMethodQueryDto extends PaginationQueryDto {
 	@IsOptional()
-	@IsInt()
+	@IsId()
 	@Type(() => Number)
 	@ApiPropertyOptional()
 	invoiceId?: number;
 
 	@IsOptional()
-	@IsInt()
+	@IsId()
 	@Type(() => Number)
 	@ApiPropertyOptional()
 	methodId?: number;
