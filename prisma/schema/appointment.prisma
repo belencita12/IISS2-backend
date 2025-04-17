@@ -1,5 +1,5 @@
 model Appointment {
-    id Int @id
+    id Int @id @default(autoincrement())
 
     designatedDate DateTime
     completedDate  DateTime?

@@ -34,6 +34,8 @@ import { PurchaseModule } from './purchase-module/purchase/purchase.module';
 import { MovementDetailModule } from './stock-module/movement-detail/movement-detail.module';
 import { InvoiceModule } from './invoice-module/invoice.module';
 import { ServiceTypeModule } from './service-type/service-type.module';
+import { AppointmentModule } from './appointment/appointment.module';
+import { ScheduleService } from './schedule/schedule.service';
 
 @Module({
 	imports: [
@@ -71,6 +73,8 @@ import { ServiceTypeModule } from './service-type/service-type.module';
 		MovementDetailModule,
 		InvoiceModule,
 		ServiceTypeModule,
+		AppointmentModule,
 	],
+	providers: [ScheduleService],
 })
 export class AppModule {}
