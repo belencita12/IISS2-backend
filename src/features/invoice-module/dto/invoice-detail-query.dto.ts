@@ -1,7 +1,9 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
+import { IsDbDate } from '@lib/decorators/validation/is-db-date.decorator';
+import { QueryParam } from '@lib/decorators/validation/query-param.decorator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class InvoiceDetailQueryDto extends PaginationQueryDto {
 	@IsOptional()
@@ -19,13 +21,11 @@ export class InvoiceDetailQueryDto extends PaginationQueryDto {
 	@ApiPropertyOptional()
 	toPartialTotal?: number;
 
-	@IsOptional()
-	@IsDateString()
-	@ApiPropertyOptional()
-	fromIssueDate?: Date;
+	@QueryParam()
+	@IsDbDate()
+	fromIssueDate?: string;
 
-	@IsOptional()
-	@IsDateString()
-	@ApiPropertyOptional()
-	toIssueDate?: Date;
+	@QueryParam()
+	@IsDbDate()
+	toIssueDate?: string;
 }
