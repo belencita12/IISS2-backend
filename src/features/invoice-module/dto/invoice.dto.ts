@@ -1,14 +1,6 @@
-import { IsPositiveNumber } from '@lib/decorators/validation/is-money.decorator';
+import { toDate } from '@lib/utils/date';
 import { ApiProperty } from '@nestjs/swagger';
 import { Client, Invoice, InvoiceType, User } from '@prisma/client';
-import { Type } from 'class-transformer';
-import {
-	IsDateString,
-	IsEnum,
-	IsNumber,
-	IsPositive,
-	IsString,
-} from 'class-validator';
 
 export interface InvoiceEnity extends Invoice {
 	client: Client & { user: User };
@@ -22,22 +14,15 @@ export class InvoiceDto {
 	total: number;
 
 	@ApiProperty()
-	@Type(() => Number)
-	@IsPositiveNumber('Lo pagado')
 	totalPayed: number;
 
 	@ApiProperty()
-	@Type(() => Number)
-	@IsNumber()
-	@IsPositive()
 	totalVat: number;
 
 	@ApiProperty()
-	@IsString()
 	invoiceNumber: string;
 
 	@ApiProperty()
-	@IsString()
 	stamped: string;
 
 	@ApiProperty()
@@ -47,12 +32,10 @@ export class InvoiceDto {
 	clientName: string;
 
 	@ApiProperty({ enum: InvoiceType })
-	@IsEnum(InvoiceType)
 	type: InvoiceType;
 
-	@ApiProperty()
-	@IsDateString()
-	issueDate: Date;
+	@ApiProperty({ example: '2025-12-11' })
+	issueDate: string;
 
 	constructor(data: InvoiceEnity) {
 		this.id = data.id;
@@ -60,7 +43,7 @@ export class InvoiceDto {
 		this.clientName = data.client.user.fullName;
 		this.invoiceNumber = data.invoiceNumber;
 		this.stamped = data.stamped;
-		this.issueDate = data.issueDate;
+		this.issueDate = toDate(data.issueDate);
 		this.total = data.total.toNumber();
 		this.totalPayed = data.totalPayed.toNumber();
 		this.totalVat = data.totalVat.toNumber();

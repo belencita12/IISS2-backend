@@ -22,6 +22,8 @@ model Invoice {
     deletedAt DateTime?
 
     InvoicePaymentMethod InvoicePaymentMethod[]
+
+    @@unique([invoiceNumber, stamped])
 }
 
 model InvoiceDetail {

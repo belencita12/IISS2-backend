@@ -17,3 +17,8 @@ export const onlyNumbers = /^[\d-]+$/;
  * Slug format for service-type. Ex: meet-30-min
  */
 export const serviceTypeSlugFormat = /^[a-z0-9ñ]+(?:-[a-z0-9ñ]+)*$/;
+
+/**
+ * Is the format of the invoice number 123-123-1234567
+ */
+export const invoiceNumber = /^\d{3}-\d{3}-\d{7}$/;

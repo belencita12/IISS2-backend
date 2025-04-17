@@ -73,10 +73,14 @@ export class InvoiceDetailService {
 		if (dto.fromIssueDate || dto.toIssueDate || dto.invoiceNumber) {
 			where.invoice = {
 				...(dto.fromIssueDate !== undefined && {
-					issueDate: { gte: dto.fromIssueDate },
+					issueDate: {
+						gte: dto.fromIssueDate ? new Date(dto.fromIssueDate) : undefined,
+					},
 				}),
 				...(dto.toIssueDate !== undefined && {
-					issueDate: { lte: dto.toIssueDate },
+					issueDate: {
+						lte: dto.toIssueDate ? new Date(dto.toIssueDate) : undefined,
+					},
 				}),
 				...(dto.invoiceNumber && {
 					invoiceNumber: { contains: dto.invoiceNumber, mode: 'insensitive' },

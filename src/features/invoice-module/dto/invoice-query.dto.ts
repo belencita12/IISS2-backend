@@ -1,43 +1,37 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
+import { IsDbDate } from '@lib/decorators/validation/is-db-date.decorator';
 import { IsId } from '@lib/decorators/validation/is-id.decorator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
 import { InvoiceType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsDateString, IsEnum, IsOptional } from 'class-validator';
+import { IsEnum } from 'class-validator';
+import { QueryParam } from '../../../lib/decorators/validation/query-param.decorator';
 
 export class InvoiceQueryDto extends PaginationQueryDto {
-	@IsOptional()
-	@ApiPropertyOptional()
+	@QueryParam()
 	ruc?: string;
 
-	@IsOptional()
 	@Type(() => Number)
 	@IsId()
-	@ApiPropertyOptional()
+	@QueryParam()
 	stockId?: number;
 
-	@IsOptional()
 	@Type(() => Number)
-	@ApiPropertyOptional()
+	@QueryParam()
 	fromTotal?: number;
 
-	@IsOptional()
 	@Type(() => Number)
-	@ApiPropertyOptional()
+	@QueryParam()
 	toTotal?: number;
 
-	@IsOptional()
 	@IsEnum(InvoiceType)
-	@ApiPropertyOptional({ enum: InvoiceType })
+	@QueryParam({ enum: InvoiceType })
 	type?: InvoiceType;
 
-	@IsOptional()
-	@IsDateString()
-	@ApiPropertyOptional()
-	fromIssueDate?: Date;
+	@IsDbDate()
+	@QueryParam()
+	fromIssueDate?: string;
 
-	@IsOptional()
-	@IsDateString()
-	@ApiPropertyOptional()
-	toIssueDate?: Date;
+	@IsDbDate()
+	@QueryParam()
+	toIssueDate?: string;
 }
