@@ -15,7 +15,4 @@ export class CreateInvoicePaymentMethodDto {
     @IsNumber()
     @IsPositive()
     amount: number;
-
-    @ApiProperty()
-    createdAt: Date;
 }
