@@ -9,7 +9,7 @@ import {
 	PrismaService,
 } from '@features/prisma/prisma.service';
 import { CreateInvoiceDetailDto } from '../dto/create-invoice-detail.dto';
-import { Prisma } from '@prisma/client';
+import { InvoiceType, Prisma } from '@prisma/client';
 import Decimal from 'decimal.js';
 import { StockDetailInfo } from '../dto/invoices.types';
 import { InvoiceDto } from '../dto/invoice.dto';
@@ -20,19 +20,20 @@ export class InvoiceService {
 	constructor(private readonly db: PrismaService) {}
 
 	async create(dto: CreateInvoiceDto) {
-		const { details, ...data } = dto;
+		const { details, issueDate, ...data } = dto;
 		const invoice = await this.db.$transaction(async (tx) => {
 			const { invoiceData, productData, stockDetailData, total, totalVat } =
 				await this.processDetails(tx, details, data.stockId);
-			this.validateTotalPayed(total, data.totalPayed);
+			this.validateTotalPayed(data.type, total, data.totalPayed);
 			await this.handleUpdateStock(tx, stockDetailData, productData);
 			return await tx.invoice.create({
 				include: { client: { include: { user: true } } },
 				data: {
 					...data,
-					totalPayed: data.type === 'CASH' ? total : data.totalPayed,
 					total,
 					totalVat,
+					totalPayed: data.type === 'CASH' ? total : data.totalPayed,
+					issueDate: new Date(issueDate),
 					details: {
 						createMany: { data: invoiceData },
 					},
@@ -70,9 +71,20 @@ export class InvoiceService {
 	}
 
 	async remove(id: number) {
-		const isExists = await this.db.invoice.isExists({ id });
-		if (!isExists) throw new NotFoundException('Factura no encontrada');
-		await this.db.invoice.softDelete({ id });
+		const invoice = await this.db.invoice.findUnique({ where: { id } });
+		if (!invoice) throw new NotFoundException('Factura no encontrada');
+
+		const details = await this.db.invoiceDetail.findMany({
+			where: { invoiceId: id },
+			select: { id: true },
+		});
+
+		await this.db.$transaction(async (tx) => {
+			await Promise.all([
+				tx.invoice.softDelete({ id }),
+				details.map((d) => tx.invoiceDetail.softDelete({ id: d.id })),
+			]);
+		});
 	}
 
 	private applyFilters(dto: InvoiceQueryDto) {
@@ -86,7 +98,10 @@ export class InvoiceService {
 				: undefined,
 			issueDate:
 				dto.fromIssueDate || dto.toIssueDate
-					? { gte: dto.fromIssueDate, lte: dto.toIssueDate }
+					? {
+							gte: dto.fromIssueDate ? new Date(dto.fromIssueDate) : undefined,
+							lte: dto.toIssueDate ? new Date(dto.toIssueDate) : undefined,
+						}
 					: undefined,
 			total:
 				dto.fromTotal || dto.toTotal
@@ -185,7 +200,16 @@ export class InvoiceService {
 		return { invoiceData, productData, stockDetailData, total, totalVat };
 	}
 
-	private validateTotalPayed(total: Decimal, totalPayed: number) {
+	private validateTotalPayed(
+		type: InvoiceType,
+		total: Decimal,
+		totalPayed?: number,
+	) {
+		if (type !== 'CREDIT') return;
+
+		if (!totalPayed)
+			throw new BadRequestException('Se requiere del total pagado');
+
 		const isTotalPayedValid = total.gte(totalPayed);
 		if (!isTotalPayedValid)
 			throw new BadRequestException(
