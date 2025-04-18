@@ -17,11 +17,11 @@ export class PaymentMethodService {
         name: createPaymentMethodDto.name
       },
     });
-  
+
     if (existing) {
       throw new BadRequestException(`Ya existe un método de pago con el nombre "${createPaymentMethodDto.name}"`);
     }
-  
+
     return await this.prisma.paymentMethod.create({
       data: {
         ...createPaymentMethodDto
@@ -31,12 +31,12 @@ export class PaymentMethodService {
 
   async findAll(dto: PaymentMethodQueryDto) {
     const { baseWhere } = this.prisma.getBaseWhere(dto);
-  
+
     const where: Prisma.PaymentMethodWhereInput = {
       ...baseWhere,
       name: dto.name ? { contains: dto.name, mode: 'insensitive' } : undefined,
     };
-  
+
     const [data, total] = await Promise.all([
       this.prisma.paymentMethod.findMany({
         ...this.prisma.paginate(dto),
@@ -44,7 +44,7 @@ export class PaymentMethodService {
       }),
       this.prisma.paymentMethod.count({ where }),
     ]);
-  
+
     return this.prisma.getPagOutput({
       page: dto.page,
       size: dto.size,
@@ -52,34 +52,33 @@ export class PaymentMethodService {
       data: data.map((item) => new PaymentMethodDto(item)),
     });
   }
-  
+
 
   async findOne(id: number) {
     const data = await this.prisma.paymentMethod.findUnique({
       where: { id },
     });
-    if(data){
+    if (data) {
       return new PaymentMethodDto(data);
     }
-    else{
+    else {
       throw new NotFoundException(`Método de pago no encontrado`);
     }
   }
 
   async update(id: number, updatePaymentMethodDto: UpdatePaymentMethodDto) {
-    const existing = await this.prisma.paymentMethod.findUnique({
-      where: {
-        name: updatePaymentMethodDto.name
-      },
-    });
-
-    if(!existing){
+    const existing = await this.prisma.paymentMethod.findUnique({ where: { id } });
+    if (!existing) {
       throw new NotFoundException(`Método de pago no encontrado`);
     }
-    if (existing) {
+
+    const duplicated = await this.prisma.paymentMethod.findUnique({ where: { name: updatePaymentMethodDto.name } });
+    if (duplicated && duplicated.id !== id) {
       throw new BadRequestException(`Ya existe un método de pago con el nombre "${updatePaymentMethodDto.name}"`);
     }
-    const updated =  await this.prisma.paymentMethod.update({
+
+
+    const updated = await this.prisma.paymentMethod.update({
       where: { id },
       data: updatePaymentMethodDto,
     });
