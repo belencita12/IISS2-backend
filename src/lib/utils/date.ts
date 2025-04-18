@@ -16,3 +16,10 @@ export const isInThisYear = (date: string | Date) => {
 	const thisMonth = dateNow.getMonth();
 	return thisYear === dateToCompare.getFullYear() || thisMonth !== 11;
 };
+
+export const toUtcDate = (dateStr: string): Date => {
+	const [date, time] = dateStr.split('T');
+	const [year, month, day] = date.split('-').map(Number);
+	const [hour, min] = time.split(':');
+	return new Date(Date.UTC(year, month - 1, day, Number(hour), Number(min)));
+};

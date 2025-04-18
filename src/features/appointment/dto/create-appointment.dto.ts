@@ -1,14 +1,16 @@
 import { IsId } from '@lib/decorators/validation/is-id.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsDate, IsOptional, IsString } from 'class-validator';
 
 export class CreateAppointmentDto {
 	@ApiProperty()
 	@IsId()
 	petId: number;
 
+	@Type(() => Date)
 	@ApiProperty()
-	@IsDateString()
+	@IsDate()
 	designatedDate: Date;
 
 	@IsOptional()

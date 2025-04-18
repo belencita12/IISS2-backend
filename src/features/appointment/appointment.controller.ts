@@ -1,4 +1,4 @@
-import { Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Get, Post, Body, Param, Delete, Query } from '@nestjs/common';
 import { AppointmentService } from './appointment.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { AppController } from '@lib/decorators/router/app-controller.decorator';
@@ -6,6 +6,8 @@ import { CurrentUser } from '@lib/decorators/auth/current-user.decoratot';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { AppointmentDto } from './dto/appointment.dto';
+import { Slot } from './dto/slot.dto';
+import { AvailabilityDateQueryDto } from './dto/availability-date-query.dto';
 
 @AppController({ name: 'appointment', tag: 'Appointment' })
 export class AppointmentController {
@@ -27,6 +29,15 @@ export class AppointmentController {
 	@ApiResponse({ type: AppointmentDto })
 	findOne(@Param('id') id: string) {
 		return this.appointmentService.findOne(+id);
+	}
+
+	@Get('/availability/:id')
+	@ApiResponse({ type: [Slot] })
+	getSchedule(
+		@Param('id') id: string,
+		@Query() query: AvailabilityDateQueryDto,
+	) {
+		return this.appointmentService.getScheduleByEmployee(+id, query.date);
 	}
 
 	@Delete(':id')

@@ -3,13 +3,20 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
 import { AppointmentDto } from './dto/appointment.dto';
+import { ScheduleService } from '@features/schedule/schedule.service';
 
 @Injectable()
 export class AppointmentService {
-	constructor(private readonly db: PrismaService) {}
+	constructor(
+		private readonly db: PrismaService,
+		private readonly scheduleService: ScheduleService,
+	) {}
 
 	async create(dto: CreateAppointmentDto, user: TokenPayload) {
-		const service = await this.db.serviceType.isExists({ id: dto.serviceId });
+		const service = await this.db.serviceType.findUnique({
+			where: { id: dto.serviceId },
+			select: { durationMin: true },
+		});
 		if (!service) throw new NotFoundException('Servicio no encontrado');
 
 		const pet = await this.getPet(dto.petId, user);
@@ -17,8 +24,20 @@ export class AppointmentService {
 
 		const { employeesId, ...data } = dto;
 
+		console.log(data.designatedDate);
+
+		await this.scheduleService.validateAppByEmployees(
+			employeesId,
+			data.designatedDate,
+			service.durationMin,
+		);
+
 		const appointment = await this.db.appointment.create({
-			data: { ...data, employee: this.connectEmployees(employeesId) },
+			data: {
+				...data,
+				designatedDate: data.designatedDate,
+				employee: this.connectEmployees(employeesId),
+			},
 			...this.getInclude(),
 		});
 
@@ -27,6 +46,11 @@ export class AppointmentService {
 
 	findAll() {
 		return `This action returns all appointment`;
+	}
+
+	async getScheduleByEmployee(id: number, date: string) {
+		const localDate = new Date(date);
+		return await this.scheduleService.getScheduleByEmployeeId(id, localDate);
 	}
 
 	async findOne(id: number) {
