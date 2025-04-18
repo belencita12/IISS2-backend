@@ -1,4 +1,4 @@
-import { ScheduleService } from '@features/schedule/schedule.service';
+import { ScheduleService } from '@features/appointment-module/schedule/schedule.service';
 
 describe('CatsController', () => {
 	let scheduleService: ScheduleService;

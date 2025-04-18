@@ -1,10 +1,5 @@
 import { WorkShift } from '@prisma/client';
 
-export type Slot = {
-	time: string;
-	isOcuppy: boolean;
-};
-
 export type TimeRange = {
 	start: number;
 	end: number;

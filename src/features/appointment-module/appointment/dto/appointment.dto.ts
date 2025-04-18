@@ -47,6 +47,7 @@ export class AppointmentDto {
 		this.id = data.id;
 		this.designatedDate = data.designatedDate;
 		this.details = data.details || undefined;
+		this.status = data.status;
 		this.completedDate = data.completedDate || undefined;
 		this.pet = {
 			id: data.petId,

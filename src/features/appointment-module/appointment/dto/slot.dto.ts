@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class Slot {
+export class SlotDto {
 	@ApiProperty()
 	time: string;
 

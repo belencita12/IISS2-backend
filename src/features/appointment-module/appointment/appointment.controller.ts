@@ -6,8 +6,10 @@ import { CurrentUser } from '@lib/decorators/auth/current-user.decoratot';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { AppointmentDto } from './dto/appointment.dto';
-import { Slot } from './dto/slot.dto';
+import { SlotDto } from './dto/slot.dto';
 import { AvailabilityDateQueryDto } from './dto/availability-date-query.dto';
+import { AppointmentQueryDto } from './dto/appointment-query.dto';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
 
 @AppController({ name: 'appointment', tag: 'Appointment' })
 export class AppointmentController {
@@ -21,8 +23,9 @@ export class AppointmentController {
 	}
 
 	@Get()
-	findAll() {
-		return this.appointmentService.findAll();
+	@ApiPaginatedResponse(AppointmentDto)
+	findAll(@Query() query: AppointmentQueryDto) {
+		return this.appointmentService.findAll(query);
 	}
 
 	@Get(':id')
@@ -32,7 +35,7 @@ export class AppointmentController {
 	}
 
 	@Get('/availability/:id')
-	@ApiResponse({ type: [Slot] })
+	@ApiResponse({ type: [SlotDto] })
 	getSchedule(
 		@Param('id') id: string,
 		@Query() query: AvailabilityDateQueryDto,

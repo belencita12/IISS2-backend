@@ -3,7 +3,9 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
 import { AppointmentDto } from './dto/appointment.dto';
-import { ScheduleService } from '@features/schedule/schedule.service';
+import { ScheduleService } from '@features/appointment-module/schedule/schedule.service';
+import { AppointmentQueryDto } from './dto/appointment-query.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AppointmentService {
@@ -24,8 +26,6 @@ export class AppointmentService {
 
 		const { employeesId, ...data } = dto;
 
-		console.log(data.designatedDate);
-
 		await this.scheduleService.validateAppByEmployees(
 			employeesId,
 			data.designatedDate,
@@ -44,8 +44,22 @@ export class AppointmentService {
 		return new AppointmentDto(appointment);
 	}
 
-	findAll() {
-		return `This action returns all appointment`;
+	async findAll(query: AppointmentQueryDto) {
+		const where = this.getFindAllWhere(query);
+		const [data, count] = await Promise.all([
+			this.db.appointment.findMany({
+				...this.db.paginate(query),
+				...this.getInclude(),
+				where,
+			}),
+			this.db.appointment.count({ where }),
+		]);
+		return this.db.getPagOutput({
+			page: query.page,
+			size: query.size,
+			total: count,
+			data: data.map((a) => new AppointmentDto(a)),
+		});
 	}
 
 	async getScheduleByEmployee(id: number, date: string) {
@@ -69,6 +83,38 @@ export class AppointmentService {
 		const isExists = await this.db.appointment.isExists({ id });
 		if (!isExists) throw new NotFoundException('No se ha encontrado la cita');
 		return await this.db.appointment.softDelete({ id });
+	}
+
+	private getFindAllWhere(query: AppointmentQueryDto) {
+		const { baseWhere } = this.db.getBaseWhere(query);
+		const where: Prisma.AppointmentWhereInput = { ...baseWhere };
+
+		if (query.status) where.status = query.status;
+
+		if (query.fromDesignatedDate || query.toDesignatedDate) {
+			where.designatedDate = {
+				gte: query.fromDesignatedDate,
+				lte: query.toDesignatedDate,
+			};
+		}
+
+		if (query.employeeRuc) {
+			where.employee = {
+				some: {
+					user: { ruc: { contains: query.employeeRuc, mode: 'insensitive' } },
+				},
+			};
+		}
+
+		if (query.clientRuc) {
+			where.pet = {
+				client: {
+					user: { ruc: { contains: query.clientRuc, mode: 'insensitive' } },
+				},
+			};
+		}
+
+		return where;
 	}
 
 	private getInclude() {

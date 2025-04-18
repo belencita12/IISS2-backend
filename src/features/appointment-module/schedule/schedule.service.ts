@@ -1,15 +1,12 @@
+import { SlotDto } from '@features/appointment-module/appointment/dto/slot.dto';
 import { PrismaService } from '@features/prisma/prisma.service';
-import {
-	AppointmentInfo,
-	ShiftInfo,
-	Slot,
-	TimeRange,
-} from '@lib/types/schedule';
+import { AppointmentInfo, ShiftInfo, TimeRange } from '@lib/types/schedule';
 import {
 	BadRequestException,
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
+import { AppointmentStatus } from '@prisma/client';
 
 @Injectable()
 export class ScheduleService {
@@ -67,7 +64,6 @@ export class ScheduleService {
 			appointments,
 		} = emplData;
 
-		console.log(appointments);
 		const busyRanges = this.getBusyRanges(appointments);
 		return this.calculateScheduleByDate(shifts, busyRanges);
 	}
@@ -89,7 +85,7 @@ export class ScheduleService {
 	}
 
 	private calculateScheduleByDate(shifts: ShiftInfo, busyRanges: TimeRange[]) {
-		const schedule: Slot[] = [];
+		const schedule: SlotDto[] = [];
 		shifts.forEach((s) => {
 			const start = this.toNumTime(s.startTime);
 			const end = this.toNumTime(s.endTime);
@@ -169,7 +165,10 @@ export class ScheduleService {
 		return {
 			user: { select: { fullName: true } },
 			appointments: {
-				where: { designatedDate: { gte: startOfDay, lte: endOfDay } },
+				where: {
+					designatedDate: { gte: startOfDay, lte: endOfDay },
+					status: AppointmentStatus.PENDING,
+				},
 				select: {
 					designatedDate: true,
 					service: { select: { durationMin: true } },
