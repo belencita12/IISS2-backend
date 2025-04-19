@@ -22,7 +22,7 @@ export class ReceiptController {
 
 	@Get(':id')
 	@ApiPaginatedResponse(ReceiptDto)
-	findOne(@Param() id: string) {
+	findOne(@Param('id') id: string) {
 		return this.receiptService.findOne(+id);
 	}
 }

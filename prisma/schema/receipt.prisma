@@ -3,7 +3,6 @@ model Receipt {
     receiptNumber   String
     invoiceId       Int
     issueDate       DateTime               @db.Date
-    paymentMethodId Int                    @unique
     paymentMethods  InvoicePaymentMethod[]
     total           Decimal                @db.Money
 
