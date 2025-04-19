@@ -64,4 +64,14 @@ export class ProductQueryDto extends PaginationQueryDto {
 		Array.isArray(value) ? value : value.split(',').map((tag) => tag.trim()),
 	)
 	tags?: string[];
+
+	@IsArray()
+	@IsNumber({}, { each: true })
+	@Transform(({ value }: { value: string | string[] }) =>
+		Array.isArray(value)
+			? value.map((v) => Number(v))
+			: value.split(',').map((id) => Number(id.trim())),
+	)
+	@ApiPropertyOptional({ type: [Number] })
+	providerIds?: number[];
 }

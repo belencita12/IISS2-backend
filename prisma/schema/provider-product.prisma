@@ -1,0 +1,13 @@
+model ProviderProduct {
+    providerId Int
+    productId  Int
+
+    provider Provider @relation(fields: [providerId], references: [id])
+    product  Product  @relation(fields: [productId], references: [id])
+
+    createdAt DateTime         @default(now())
+    updatedAt DateTime         @updatedAt
+    deletedAt DateTime?
+
+    @@id([providerId, productId])
+}

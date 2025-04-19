@@ -50,4 +50,14 @@ export class CreateProductDto {
 	)
 	@ApiPropertyOptional({ type: [String] })
 	tags?: string[];
+
+	@IsArray()
+	@IsNumber({}, { each: true })
+	@Transform(({ value }: { value: string | string[] }) =>
+		Array.isArray(value)
+			? value.map((v) => Number(v))
+			: value.split(',').map((id) => Number(id.trim())),
+	)
+	@ApiPropertyOptional({ type: [Number] })
+	providers?: number[];
 }

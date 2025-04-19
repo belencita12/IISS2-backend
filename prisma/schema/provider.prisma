@@ -5,8 +5,11 @@ model Provider {
   phoneNumber  String
   ruc          String     @unique
   Purchase     Purchase[]
-
+  products     ProviderProduct[]
+  
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+
+   
 }

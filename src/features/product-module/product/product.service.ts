@@ -17,7 +17,7 @@ export class ProductService {
 	) {}
 
 	async create(dto: CreateProductDto) {
-		const { price, productImg, tags, ...rest } = dto;
+		const { price, productImg, tags, providers, ...rest } = dto;
 		const prodImg = productImg
 			? await this.imgService.create(productImg)
 			: null;
@@ -33,11 +33,19 @@ export class ProductService {
 					},
 				},
 				tags: this.tagService.connectTags(tags),
+				providers: providers
+					? {
+							create: providers.map((providerId) => ({
+								provider: { connect: { id: providerId } },
+							})),
+						}
+					: undefined,
 			},
 			include: {
 				price: true,
 				image: true,
 				tags: { include: { tag: true } },
+				providers: { include: { provider: true } },
 			},
 		});
 		return new ProductDto(prod);
@@ -55,12 +63,20 @@ export class ProductService {
 			tags: query.tags
 				? { some: { tag: { name: { in: query.tags } } } }
 				: undefined,
+			providers: query.providerIds
+				? { some: { provider: { id: { in: query.providerIds } } } }
+				: undefined,
 		};
 		const [data, total] = await Promise.all([
 			this.db.product.findMany({
 				...this.db.paginate(query),
 				where,
-				include: { price: true, image: true, tags: { include: { tag: true } } },
+				include: {
+					price: true,
+					image: true,
+					tags: { include: { tag: true } },
+					providers: { include: { provider: true } },
+				},
 			}),
 			this.db.product.count({ where }),
 		]);
@@ -79,6 +95,7 @@ export class ProductService {
 				price: true,
 				image: true,
 				tags: { include: { tag: true } },
+				providers: { include: { provider: true } },
 			},
 		});
 		if (!prod) throw new HttpException('Producto no encontrado', 404);
@@ -88,15 +105,26 @@ export class ProductService {
 	async update(id: number, dto: CreateProductDto) {
 		const prodToUpd = await this.db.product.findUnique({
 			where: { id },
-			include: { image: true, price: true, tags: { include: { tag: true } } },
+			include: {
+				image: true,
+				price: true,
+				tags: { include: { tag: true } },
+				providers: true,
+			},
 		});
 
 		if (!prodToUpd) throw new HttpException('Producto no encontrado', 404);
+		const { price, productImg, tags = [], providers = [], ...rest } = dto;
 
-		const { price, productImg, tags = [], ...rest } = dto;
+		await this.db.providerProduct.deleteMany({
+			where: { productId: id },
+		});
+		const newProviders = providers.map((providerId) => ({
+			provider: { connect: { id: providerId } },
+		}));
+
 		const prodImg = await this.imgService.upsert(prodToUpd.image, productImg);
 		const isSamePrice = prodToUpd.price.amount.eq(price);
-
 		const prevTags = prodToUpd.tags;
 
 		const prod = await this.db.product.update({
@@ -108,11 +136,13 @@ export class ProductService {
 				price: isSamePrice
 					? { connect: { id: prodToUpd.price.id } }
 					: { create: { amount: new Decimal(price) } },
+				providers: { create: newProviders },
 			},
 			include: {
 				price: true,
 				image: true,
 				tags: { include: { tag: true } },
+				providers: { include: { provider: true } },
 			},
 		});
 		if (!prod) throw new HttpException('Error al actualizar el producto', 500);
