@@ -14,8 +14,11 @@ model InvoicePaymentMethod {
     method    PaymentMethod @relation(fields: [methodId], references: [id])
     invoiceId Int
     invoice   Invoice       @relation(fields: [invoiceId], references: [id])
+    receiptId Int? 
+    receipt   Receipt?      @relation(fields: [receiptId], references: [id])
+
     amount    Int
     deletedAt DateTime?
-    createdAt DateTime      @default(now())
-    updatedAt DateTime      @updatedAt
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
 }
