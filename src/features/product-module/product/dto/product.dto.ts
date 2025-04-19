@@ -6,6 +6,7 @@ import {
 	Product,
 	ProductPrice,
 	ProductTag,
+	Provider,
 	Tag,
 } from '@prisma/client';
 import { IsEnum, IsInt, IsNumber, IsString, IsArray } from 'class-validator';
@@ -14,6 +15,7 @@ export interface ProductEntity extends Product {
 	price: ProductPrice;
 	image: Image | null;
 	tags?: (ProductTag & { tag: Tag })[];
+	providers?: { provider: Provider }[];
 }
 
 export class ProductDto {
@@ -34,6 +36,9 @@ export class ProductDto {
 		this.price = data.price.amount.toNumber();
 		this.quantity = data.quantity;
 		this.tags = data.tags ? data.tags.map((t) => t.tag.name) : [];
+		this.providers = data.providers
+			? data.providers.map((provider) => provider.provider.id)
+			: [];
 		this.createdAt = data.createdAt;
 		this.updatedAt = data.updatedAt;
 		this.deletedAt = data.deletedAt;
@@ -77,6 +82,10 @@ export class ProductDto {
 	@IsArray()
 	@ApiPropertyOptional({ type: [String] })
 	tags: string[];
+
+	@IsArray()
+	@ApiPropertyOptional({ type: [Number] })
+	providers: number[];
 
 	@ApiProperty()
 	createdAt: Date;

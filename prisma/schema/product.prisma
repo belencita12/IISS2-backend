@@ -17,7 +17,8 @@ model Product {
     movementDetails MovementDetail[]
     tags            ProductTag[]
     invoiceDetails  InvoiceDetail[]
-
+    providers ProviderProduct[]
+    
     quantity Int @default(0)
 
     purchase  PurchaseDetail[]
