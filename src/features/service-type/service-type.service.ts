@@ -113,12 +113,12 @@ export class ServiceTypeService {
 	async remove(id: number) {
 		const serviceType = await this.db.serviceType.findUnique({
 			where: { id },
-			select: { id: true },
+			select: { id: true, productId: true },
 		});
 		if (!serviceType) throw new NotFoundException('Servicio no encontrado');
 
 		const product = await this.db.product.findUnique({
-			where: { id: serviceType.id },
+			where: { id: serviceType.productId },
 			select: { id: true },
 		});
 		if (!product) throw new NotFoundException('Producto no encontrado');
