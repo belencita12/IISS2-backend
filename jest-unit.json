@@ -18,6 +18,7 @@
       "@/(.*)": "<rootDir>/src/$1",
       "@lib/(.*)": "<rootDir>/src/lib/$1",
       "@config/(.*)": "<rootDir>/src/config/$1",
+      "@features/(.*)": "<rootDir>/src/features/$1",
       "@decorators/(.*)": "<rootDir>/src/lib/decorators/$1",
       "@commons/(.*)": "<rootDir>/src/lib/commons/$1",
       "@test-lib/(.*)": "<rootDir>/test/lib/$1"

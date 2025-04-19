@@ -5,7 +5,7 @@ import { IsStrLen } from '@lib/decorators/validation/is-str-len.decorator';
 import { IsTag } from '@lib/decorators/validation/is-tag.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsPositive } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsPositive, Max } from 'class-validator';
 
 export class CreateServiceTypeDto {
 	@ApiProperty()
@@ -31,10 +31,24 @@ export class CreateServiceTypeDto {
 	iva: number;
 
 	@Type(() => Number)
-	@IsNumber()
+	@IsInt()
 	@IsPositive()
 	@ApiProperty({ example: 40000 })
 	price: number;
+
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@IsPositive()
+	@Max(5)
+	@ApiPropertyOptional({ example: 3 })
+	maxColabs?: number;
+
+	@IsOptional()
+	@Type(() => Boolean)
+	@IsBoolean()
+	@ApiPropertyOptional()
+	isPublic?: boolean;
 
 	@IsOptional()
 	@IsTag()
