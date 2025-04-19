@@ -27,7 +27,7 @@ enum AppointmentStatus {
 }
 
 model AppointmentCancelation {
-    id Int @id
+    id Int @id @default(autoincrement())
 
     details       String
     managerId     Int

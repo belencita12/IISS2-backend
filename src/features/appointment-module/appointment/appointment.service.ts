@@ -5,7 +5,8 @@ import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
 import { AppointmentDto } from './dto/appointment.dto';
 import { ScheduleService } from '@features/appointment-module/schedule/schedule.service';
 import { AppointmentQueryDto } from './dto/appointment-query.dto';
-import { Prisma } from '@prisma/client';
+import { AppointmentStatus, Prisma } from '@prisma/client';
+import { AppointmentCancelDto } from './dto/appointment-cancel.dto';
 
 @Injectable()
 export class AppointmentService {
@@ -43,6 +44,42 @@ export class AppointmentService {
 		});
 
 		return new AppointmentDto(appointment);
+	}
+
+	async cancelAppointment(
+		appId: number,
+		dto: AppointmentCancelDto,
+		user: TokenPayload,
+	) {
+		const emplId = user.employeeId!;
+		const appointment = await this.db.appointment.findUnique({
+			where: { id: appId, status: { not: AppointmentStatus.CANCELLED } },
+		});
+		if (!appointment) {
+			throw new NotFoundException('La cita no existe o ya fue cancelada');
+		}
+		await this.db.appointment.update({
+			where: { id: appId },
+			data: {
+				status: AppointmentStatus.CANCELLED,
+				cancelation: {
+					create: { details: dto.description, managerId: emplId },
+				},
+			},
+		});
+	}
+
+	async completeAppointment(appId: number) {
+		const appointment = await this.db.appointment.findUnique({
+			where: { id: appId, status: AppointmentStatus.PENDING },
+		});
+		if (!appointment) {
+			throw new NotFoundException('La cita no existe o no esta pendiente');
+		}
+		await this.db.appointment.update({
+			where: { id: appId },
+			data: { status: AppointmentStatus.COMPLETED },
+		});
 	}
 
 	async findAll(query: AppointmentQueryDto) {
