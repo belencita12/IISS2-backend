@@ -14,11 +14,24 @@ export class ScheduleService {
 
 	async validateAppByEmployees(
 		emplIds: number[],
-		date: Date,
+		designatedDate: string,
+		designatedTime: string,
 		duration: number,
 	) {
+		const isMulOfFive = this.toNumTime(designatedTime) % 5 === 0;
+
+		if (!isMulOfFive) {
+			throw new BadRequestException(
+				'La hora designada no es un minuto multiplo de 5',
+			);
+		}
+
+		const date = new Date(`${designatedDate}T${designatedTime}`);
+
+		this.validateDesignatedDay(date);
+
 		const emplData = await this.db.employee.findMany({
-			where: this.filterManyEmpls(emplIds, date),
+			where: { id: { in: emplIds } },
 			select: this.getSelectHelper(date),
 		});
 
@@ -30,6 +43,7 @@ export class ScheduleService {
 
 		const appStart = date.getHours() * 60 + date.getMinutes();
 		const appEnd = appStart + duration;
+		const weekDay = date.getUTCDay();
 
 		for (const e of emplData) {
 			const {
@@ -37,7 +51,14 @@ export class ScheduleService {
 				appointments,
 			} = e;
 
-			if (!this.isInShift(shifts, appStart, appEnd)) {
+			const shiftByDay = this.filterShiftsByWeekDay(shifts, weekDay);
+			if (shiftByDay.length === 0) {
+				throw new BadRequestException(
+					`${e.user.fullName} no trabaja en la fecha designada`,
+				);
+			}
+
+			if (!this.isInShift(shiftByDay, appStart, appEnd)) {
 				throw new BadRequestException(
 					`El horario de la cita esta fuera del turno de ${e.user.fullName}`,
 				);
@@ -49,23 +70,36 @@ export class ScheduleService {
 				);
 			}
 		}
+
+		return date;
 	}
 
 	async getScheduleByEmployeeId(emplId: number, date: Date) {
+		const weekDay = date.getUTCDay();
+
+		this.validateDesignatedDay(date);
+
 		const emplData = await this.db.employee.findUnique({
-			where: this.filterUniqueEmpl(emplId, date),
+			where: { id: emplId },
 			select: this.getSelectHelper(date),
 		});
 
-		if (!emplData) throw new NotFoundException('Empleado no enconrado');
+		if (!emplData) throw new NotFoundException('El empleado no existe');
 
 		const {
 			position: { shifts },
 			appointments,
 		} = emplData;
 
+		const shiftByDay = this.filterShiftsByWeekDay(shifts, weekDay);
+		if (shiftByDay.length === 0) {
+			throw new BadRequestException(
+				`${emplData.user.fullName} no trabaja en la fecha designada`,
+			);
+		}
+
 		const busyRanges = this.getBusyRanges(appointments);
-		return this.calculateScheduleByDate(shifts, busyRanges);
+		return this.calculateScheduleByDate(shiftByDay, busyRanges);
 	}
 
 	private isOverlapping(
@@ -75,6 +109,20 @@ export class ScheduleService {
 	) {
 		const busyRanges = this.getBusyRanges(appointments);
 		return busyRanges.some((r) => !(end <= r.start || start >= r.end));
+	}
+
+	private validateDesignatedDay(date: Date) {
+		const today = new Date();
+		if (today.toISOString().split('T')[0] > date.toISOString().split('T')[0]) {
+			throw new BadRequestException(
+				'La fecha debe ser igual o posterior a la actual',
+			);
+		}
+	}
+
+	private filterShiftsByWeekDay(shifts: ShiftInfo, weekDay: number) {
+		const shiftByDay = shifts.filter((s) => s.weekDay === weekDay);
+		return shiftByDay;
 	}
 
 	private isInShift(shifts: ShiftInfo, start: number, end: number) {
@@ -120,22 +168,6 @@ export class ScheduleService {
 			.padStart(2, '0');
 		const min = (timeMin % 60).toString().padStart(2, '0');
 		return `${hours}:${min}`;
-	}
-
-	private filterManyEmpls(emplId: number[], date: Date) {
-		const weekDay = date.getDay();
-		return {
-			id: { in: emplId },
-			position: { shifts: { some: { weekDay } } },
-		};
-	}
-
-	private filterUniqueEmpl(emplId: number, date: Date) {
-		const weekDay = date.getDay();
-		return {
-			id: emplId,
-			position: { shifts: { some: { weekDay } } },
-		};
 	}
 
 	private getSelectHelper(date: Date) {

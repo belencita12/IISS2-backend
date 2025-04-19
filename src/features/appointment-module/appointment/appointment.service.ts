@@ -24,18 +24,19 @@ export class AppointmentService {
 		const pet = await this.getPet(dto.petId, user);
 		if (!pet) throw new NotFoundException('La mascota no fue encontrada');
 
-		const { employeesId, ...data } = dto;
+		const { employeesId, designatedDate, designatedTime, ...data } = dto;
 
-		await this.scheduleService.validateAppByEmployees(
+		const appDay = await this.scheduleService.validateAppByEmployees(
 			employeesId,
-			data.designatedDate,
+			designatedDate,
+			designatedTime,
 			service.durationMin,
 		);
 
 		const appointment = await this.db.appointment.create({
 			data: {
 				...data,
-				designatedDate: data.designatedDate,
+				designatedDate: appDay,
 				employee: this.connectEmployees(employeesId),
 			},
 			...this.getInclude(),

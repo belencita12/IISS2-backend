@@ -1,17 +1,21 @@
+import { IsDbDate } from '@lib/decorators/validation/is-db-date.decorator';
 import { IsId } from '@lib/decorators/validation/is-id.decorator';
+import { IsTimeFormat } from '@lib/decorators/validation/is-time-format';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsDate, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class CreateAppointmentDto {
 	@ApiProperty()
 	@IsId()
 	petId: number;
 
-	@Type(() => Date)
-	@ApiProperty()
-	@IsDate()
-	designatedDate: Date;
+	@ApiProperty({ example: '2025-04-12' })
+	@IsDbDate()
+	designatedDate: string;
+
+	@ApiProperty({ example: '09:05' })
+	@IsTimeFormat()
+	designatedTime: string;
 
 	@IsOptional()
 	@IsString()
