@@ -1,10 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { InvoicePaymentMethod, PaymentMethod } from '@prisma/client';
-export interface invoicePaymentMethodEntity extends InvoicePaymentMethod{
-    method: PaymentMethod
+
+export interface invoicePaymentMethodEntity extends InvoicePaymentMethod {
+	method: PaymentMethod;
 }
-
-
 
 export class InvoicePaymentMethodDto {
 	constructor(entity: invoicePaymentMethodEntity) {
