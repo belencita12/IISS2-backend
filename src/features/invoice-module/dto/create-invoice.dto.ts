@@ -42,13 +42,14 @@ export class CreateInvoiceDto {
 	@IsEnum(InvoiceType)
 	type: InvoiceType;
 
-	@ApiProperty({ type: [InvoicePaymentMethodDetailDto] })
+	@IsOptional()
+	@Type(() => InvoicePaymentMethodDetailDto)
+	@ValidateNested({ each: true })
+	@ApiPropertyOptional({ type: [InvoicePaymentMethodDetailDto] })
 	@NoDuplicatesBy<InvoicePaymentMethodDetailDto>('methodId', {
 		message: 'No se permiten metodos duplicados',
 	})
-	@Type(() => InvoicePaymentMethodDetailDto)
-	@ValidateNested({ each: true })
-	paymentMethods: InvoicePaymentMethodDetailDto[];
+	paymentMethods?: InvoicePaymentMethodDetailDto[];
 
 	@ApiProperty({ type: [CreateInvoiceDetailDto] })
 	@ValidateNested({ each: true })

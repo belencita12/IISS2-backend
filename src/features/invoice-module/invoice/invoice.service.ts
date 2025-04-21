@@ -9,12 +9,13 @@ import {
 	PrismaService,
 } from '@features/prisma/prisma.service';
 import { CreateInvoiceDetailDto } from '../dto/create-invoice-detail.dto';
-import { InvoiceType, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import Decimal from 'decimal.js';
 import { StockDetailInfo } from '../dto/invoices.types';
 import { InvoiceDto } from '../dto/invoice.dto';
 import { InvoiceQueryDto } from '../dto/invoice-query.dto';
 import { InvoicePaymentMethodDetailDto } from '../dto/invoice-payment-method-detail.dto';
+import { PayCreditInvoiceDto } from '../dto/pay-credit-invoice.dto';
 
 @Injectable()
 export class InvoiceService {
@@ -25,8 +26,7 @@ export class InvoiceService {
 		const invoice = await this.db.$transaction(
 			async (tx) => {
 				const { invoiceData, productData, stockDetailData, total, totalVat } =
-					await this.processDetails(tx, details, data.stockId);
-				this.validateTotalPayed(data.type, total, data.totalPayed);
+					await this.processDetails(tx, data.stockId, details);
 				await this.handleUpdateStock(tx, stockDetailData, productData);
 				const createdInv = await tx.invoice.create({
 					include: { client: { include: { user: true } } },
@@ -41,17 +41,73 @@ export class InvoiceService {
 						},
 					},
 				});
-				await this.processPaymentMethods(
-					tx,
-					total,
-					createdInv.id,
-					paymentMethods,
-				);
+				if (data.type === 'CASH') {
+					await this.applyPaymentMethods(
+						tx,
+						createdInv.id,
+						paymentMethods || [],
+						total,
+					);
+				}
 				return createdInv;
 			},
 			{ timeout: 15000 },
 		);
 		return new InvoiceDto(invoice);
+	}
+
+	async payCreditInvoice(id: number, dto: PayCreditInvoiceDto) {
+		const { amount, paymentDate, paymentMethods } = dto;
+
+		const invoice = await this.db.invoice.findUnique({ where: { id } });
+		if (!invoice) throw new NotFoundException('Factura no encontrada');
+		if (invoice.type != 'CREDIT')
+			throw new BadRequestException('Solo pueden pagarse facturas a credito');
+		if (invoice.issueDate > new Date(paymentDate))
+			throw new BadRequestException(
+				'La fecha del recibo no puede ser anterior a la factura',
+			);
+
+		let total = 0;
+		const payMethodData: Prisma.InvoicePaymentMethodCreateManyInput[] = [];
+
+		for (const pM of paymentMethods) {
+			total += pM.amount;
+			payMethodData.push({
+				invoiceId: id,
+				amount: pM.amount,
+				methodId: pM.methodId,
+			});
+		}
+
+		const newTotalPayed = new Decimal(invoice.totalPayed).plus(amount);
+		if (invoice.total.lessThan(newTotalPayed))
+			throw new BadRequestException(
+				'El pago no puede exceder al total de la factura',
+			);
+
+		if (total !== amount)
+			throw new BadRequestException(
+				'El monto de los metodos de pago no coincide con el monto que se intenta pagar',
+			);
+
+		const updatedInvoice = await this.db.invoice.update({
+			include: { client: { include: { user: true } } },
+			where: { id },
+			data: {
+				totalPayed: newTotalPayed,
+				receipts: {
+					create: {
+						total: amount,
+						issueDate: new Date(paymentDate),
+						receiptNumber: dto.receiptNumber,
+						paymentMethods: { createMany: { data: payMethodData } },
+					},
+				},
+			},
+		});
+
+		return new InvoiceDto(updatedInvoice);
 	}
 
 	async findAll(dto: InvoiceQueryDto) {
@@ -127,8 +183,8 @@ export class InvoiceService {
 
 	private async processDetails(
 		tx: ExtendedTransaction,
-		details: CreateInvoiceDetailDto[],
 		stockId: number,
+		details: CreateInvoiceDetailDto[],
 	) {
 		const productsId = details.map((d) => d.productId);
 		const stockDetails = await tx.stockDetails.findMany({
@@ -155,12 +211,18 @@ export class InvoiceService {
 		await Promise.all(products.map((p) => tx.product.update(p)));
 	}
 
-	private async processPaymentMethods(
+	async applyPaymentMethods(
 		tx: ExtendedTransaction,
-		invTotal: Decimal,
 		invoiceId: number,
 		paymentMethods: InvoicePaymentMethodDetailDto[],
+		expectedTotal?: Decimal,
 	) {
+		if (!paymentMethods || paymentMethods.length === 0) {
+			throw new BadRequestException(
+				'Es necesario especificar los métodos de pago.',
+			);
+		}
+
 		const invPayMethodData: Prisma.InvoicePaymentMethodCreateManyInput[] = [];
 		let total = 0;
 
@@ -173,9 +235,9 @@ export class InvoiceService {
 			});
 		}
 
-		if (!invTotal.eq(total)) {
+		if (expectedTotal && !expectedTotal.eq(total)) {
 			throw new BadRequestException(
-				'Los montos de los metodos de pago deben coincidir con lo pagado.',
+				'Los montos de los métodos de pago deben coincidir con lo pagado.',
 			);
 		}
 
@@ -236,22 +298,5 @@ export class InvoiceService {
 		}
 
 		return { invoiceData, productData, stockDetailData, total, totalVat };
-	}
-
-	private validateTotalPayed(
-		type: InvoiceType,
-		total: Decimal,
-		totalPayed?: number,
-	) {
-		if (type !== 'CREDIT') return;
-
-		if (!totalPayed)
-			throw new BadRequestException('Se requiere del total pagado');
-
-		const isTotalPayedValid = total.gte(totalPayed);
-		if (!isTotalPayedValid)
-			throw new BadRequestException(
-				'Lo pagado por la factura no puede ser mayor al total de la misma',
-			);
 	}
 }
