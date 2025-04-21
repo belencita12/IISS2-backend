@@ -9,6 +9,7 @@ import { InvoiceType } from '@prisma/client';
 import { IsInvoiceStamped } from '@lib/decorators/validation/is-invoice-stamped.decorator';
 import { IsInvoiceNumber } from '@lib/decorators/validation/is-invoice-number.decorator';
 import { NoDuplicatesBy } from '@lib/decorators/validation/no-duplicated-by.decorator';
+import { InvoicePaymentMethodDetailDto } from './invoice-payment-method-detail.dto';
 
 export class CreateInvoiceDto {
 	@ApiProperty()
@@ -40,6 +41,14 @@ export class CreateInvoiceDto {
 	@ApiProperty({ enum: InvoiceType })
 	@IsEnum(InvoiceType)
 	type: InvoiceType;
+
+	@ApiProperty({ type: [InvoicePaymentMethodDetailDto] })
+	@NoDuplicatesBy<InvoicePaymentMethodDetailDto>('methodId', {
+		message: 'No se permiten metodos duplicados',
+	})
+	@Type(() => InvoicePaymentMethodDetailDto)
+	@ValidateNested({ each: true })
+	paymentMethods: InvoicePaymentMethodDetailDto[];
 
 	@ApiProperty({ type: [CreateInvoiceDetailDto] })
 	@ValidateNested({ each: true })

@@ -14,32 +14,43 @@ import Decimal from 'decimal.js';
 import { StockDetailInfo } from '../dto/invoices.types';
 import { InvoiceDto } from '../dto/invoice.dto';
 import { InvoiceQueryDto } from '../dto/invoice-query.dto';
+import { InvoicePaymentMethodDetailDto } from '../dto/invoice-payment-method-detail.dto';
 
 @Injectable()
 export class InvoiceService {
 	constructor(private readonly db: PrismaService) {}
 
 	async create(dto: CreateInvoiceDto) {
-		const { details, issueDate, ...data } = dto;
-		const invoice = await this.db.$transaction(async (tx) => {
-			const { invoiceData, productData, stockDetailData, total, totalVat } =
-				await this.processDetails(tx, details, data.stockId);
-			this.validateTotalPayed(data.type, total, data.totalPayed);
-			await this.handleUpdateStock(tx, stockDetailData, productData);
-			return await tx.invoice.create({
-				include: { client: { include: { user: true } } },
-				data: {
-					...data,
-					total,
-					totalVat,
-					totalPayed: data.type === 'CASH' ? total : data.totalPayed,
-					issueDate: new Date(issueDate),
-					details: {
-						createMany: { data: invoiceData },
+		const { details, issueDate, paymentMethods, ...data } = dto;
+		const invoice = await this.db.$transaction(
+			async (tx) => {
+				const { invoiceData, productData, stockDetailData, total, totalVat } =
+					await this.processDetails(tx, details, data.stockId);
+				this.validateTotalPayed(data.type, total, data.totalPayed);
+				await this.handleUpdateStock(tx, stockDetailData, productData);
+				const createdInv = await tx.invoice.create({
+					include: { client: { include: { user: true } } },
+					data: {
+						...data,
+						total,
+						totalVat,
+						totalPayed: data.type === 'CASH' ? total : 0,
+						issueDate: new Date(issueDate),
+						details: {
+							createMany: { data: invoiceData },
+						},
 					},
-				},
-			});
-		});
+				});
+				await this.processPaymentMethods(
+					tx,
+					total,
+					createdInv.id,
+					paymentMethods,
+				);
+				return createdInv;
+			},
+			{ timeout: 15000 },
+		);
 		return new InvoiceDto(invoice);
 	}
 
@@ -142,6 +153,33 @@ export class InvoiceService {
 	) {
 		await Promise.all(stockDetails.map((sd) => tx.stockDetails.update(sd)));
 		await Promise.all(products.map((p) => tx.product.update(p)));
+	}
+
+	private async processPaymentMethods(
+		tx: ExtendedTransaction,
+		invTotal: Decimal,
+		invoiceId: number,
+		paymentMethods: InvoicePaymentMethodDetailDto[],
+	) {
+		const invPayMethodData: Prisma.InvoicePaymentMethodCreateManyInput[] = [];
+		let total = 0;
+
+		for (const pM of paymentMethods) {
+			total += pM.amount;
+			invPayMethodData.push({
+				invoiceId,
+				amount: pM.amount,
+				methodId: pM.methodId,
+			});
+		}
+
+		if (!invTotal.eq(total)) {
+			throw new BadRequestException(
+				'Los montos de los metodos de pago deben coincidir con lo pagado.',
+			);
+		}
+
+		await tx.invoicePaymentMethod.createMany({ data: invPayMethodData });
 	}
 
 	private buildInvoiceDetailsData(
