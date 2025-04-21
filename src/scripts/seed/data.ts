@@ -243,16 +243,16 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 
 export const seedWorkPositions = async (db: PrismaTransactionClient) => {
 	const shiftsData = [
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 1 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 1 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 2 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 2 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 3 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 3 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 4 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 4 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 5 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 5 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 1 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 1 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 2 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 2 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 3 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 3 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 4 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 4 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 5 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 5 },
 	];
 
 	const workPositions: Prisma.WorkPositionCreateInput[] = [

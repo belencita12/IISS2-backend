@@ -1,17 +1,27 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 import { CreateWorkPositionDto } from './dto/work-position/create-work-position.dto';
 import { WorkPositionDto } from './dto/work-position/work-position.dto';
 import { UpdateWorkPositionDto } from './dto/work-position/update-work-position.dto';
 import { WorkPositionQueryDto } from './dto/work-position/work-position-query.dto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@features/prisma/prisma.service';
+import { ScheduleService } from '@features/appointment-module/schedule/schedule.service';
+import { CreateWorkShiftDto } from './dto/work-shift/create-work-shift.dto';
 
 @Injectable()
 export class WorkPositionService {
-	constructor(private readonly db: PrismaService) {}
+	constructor(
+		private readonly db: PrismaService,
+		private readonly scheduleService: ScheduleService,
+	) {}
 
 	async create(dto: CreateWorkPositionDto) {
 		const { name, shifts } = dto;
+		this.validateShifts(shifts);
 		const work = await this.db.workPosition.create({
 			include: { shifts: true },
 			data: {
@@ -46,6 +56,7 @@ export class WorkPositionService {
 			where: { workPositionId: id },
 		});
 		const { name, shifts } = dto;
+		this.validateShifts(shifts);
 		await this.db.$transaction(async (tx) => {
 			for (const prevShift of prevShifts) {
 				if (!shifts.some((s) => s.id === prevShift.id))
@@ -73,6 +84,25 @@ export class WorkPositionService {
 		const exists = await this.db.workPosition.isExists({ id });
 		if (!exists) throw new NotFoundException('Puesto de trabajo no encontrado');
 		await this.db.workPosition.softDelete({ id });
+	}
+
+	private validateShifts(shifts: CreateWorkShiftDto[]) {
+		shifts.forEach((s) => {
+			if (s.endTime === s.startTime) {
+				throw new BadRequestException(
+					'Uno de los turnos inicia y termina en el mismo momento',
+				);
+			}
+
+			if (
+				this.scheduleService.toNumTime(s.endTime) <
+				this.scheduleService.toNumTime(s.startTime)
+			) {
+				throw new BadRequestException(
+					'Uno de los turnos termina antes de que empiece',
+				);
+			}
+		});
 	}
 
 	private async filter(query: WorkPositionQueryDto) {
