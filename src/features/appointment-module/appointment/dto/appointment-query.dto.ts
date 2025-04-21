@@ -1,8 +1,10 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
+import { IsDbDate } from '@lib/decorators/validation/is-db-date.decorator';
 import { IsId } from '@lib/decorators/validation/is-id.decorator';
 import { QueryParam } from '@lib/decorators/validation/query-param.decorator';
 import { AppointmentStatus } from '@prisma/client';
-import { IsDateString, IsEnum, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsEnum, IsString } from 'class-validator';
 
 export class AppointmentQueryDto extends PaginationQueryDto {
 	@QueryParam()
@@ -13,17 +15,18 @@ export class AppointmentQueryDto extends PaginationQueryDto {
 	@IsString()
 	employeeRuc?: string;
 
+	@Type(() => Number)
 	@QueryParam()
 	@IsId()
 	serviceId?: number;
 
 	@QueryParam()
-	@IsDateString()
-	fromDesignatedDate?: Date;
+	@IsDbDate()
+	fromDesignatedDate?: string;
 
 	@QueryParam()
-	@IsDateString()
-	toDesignatedDate?: Date;
+	@IsDbDate()
+	toDesignatedDate?: string;
 
 	@QueryParam({ enum: AppointmentStatus })
 	@IsEnum(AppointmentStatus)

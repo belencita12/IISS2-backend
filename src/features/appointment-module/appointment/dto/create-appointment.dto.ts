@@ -2,7 +2,7 @@ import { IsDbDate } from '@lib/decorators/validation/is-db-date.decorator';
 import { IsId } from '@lib/decorators/validation/is-id.decorator';
 import { IsTimeFormat } from '@lib/decorators/validation/is-time-format';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { ArrayMinSize, IsOptional, IsString } from 'class-validator';
 
 export class CreateAppointmentDto {
 	@ApiProperty()
@@ -27,6 +27,7 @@ export class CreateAppointmentDto {
 	serviceId: number;
 
 	@ApiProperty({ type: [Number] })
+	@ArrayMinSize(1, { message: 'Debe haber al menos un empleado' })
 	@IsId('El identificador del empleado', { each: true })
 	employeesId: number[];
 }

@@ -157,12 +157,12 @@ export class ScheduleService {
 		});
 	}
 
-	private toNumTime(timeStr: string) {
+	toNumTime(timeStr: string) {
 		const [hours, min] = timeStr.split(':');
 		return parseInt(hours) * 60 + parseInt(min);
 	}
 
-	private toStrTime(timeMin: number) {
+	toStrTime(timeMin: number) {
 		const hours = Math.floor(timeMin / 60)
 			.toString()
 			.padStart(2, '0');

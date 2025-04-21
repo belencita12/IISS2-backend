@@ -3,6 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class AppointmentCancelDto {
 	@ApiProperty()
-	@IsStrLen(1, 512)
+	@IsStrLen(12, 512)
 	description: string;
 }

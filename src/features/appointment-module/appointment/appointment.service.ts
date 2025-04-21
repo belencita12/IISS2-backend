@@ -129,10 +129,16 @@ export class AppointmentService {
 
 		if (query.status) where.status = query.status;
 
+		if (query.serviceId) where.serviceId = query.serviceId;
+
 		if (query.fromDesignatedDate || query.toDesignatedDate) {
 			where.designatedDate = {
-				gte: query.fromDesignatedDate,
-				lte: query.toDesignatedDate,
+				gte: query.fromDesignatedDate
+					? new Date(query.fromDesignatedDate)
+					: undefined,
+				lte: query.toDesignatedDate
+					? new Date(`${query.toDesignatedDate}T23:59:59.000Z`)
+					: undefined,
 			};
 		}
 
