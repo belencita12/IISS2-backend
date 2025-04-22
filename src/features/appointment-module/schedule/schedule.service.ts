@@ -128,7 +128,8 @@ export class ScheduleService {
 	private isInShift(shifts: ShiftInfo, start: number, end: number) {
 		return shifts.some(
 			(s) =>
-				this.toNumTime(s.startTime) > start || this.toNumTime(s.endTime) < end,
+				this.toNumTime(s.startTime) <= start &&
+				this.toNumTime(s.endTime) >= end,
 		);
 	}
 
