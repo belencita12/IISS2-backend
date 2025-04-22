@@ -58,4 +58,12 @@ export class CreateInvoiceDto {
 		message: 'No se permiten productos duplicados',
 	})
 	details: CreateInvoiceDetailDto[];
+
+	@ApiProperty({ type: [CreateInvoiceDetailDto] })
+	@ValidateNested({ each: true })
+	@Type(() => CreateInvoiceDetailDto)
+	@NoDuplicatesBy<CreateInvoiceDetailDto>('productId', {
+		message: 'No se permiten servicios duplicados',
+	})
+	services: CreateInvoiceDetailDto[];
 }

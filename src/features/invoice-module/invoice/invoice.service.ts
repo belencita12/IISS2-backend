@@ -9,7 +9,7 @@ import {
 	PrismaService,
 } from '@features/prisma/prisma.service';
 import { CreateInvoiceDetailDto } from '../dto/create-invoice-detail.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, Product, ProductPrice } from '@prisma/client';
 import Decimal from 'decimal.js';
 import { StockDetailInfo } from '../dto/invoices.types';
 import { InvoiceDto } from '../dto/invoice.dto';
@@ -22,11 +22,11 @@ export class InvoiceService {
 	constructor(private readonly db: PrismaService) {}
 
 	async create(dto: CreateInvoiceDto) {
-		const { details, issueDate, paymentMethods, ...data } = dto;
+		const { details, issueDate, paymentMethods, services, ...data } = dto;
 		const invoice = await this.db.$transaction(
 			async (tx) => {
 				const { invoiceData, productData, stockDetailData, total, totalVat } =
-					await this.processDetails(tx, data.stockId, details);
+					await this.processDetails(tx, data.stockId, details, services);
 				await this.handleUpdateStock(tx, stockDetailData, productData);
 				const createdInv = await tx.invoice.create({
 					include: { client: { include: { user: true } } },
@@ -185,21 +185,91 @@ export class InvoiceService {
 		tx: ExtendedTransaction,
 		stockId: number,
 		details: CreateInvoiceDetailDto[],
+		services: CreateInvoiceDetailDto[],
 	) {
 		const productsId = details.map((d) => d.productId);
-		const stockDetails = await tx.stockDetails.findMany({
-			where: { productId: { in: productsId }, stockId },
-			include: {
-				product: { include: { price: { select: { amount: true } } } },
-			},
+		const servicesId = services.map((s) => s.productId);
+
+		const servicesProdDetails = await tx.product.findMany({
+			where: { id: { in: servicesId } },
+			include: { price: true },
 		});
 
-		if (stockDetails.length !== productsId.length)
-			throw new NotFoundException(
-				'Uno o mas de los productos de la lista no existe o no se encuentra en el deposito',
-			);
+		const stockDetails = await tx.stockDetails.findMany({
+			where: { id: { in: productsId }, stockId },
+			include: { product: { include: { price: true } } },
+		});
 
-		return this.buildInvoiceDetailsData(stockDetails, stockId, details);
+		if (stockDetails.length !== productsId.length) {
+			throw new NotFoundException(
+				'Uno o mas de los productos de la lista no existen',
+			);
+		}
+
+		if (servicesProdDetails.length !== servicesId.length) {
+			throw new NotFoundException(
+				'Uno o mas de los servicios de la lista no existen',
+			);
+		}
+
+		const productsResult = this.buildProductsDetailsData(
+			stockDetails,
+			stockId,
+			details,
+		);
+
+		const servicesResult = this.buildServiceDetailsData(
+			servicesProdDetails,
+			services,
+		);
+
+		const total = productsResult.total.add(servicesResult.total);
+		const totalVat = productsResult.totalVat.add(servicesResult.totalVat);
+
+		if (total.lte(0))
+			throw new BadRequestException('El total no puede ser igual a 0');
+
+		return {
+			invoiceData: [
+				...productsResult.invoiceData,
+				...servicesResult.invoiceData,
+			],
+			productData: productsResult.productData,
+			stockDetailData: productsResult.stockDetailData,
+			total,
+			totalVat,
+		};
+	}
+
+	private buildServiceDetailsData(
+		services: (Product & { price: ProductPrice })[],
+		details: CreateInvoiceDetailDto[],
+	) {
+		const invoiceData: Prisma.InvoiceDetailCreateManyInvoiceInput[] = [];
+		let total = new Decimal(0);
+		let totalVat = new Decimal(0);
+
+		for (const d of details) {
+			const service = services.find((s) => s.id === d.productId)!;
+
+			const partialAmount = service.price.amount.mul(d.quantity);
+			const partialAmountVAT = partialAmount
+				.mul(service.iva)
+				.div(Decimal.add(100, service.iva));
+
+			total = total.add(partialAmount);
+			totalVat = totalVat.add(partialAmountVAT);
+
+			invoiceData.push({
+				partialAmount,
+				partialAmountVAT,
+				productId: service.id,
+				quantity: d.quantity,
+				unitCost: service.price.amount,
+			});
+		}
+
+		return { invoiceData, total, totalVat };
 	}
 
 	private async handleUpdateStock(
@@ -244,7 +314,7 @@ export class InvoiceService {
 		await tx.invoicePaymentMethod.createMany({ data: invPayMethodData });
 	}
 
-	private buildInvoiceDetailsData(
+	private buildProductsDetailsData(
 		products: StockDetailInfo[],
 		stockId: number,
 		details: CreateInvoiceDetailDto[],
