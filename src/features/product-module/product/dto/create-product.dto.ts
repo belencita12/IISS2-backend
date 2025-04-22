@@ -1,3 +1,4 @@
+import { IsIVA } from '@lib/decorators/validation/is-iva';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Category } from '@prisma/client';
 import { Transform } from 'class-transformer';
@@ -29,9 +30,8 @@ export class CreateProductDto {
 	category: Category;
 
 	@Transform(({ value }) => Number(value))
-	@IsNumber()
-	@IsPositive()
-	@ApiProperty({ example: 0.1 })
+	@ApiProperty({ example: 10 })
+	@IsIVA()
 	iva: number;
 
 	@IsOptional()
