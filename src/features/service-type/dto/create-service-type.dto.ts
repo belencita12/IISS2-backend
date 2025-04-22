@@ -26,8 +26,8 @@ export class CreateServiceTypeDto {
 	durationMin: number;
 
 	@Type(() => Number)
+	@ApiProperty({ example: 10 })
 	@IsIVA()
-	@ApiProperty({ example: 0.1 })
 	iva: number;
 
 	@Type(() => Number)
