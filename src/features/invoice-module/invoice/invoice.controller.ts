@@ -17,6 +17,7 @@ import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { Role } from '@lib/constants/role.enum';
 import { AppController } from '@lib/decorators/router/app-controller.decorator';
 import { InvoiceService } from './invoice.service';
+import { PayCreditInvoiceDto } from '../dto/pay-credit-invoice.dto';
 
 @AppController({ name: 'invoice', tag: 'Invoice' })
 @UseGuards(RolesGuard)
@@ -43,6 +44,14 @@ export class InvoiceController {
 	@Roles(Role.Employee, Role.Admin)
 	findOne(@Param('id') id: string) {
 		return this.invoiceService.findOne(+id);
+	}
+
+	@Post('/pay/:id')
+	@ApiResponse({ type: InvoiceDto })
+	@ApiBody({ type: PayCreditInvoiceDto })
+	@Roles(Role.Employee, Role.Admin)
+	payCreditInvoice(@Param('id') id: string, @Body() dto: PayCreditInvoiceDto) {
+		return this.invoiceService.payCreditInvoice(+id, dto);
 	}
 
 	@Delete(':id')

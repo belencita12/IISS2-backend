@@ -9,38 +9,105 @@ import {
 	PrismaService,
 } from '@features/prisma/prisma.service';
 import { CreateInvoiceDetailDto } from '../dto/create-invoice-detail.dto';
-import { InvoiceType, Prisma } from '@prisma/client';
+import { Prisma, Product, ProductPrice } from '@prisma/client';
 import Decimal from 'decimal.js';
 import { StockDetailInfo } from '../dto/invoices.types';
 import { InvoiceDto } from '../dto/invoice.dto';
 import { InvoiceQueryDto } from '../dto/invoice-query.dto';
+import { InvoicePaymentMethodDetailDto } from '../dto/invoice-payment-method-detail.dto';
+import { PayCreditInvoiceDto } from '../dto/pay-credit-invoice.dto';
 
 @Injectable()
 export class InvoiceService {
 	constructor(private readonly db: PrismaService) {}
 
 	async create(dto: CreateInvoiceDto) {
-		const { details, issueDate, ...data } = dto;
-		const invoice = await this.db.$transaction(async (tx) => {
-			const { invoiceData, productData, stockDetailData, total, totalVat } =
-				await this.processDetails(tx, details, data.stockId);
-			this.validateTotalPayed(data.type, total, data.totalPayed);
-			await this.handleUpdateStock(tx, stockDetailData, productData);
-			return await tx.invoice.create({
-				include: { client: { include: { user: true } } },
-				data: {
-					...data,
-					total,
-					totalVat,
-					totalPayed: data.type === 'CASH' ? total : data.totalPayed,
-					issueDate: new Date(issueDate),
-					details: {
-						createMany: { data: invoiceData },
+		const { details, issueDate, paymentMethods, services, ...data } = dto;
+		const invoice = await this.db.$transaction(
+			async (tx) => {
+				const { invoiceData, productData, stockDetailData, total, totalVat } =
+					await this.processDetails(tx, data.stockId, details, services);
+				await this.handleUpdateStock(tx, stockDetailData, productData);
+				const createdInv = await tx.invoice.create({
+					include: { client: { include: { user: true } } },
+					data: {
+						...data,
+						total,
+						totalVat,
+						totalPayed: data.type === 'CASH' ? total : 0,
+						issueDate: new Date(issueDate),
+						details: {
+							createMany: { data: invoiceData },
+						},
+					},
+				});
+				if (data.type === 'CASH') {
+					await this.applyPaymentMethods(
+						tx,
+						createdInv.id,
+						paymentMethods || [],
+						total,
+					);
+				}
+				return createdInv;
+			},
+			{ timeout: 15000 },
+		);
+		return new InvoiceDto(invoice);
+	}
+
+	async payCreditInvoice(id: number, dto: PayCreditInvoiceDto) {
+		const { amount, paymentDate, paymentMethods } = dto;
+
+		const invoice = await this.db.invoice.findUnique({ where: { id } });
+		if (!invoice) throw new NotFoundException('Factura no encontrada');
+		if (invoice.type != 'CREDIT')
+			throw new BadRequestException('Solo pueden pagarse facturas a credito');
+		if (invoice.issueDate > new Date(paymentDate))
+			throw new BadRequestException(
+				'La fecha del recibo no puede ser anterior a la factura',
+			);
+
+		let total = 0;
+		const payMethodData: Prisma.InvoicePaymentMethodCreateManyInput[] = [];
+
+		for (const pM of paymentMethods) {
+			total += pM.amount;
+			payMethodData.push({
+				invoiceId: id,
+				amount: pM.amount,
+				methodId: pM.methodId,
+			});
+		}
+
+		const newTotalPayed = new Decimal(invoice.totalPayed).plus(amount);
+		if (invoice.total.lessThan(newTotalPayed))
+			throw new BadRequestException(
+				'El pago no puede exceder al total de la factura',
+			);
+
+		if (total !== amount)
+			throw new BadRequestException(
+				'El monto de los metodos de pago no coincide con el monto que se intenta pagar',
+			);
+
+		const updatedInvoice = await this.db.invoice.update({
+			include: { client: { include: { user: true } } },
+			where: { id },
+			data: {
+				totalPayed: newTotalPayed,
+				receipts: {
+					create: {
+						total: amount,
+						issueDate: new Date(paymentDate),
+						receiptNumber: dto.receiptNumber,
+						paymentMethods: { createMany: { data: payMethodData } },
 					},
 				},
-			});
+			},
 		});
-		return new InvoiceDto(invoice);
+
+		return new InvoiceDto(updatedInvoice);
 	}
 
 	async findAll(dto: InvoiceQueryDto) {
@@ -116,23 +183,93 @@ export class InvoiceService {
 
 	private async processDetails(
 		tx: ExtendedTransaction,
-		details: CreateInvoiceDetailDto[],
 		stockId: number,
+		details: CreateInvoiceDetailDto[],
+		services: CreateInvoiceDetailDto[],
 	) {
 		const productsId = details.map((d) => d.productId);
-		const stockDetails = await tx.stockDetails.findMany({
-			where: { productId: { in: productsId }, stockId },
-			include: {
-				product: { include: { price: { select: { amount: true } } } },
-			},
+		const servicesId = services.map((s) => s.productId);
+
+		const servicesProdDetails = await tx.product.findMany({
+			where: { id: { in: servicesId } },
+			include: { price: true },
 		});
 
-		if (stockDetails.length !== productsId.length)
-			throw new NotFoundException(
-				'Uno o mas de los productos de la lista no existe o no se encuentra en el deposito',
-			);
+		const stockDetails = await tx.stockDetails.findMany({
+			where: { id: { in: productsId }, stockId },
+			include: { product: { include: { price: true } } },
+		});
 
-		return this.buildInvoiceDetailsData(stockDetails, stockId, details);
+		if (stockDetails.length !== productsId.length) {
+			throw new NotFoundException(
+				'Uno o mas de los productos de la lista no existen',
+			);
+		}
+
+		if (servicesProdDetails.length !== servicesId.length) {
+			throw new NotFoundException(
+				'Uno o mas de los servicios de la lista no existen',
+			);
+		}
+
+		const productsResult = this.buildProductsDetailsData(
+			stockDetails,
+			stockId,
+			details,
+		);
+
+		const servicesResult = this.buildServiceDetailsData(
+			servicesProdDetails,
+			services,
+		);
+
+		const total = productsResult.total.add(servicesResult.total);
+		const totalVat = productsResult.totalVat.add(servicesResult.totalVat);
+
+		if (total.lte(0))
+			throw new BadRequestException('El total no puede ser igual a 0');
+
+		return {
+			invoiceData: [
+				...productsResult.invoiceData,
+				...servicesResult.invoiceData,
+			],
+			productData: productsResult.productData,
+			stockDetailData: productsResult.stockDetailData,
+			total,
+			totalVat,
+		};
+	}
+
+	private buildServiceDetailsData(
+		services: (Product & { price: ProductPrice })[],
+		details: CreateInvoiceDetailDto[],
+	) {
+		const invoiceData: Prisma.InvoiceDetailCreateManyInvoiceInput[] = [];
+		let total = new Decimal(0);
+		let totalVat = new Decimal(0);
+
+		for (const d of details) {
+			const service = services.find((s) => s.id === d.productId)!;
+
+			const partialAmount = service.price.amount.mul(d.quantity);
+			const partialAmountVAT = partialAmount
+				.mul(service.iva)
+				.div(Decimal.add(100, service.iva));
+
+			total = total.add(partialAmount);
+			totalVat = totalVat.add(partialAmountVAT);
+
+			invoiceData.push({
+				partialAmount,
+				partialAmountVAT,
+				productId: service.id,
+				quantity: d.quantity,
+				unitCost: service.price.amount,
+			});
+		}
+
+		return { invoiceData, total, totalVat };
 	}
 
 	private async handleUpdateStock(
@@ -144,7 +281,40 @@ export class InvoiceService {
 		await Promise.all(products.map((p) => tx.product.update(p)));
 	}
 
-	private buildInvoiceDetailsData(
+	async applyPaymentMethods(
+		tx: ExtendedTransaction,
+		invoiceId: number,
+		paymentMethods: InvoicePaymentMethodDetailDto[],
+		expectedTotal?: Decimal,
+	) {
+		if (!paymentMethods || paymentMethods.length === 0) {
+			throw new BadRequestException(
+				'Es necesario especificar los métodos de pago.',
+			);
+		}
+
+		const invPayMethodData: Prisma.InvoicePaymentMethodCreateManyInput[] = [];
+		let total = 0;
+
+		for (const pM of paymentMethods) {
+			total += pM.amount;
+			invPayMethodData.push({
+				invoiceId,
+				amount: pM.amount,
+				methodId: pM.methodId,
+			});
+		}
+
+		if (expectedTotal && !expectedTotal.eq(total)) {
+			throw new BadRequestException(
+				'Los montos de los métodos de pago deben coincidir con lo pagado.',
+			);
+		}
+
+		await tx.invoicePaymentMethod.createMany({ data: invPayMethodData });
+	}
+
+	private buildProductsDetailsData(
 		products: StockDetailInfo[],
 		stockId: number,
 		details: CreateInvoiceDetailDto[],
@@ -198,22 +368,5 @@ export class InvoiceService {
 		}
 
 		return { invoiceData, productData, stockDetailData, total, totalVat };
-	}
-
-	private validateTotalPayed(
-		type: InvoiceType,
-		total: Decimal,
-		totalPayed?: number,
-	) {
-		if (type !== 'CREDIT') return;
-
-		if (!totalPayed)
-			throw new BadRequestException('Se requiere del total pagado');
-
-		const isTotalPayedValid = total.gte(totalPayed);
-		if (!isTotalPayedValid)
-			throw new BadRequestException(
-				'Lo pagado por la factura no puede ser mayor al total de la misma',
-			);
 	}
 }
