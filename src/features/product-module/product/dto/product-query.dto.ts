@@ -11,6 +11,8 @@ import {
 	IsArray,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { IsId } from '@lib/decorators/validation/is-id.decorator';
+import { QueryParam } from '@lib/decorators/validation/query-param.decorator';
 
 export class ProductQueryDto extends PaginationQueryDto {
 	@ApiPropertyOptional()
@@ -64,4 +66,9 @@ export class ProductQueryDto extends PaginationQueryDto {
 		Array.isArray(value) ? value : value.split(',').map((tag) => tag.trim()),
 	)
 	tags?: string[];
+
+	@QueryParam()
+	@Type(() => Number)
+	@IsId('El identificador del deposito')
+	stockId?: number;
 }
