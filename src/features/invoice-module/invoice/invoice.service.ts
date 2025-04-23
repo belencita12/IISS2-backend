@@ -338,7 +338,7 @@ export class InvoiceService {
 			const partialAmount = currentSD.product.price.amount.mul(d.quantity);
 			const partialAmountVAT = partialAmount
 				.mul(currentSD.product.iva)
-				.div(Decimal.add(1, currentSD.product.iva));
+				.div(Decimal.add(100, currentSD.product.iva));
 
 			total = total.add(partialAmount);
 			totalVat = totalVat.add(partialAmountVAT);

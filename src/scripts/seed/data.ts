@@ -276,7 +276,7 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			category: 'PRODUCT',
 			code: `PROD-${genRandomStr()}`,
 			cost: 20000,
-			iva: 0.1,
+			iva: 10,
 			price: {
 				create: {
 					amount: 24000,
@@ -289,7 +289,7 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			category: 'PRODUCT',
 			code: `PROD-${genRandomStr()}`,
 			cost: 24000,
-			iva: 0.1,
+			iva: 10,
 			price: {
 				create: {
 					amount: 28000,
@@ -302,7 +302,7 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			category: 'PRODUCT',
 			code: `PROD-${genRandomStr()}`,
 			cost: 18000,
-			iva: 0.1,
+			iva: 10,
 			price: {
 				create: {
 					amount: 20000,
@@ -315,7 +315,7 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			category: 'PRODUCT',
 			code: `PROD-${genRandomStr()}`,
 			cost: 12000,
-			iva: 0.1,
+			iva: 10,
 			price: {
 				create: {
 					amount: 15000,
