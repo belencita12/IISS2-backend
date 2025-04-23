@@ -63,6 +63,10 @@ export class InvoiceDetailService {
 		const { baseWhere } = this.db.getBaseWhere(dto);
 		const where: Prisma.InvoiceDetailWhereInput = { ...baseWhere };
 
+		if (dto.invoiceId) {
+			where.invoiceId = dto.invoiceId;
+		}
+
 		if (dto.fromPartialTotal || dto.toPartialTotal) {
 			where.partialAmount = {
 				...(dto.fromPartialTotal && { gte: dto.fromPartialTotal }),
@@ -70,7 +74,7 @@ export class InvoiceDetailService {
 			};
 		}
 
-		if (dto.fromIssueDate || dto.toIssueDate || dto.invoiceNumber) {
+		if (dto.fromIssueDate || dto.toIssueDate) {
 			where.invoice = {
 				...(dto.fromIssueDate !== undefined && {
 					issueDate: {
@@ -81,9 +85,6 @@ export class InvoiceDetailService {
 					issueDate: {
 						lte: dto.toIssueDate ? new Date(dto.toIssueDate) : undefined,
 					},
-				}),
-				...(dto.invoiceNumber && {
-					invoiceNumber: { contains: dto.invoiceNumber, mode: 'insensitive' },
 				}),
 			};
 		}

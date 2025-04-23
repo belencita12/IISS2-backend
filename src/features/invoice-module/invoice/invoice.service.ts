@@ -191,12 +191,12 @@ export class InvoiceService {
 		const servicesId = services.map((s) => s.productId);
 
 		const servicesProdDetails = await tx.product.findMany({
-			where: { id: { in: servicesId } },
+			where: { id: { in: servicesId }, category: 'SERVICE' },
 			include: { price: true },
 		});
 
 		const stockDetails = await tx.stockDetails.findMany({
-			where: { id: { in: productsId }, stockId },
+			where: { productId: { in: productsId }, stockId },
 			include: { product: { include: { price: true } } },
 		});
 
