@@ -1,4 +1,5 @@
 import { IsId } from '@lib/decorators/validation/is-id.decorator';
+import { IsRuc } from '@lib/decorators/validation/is-ruc';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEmail, IsOptional, IsPhoneNumber, IsString } from 'class-validator';
@@ -31,7 +32,7 @@ export class CreateEmployeeDto {
 	@ApiProperty()
 	phoneNumber: string;
 
-	@IsString()
+	@IsRuc()
 	@ApiProperty()
 	ruc: string;
 }
