@@ -20,6 +20,11 @@ export class AppointmentQueryDto extends PaginationQueryDto {
 	@IsId()
 	serviceId?: number;
 
+	@Type(() => Number)
+	@QueryParam()
+	@IsId()
+	petId?: number;
+
 	@QueryParam()
 	@IsDbDate()
 	fromDesignatedDate?: string;
