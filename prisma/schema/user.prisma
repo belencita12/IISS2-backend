@@ -1,7 +1,7 @@
 model User {
   id          Int    @id @default(autoincrement())
   adress      String? @db.VarChar(100)
-  phoneNumber String @db.VarChar(20)
+  phoneNumber String @db.VarChar(20) @unique
   fullName    String
   username    String @unique
   email       String @unique
