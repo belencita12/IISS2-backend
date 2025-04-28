@@ -14,6 +14,10 @@ export class UpdateVaccineDto {
 	@IsOptional()
 	name?: string;
 
+	@IsString()
+	@ApiProperty({ example: 'Descripcion Vacuna X' })
+	description: string;
+
 	@ApiProperty({ example: 5 })
 	@Transform(({ value }) => Number(value))
 	@IsNumber()

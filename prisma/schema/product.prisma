@@ -2,6 +2,7 @@ model Product {
     id       Int          @id @default(autoincrement())
     code     String       @unique
     name     String
+    description String?
     cost     Decimal      @db.Money
     iva      Float
     imageId  Int?

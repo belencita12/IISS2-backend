@@ -19,6 +19,7 @@ export interface ProductEntity extends Product {
 export class ProductDto {
 	constructor(data: ProductEntity) {
 		this.name = data.name;
+		this.description = data.description? data.description : "";
 		this.id = data.id;
 		this.code = data.code;
 		this.cost = data.cost.toNumber();
@@ -46,6 +47,10 @@ export class ProductDto {
 	@IsString()
 	@ApiProperty({ example: 'Wiskas Cachorros 500gr' })
 	name: string;
+
+	@IsString()
+	@ApiProperty({ example: 'Wiskas Cachorros 500gr' })
+	description: string;
 
 	@IsString()
 	@ApiProperty({ example: 'PROD-123' })
