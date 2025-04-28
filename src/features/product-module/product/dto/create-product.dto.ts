@@ -19,8 +19,9 @@ export class CreateProductDto {
 	name: string;
 
 	@IsString()
-	@ApiProperty({ example: 'Comida para cachorros 500gr' })
-	description: string;
+	@IsOptional()
+	@ApiPropertyOptional({ example: 'Comida para cachorros 500gr' })
+	description?: string;
 
 	@Transform(({ value }) => Number(value))
 	@IsNumber()
