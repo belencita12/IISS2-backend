@@ -30,6 +30,7 @@ export class VaccineService {
 
 		const newProduct = await this.productService.create({
 			name: dto.name,
+			description : dto.description,
 			category: 'VACCINE',
 			cost,
 			iva,
@@ -39,7 +40,7 @@ export class VaccineService {
 
 		return this.db.vaccine.create({
 			data: {
-				...dto,
+				name: dto.name,
 				species: { connect: { id: speciesId } },
 				manufacturer: { connect: { id: manufacturerId } },
 				product: { connect: { id: newProduct.id } },
@@ -109,6 +110,7 @@ export class VaccineService {
 			await this.productService.update(existingVaccine.product.id, {
 				productImg,
 				name: updateVaccineDto.name ?? existingVaccine.product.name,
+				description: updateVaccineDto.description,
 				cost: cost ?? existingVaccine.product.cost.toNumber(),
 				category: 'VACCINE',
 				iva: iva ?? existingVaccine.product.iva,
@@ -119,7 +121,7 @@ export class VaccineService {
 		return this.db.vaccine.update({
 			where: { id },
 			data: {
-				...vaccineUpdateData,
+				name : vaccineUpdateData.name,
 				species: speciesId ? { connect: { id: speciesId } } : undefined,
 				manufacturer: manufacturerId
 					? { connect: { id: manufacturerId } }

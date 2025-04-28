@@ -18,6 +18,11 @@ export class CreateProductDto {
 	@ApiProperty({ example: 'Wiskas Cachorros 500gr' })
 	name: string;
 
+	@IsString()
+	@IsOptional()
+	@ApiPropertyOptional({ example: 'Comida para cachorros 500gr' })
+	description?: string;
+
 	@Transform(({ value }) => Number(value))
 	@IsNumber()
 	@IsPositive()

@@ -14,6 +14,11 @@ export class CreateVaccineDto {
 	@IsDefined()
 	name: string;
 
+	@IsString()
+	@IsOptional()
+	@ApiPropertyOptional({ example: 'Descripcion Vacuna X' })
+	description?: string;
+
 	@ApiProperty({ example: 5, required: true })
 	@Transform(({ value }) => Number(value))
 	@IsNumber()
