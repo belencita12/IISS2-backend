@@ -43,7 +43,7 @@ export class StampedService {
 
 	async update(id: number, dto: CreateStampedDto) {
 		this.validateDtoRanges(dto);
-		const prevStamped = await this.db.stamped.findFirst({ where: { id } });
+		const prevStamped = await this.db.stamped.findUnique({ where: { id } });
 		if (!prevStamped) throw new NotFoundException('El timbrado no existe');
 		if (prevStamped.currentNum > prevStamped.fromNum) {
 			throw new BadRequestException(
