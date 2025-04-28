@@ -23,3 +23,10 @@ export const toUtcDate = (dateStr: string): Date => {
 	const [hour, min] = time.split(':');
 	return new Date(Date.UTC(year, month - 1, day, Number(hour), Number(min)));
 };
+
+export const getToday = () => {
+	const today = new Date();
+	return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+};
+
+export const normalizeDate = (date: Date) => date.toISOString().split('T')[0];

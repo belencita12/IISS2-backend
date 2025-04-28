@@ -1,0 +1,13 @@
+model Stamped {
+    id         Int      @id @default(autoincrement())
+    stampedNum String   @unique
+    fromDate   DateTime @db.Date
+    toDate     DateTime @db.Date
+    fromNum    Int
+    toNum      Int
+    currentNum Int      @default(0)
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+}
