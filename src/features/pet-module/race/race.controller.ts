@@ -60,4 +60,11 @@ export class RaceController {
 	async remove(@Param('id') id: string) {
 		return this.raceService.remove(+id);
 	}
+
+	@Roles(Role.Admin)
+	@Patch('/restore/:id')
+	@ApiResponse({ type: RaceDto })
+	async restore(@Param('id') id: string) {
+		return this.raceService.restore(+id);
+	}
 }
