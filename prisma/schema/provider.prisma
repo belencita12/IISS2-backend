@@ -2,9 +2,10 @@ model Provider {
   id           Int        @id @default(autoincrement())
   businessName String     @unique
   description  String?
-  phoneNumber  String
+  phoneNumber  String     @unique
   ruc          String     @unique
   Purchase     Purchase[]
+  products     Product[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

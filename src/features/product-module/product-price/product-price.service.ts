@@ -2,16 +2,18 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { CreateProductPriceDto } from './dto/create-product-price.dto';
 import { ProductPriceQueryDto } from './dto/product-price-query.dto';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '@features/prisma/prisma.service';
+import {
+	ExtendedTransaction,
+	PrismaService,
+} from '@features/prisma/prisma.service';
 
 @Injectable()
 export class ProductPriceService {
 	constructor(private readonly db: PrismaService) {}
 
-	async create(dto: CreateProductPriceDto) {
-		const newProductPrice = await this.db.productPrice.create({
-			data: dto,
-		});
+	async create(tx: ExtendedTransaction, dto: CreateProductPriceDto) {
+		const newProductPrice = await tx.productPrice.create({ data: dto });
+		this.desactivateExceptById(tx, newProductPrice.id);
 		return newProductPrice;
 	}
 
@@ -45,10 +47,11 @@ export class ProductPriceService {
 		return price;
 	}
 
-	async update(id: number, dto: CreateProductPriceDto) {
-		const price = await this.db.productPrice.findUnique({ where: { id } });
-		if (!price) throw new HttpException('Precio no encontrado', 404);
-		return await this.db.productPrice.update({ where: { id }, data: dto });
+	async desactivateExceptById(tx: ExtendedTransaction, id: number) {
+		await tx.productPrice.updateMany({
+			where: { id: { not: id } },
+			data: { isActive: false },
+		});
 	}
 
 	async remove(id: number) {

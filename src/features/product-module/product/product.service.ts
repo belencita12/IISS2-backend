@@ -7,6 +7,7 @@ import { Prisma } from '@prisma/client';
 import { ImageService } from '@features/media-module/image/image.service';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { TagService } from '../tag/tag.service';
+import { ProductPriceService } from '../product-price/product-price.service';
 
 @Injectable()
 export class ProductService {
@@ -14,56 +15,43 @@ export class ProductService {
 		private readonly db: PrismaService,
 		private readonly imgService: ImageService,
 		private readonly tagService: TagService,
+		private readonly productPriceService: ProductPriceService,
 	) {}
 
 	async create(dto: CreateProductDto) {
-		const { price, productImg, tags, ...rest } = dto;
+		const { price, productImg, tags, cost, ...rest } = dto;
 		const prodImg = productImg
 			? await this.imgService.create(productImg)
 			: null;
-		const prod = await this.db.product.create({
-			data: {
-				...rest,
-				code: this.genProdCode(),
-				category: rest.category,
-				image: prodImg ? { connect: { id: prodImg.id } } : undefined,
-				price: {
-					create: {
-						amount: new Decimal(price),
-					},
+		const product = await this.db.$transaction(async (tx) => {
+			const product = await tx.product.create({
+				data: {
+					...rest,
+					code: this.genProdCode(),
+					category: rest.category,
+					imageId: prodImg ? prodImg.id : undefined,
+					tags: tags ? this.tagService.connectTags(tags) : undefined,
+					prices: { create: { amount: new Decimal(price) } },
+					costs: { create: { cost: new Decimal(cost) } },
 				},
-				tags: this.tagService.connectTags(tags),
-			},
-			include: {
-				price: true,
-				image: true,
-				tags: { include: { tag: true } },
-			},
+				...this.getInclude(),
+			});
+			await this.productPriceService.desactivateExceptById(
+				tx,
+				product.prices[0].id,
+			);
+			return product;
 		});
-		return new ProductDto(prod);
+		return new ProductDto(product);
 	}
 
 	async findAll(query: ProductQueryDto) {
-		const { baseWhere } = this.db.getBaseWhere(query);
-		const where: Prisma.ProductWhereInput = {
-			...baseWhere,
-			name: { contains: query.name, mode: 'insensitive' },
-			code: { contains: query.code },
-			category: query.category,
-			cost: { gte: query.minCost, lte: query.maxCost },
-			price: { amount: { gte: query.minPrice, lte: query.maxPrice } },
-			StockDetails: query.stockId
-				? { some: { stockId: query.stockId } }
-				: undefined,
-			tags: query.tags
-				? { some: { tag: { name: { in: query.tags } } } }
-				: undefined,
-		};
+		const where = this.getWhere(query);
 		const [data, total] = await Promise.all([
 			this.db.product.findMany({
 				...this.db.paginate(query),
+				...this.getInclude(),
 				where,
-				include: { price: true, image: true, tags: { include: { tag: true } } },
 			}),
 			this.db.product.count({ where }),
 		]);
@@ -77,12 +65,8 @@ export class ProductService {
 
 	async findOne(id: number) {
 		const prod = await this.db.product.findUnique({
+			...this.getInclude(),
 			where: { id },
-			include: {
-				price: true,
-				image: true,
-				tags: { include: { tag: true } },
-			},
 		});
 		if (!prod) throw new HttpException('Producto no encontrado', 404);
 		return new ProductDto(prod);
@@ -90,36 +74,45 @@ export class ProductService {
 
 	async update(id: number, dto: CreateProductDto) {
 		const prodToUpd = await this.db.product.findUnique({
+			...this.getInclude(),
 			where: { id },
-			include: { image: true, price: true, tags: { include: { tag: true } } },
 		});
 
 		if (!prodToUpd) throw new HttpException('Producto no encontrado', 404);
 
-		const { price, productImg, tags = [], ...rest } = dto;
+		const { price, cost, productImg, tags = [], ...rest } = dto;
 		const prodImg = await this.imgService.upsert(prodToUpd.image, productImg);
-		const isSamePrice = prodToUpd.price.amount.eq(price);
-
+		const isSamePrice = prodToUpd.prices[0].amount.eq(price);
+		const isSameCost = prodToUpd.costs[0].cost.eq(cost);
 		const prevTags = prodToUpd.tags;
 
-		const prod = await this.db.product.update({
-			where: { id },
-			data: {
-				...rest,
-				tags: this.tagService.handleUpdateTags(prevTags, tags),
-				image: prodImg ? { connect: { id: prodImg.id } } : undefined,
-				price: isSamePrice
-					? { connect: { id: prodToUpd.price.id } }
-					: { create: { amount: new Decimal(price) } },
-			},
-			include: {
-				price: true,
-				image: true,
-				tags: { include: { tag: true } },
-			},
+		const updatedProduct = await this.db.$transaction(async (tx) => {
+			const updatedProduct = await this.db.product.update({
+				...this.getInclude(),
+				where: { id },
+				data: {
+					...rest,
+					category: rest.category,
+					tags: this.tagService.handleUpdateTags(prevTags, tags),
+					imageId: prodImg ? prodImg.id : undefined,
+					costs: !isSameCost
+						? { create: { cost: new Decimal(price) } }
+						: undefined,
+					prices: !isSamePrice
+						? { create: { amount: new Decimal(price) } }
+						: undefined,
+				},
+			});
+			if (!updatedProduct) {
+				throw new HttpException('Error al actualizar el producto', 500);
+			}
+			await this.productPriceService.desactivateExceptById(
+				tx,
+				updatedProduct.prices[0].id,
+			);
+			return updatedProduct;
 		});
-		if (!prod) throw new HttpException('Error al actualizar el producto', 500);
-		return new ProductDto(prod);
+		return new ProductDto(updatedProduct);
 	}
 
 	async remove(id: number) {
@@ -137,9 +130,63 @@ export class ProductService {
 		});
 	}
 
+	private getWhere(query: ProductQueryDto) {
+		const { baseWhere } = this.db.getBaseWhere(query);
+		const where: Prisma.ProductWhereInput = {
+			...baseWhere,
+			name: { contains: query.name, mode: 'insensitive' },
+			code: { contains: query.code },
+			category: query.category,
+			costs:
+				query.minCost || query.maxCost
+					? {
+							some: {
+								isActive: true,
+								cost: { gte: query.minCost, lte: query.maxCost },
+							},
+						}
+					: undefined,
+			prices:
+				query.minPrice || query.maxPrice
+					? {
+							some: {
+								isActive: true,
+								amount: { gte: query.minPrice, lte: query.maxPrice },
+							},
+						}
+					: undefined,
+			StockDetails: query.stockId
+				? { some: { stockId: query.stockId } }
+				: undefined,
+			tags: query.tags
+				? { some: { tag: { name: { in: query.tags } } } }
+				: undefined,
+		};
+		return where;
+	}
+
+	private getInclude() {
+		return {
+			include: {
+				prices: {
+					where: { isActive: true },
+					take: 1,
+					orderBy: { createdAt: Prisma.SortOrder.desc },
+				},
+				costs: {
+					where: { isActive: true },
+					take: 1,
+					orderBy: { createdAt: Prisma.SortOrder.desc },
+				},
+				image: true,
+				tags: { include: { tag: true } },
+			},
+		};
+	}
+
 	private genProdCode() {
-		const randomNumber = Math.floor(Math.random() * 1000);
+		const randomNumber = Math.floor(Math.random() * 100);
 		const nowString = Date.now().toString();
-		return `prod-${nowString}-${randomNumber}`;
+		return `${nowString}${randomNumber}`;
 	}
 }

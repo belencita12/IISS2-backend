@@ -269,58 +269,72 @@ export const seedWorkPositions = async (db: PrismaTransactionClient) => {
 	}
 };
 
+export const seedProviders = async (db: PrismaTransactionClient) => {
+	const providersData: Prisma.ProviderCreateInput[] = [
+		{
+			phoneNumber: '+595985103811',
+			businessName: 'Juguetitos Bonitos S.A.',
+			ruc: '1236429-1',
+		},
+		{
+			phoneNumber: '+595987103810',
+			businessName: 'Comidita Bonita S.A.',
+			ruc: '1246428-4',
+		},
+		{
+			phoneNumber: '+595984103719',
+			businessName: 'Medicamentos Bonitos S.A.',
+			ruc: '1116429-0',
+		},
+	];
+	for (const p of providersData) {
+		await db.provider.create({ data: p });
+	}
+};
+
 export const seedProducts = async (db: PrismaTransactionClient) => {
+	const [{ id: prov1Id }, { id: _prov2Id }, { id: prov3Id }] =
+		await db.provider.findMany();
+
 	const productsData: Prisma.ProductCreateInput[] = [
 		{
 			name: 'Desparasitante Perro',
 			category: 'PRODUCT',
+			provider: { connect: { id: prov3Id } },
 			code: `PROD-${genRandomStr()}`,
-			cost: 20000,
+			prices: { create: { amount: 24000 } },
+			costs: { create: { cost: 20000 } },
 			iva: 10,
-			price: {
-				create: {
-					amount: 24000,
-				},
-			},
 			quantity: 12,
 		},
 		{
 			name: 'Desparasitante Gato',
 			category: 'PRODUCT',
+			provider: { connect: { id: prov3Id } },
 			code: `PROD-${genRandomStr()}`,
-			cost: 24000,
+			prices: { create: { amount: 28000 } },
+			costs: { create: { cost: 2400 } },
 			iva: 10,
-			price: {
-				create: {
-					amount: 28000,
-				},
-			},
 			quantity: 10,
 		},
 		{
 			name: 'Pelota Juguete Perro',
 			category: 'PRODUCT',
+			provider: { connect: { id: prov1Id } },
 			code: `PROD-${genRandomStr()}`,
-			cost: 18000,
+			prices: { create: { amount: 20000 } },
+			costs: { create: { cost: 18000 } },
 			iva: 10,
-			price: {
-				create: {
-					amount: 20000,
-				},
-			},
 			quantity: 15,
 		},
 		{
 			name: 'Shampoo Perro 1Lt',
+			provider: { connect: { id: prov1Id } },
 			category: 'PRODUCT',
 			code: `PROD-${genRandomStr()}`,
-			cost: 12000,
+			costs: { create: { cost: 12000 } },
+			prices: { create: { amount: 15000 } },
 			iva: 10,
-			price: {
-				create: {
-					amount: 15000,
-				},
-			},
 		},
 	];
 	for (const p of productsData) {
@@ -341,6 +355,10 @@ export const seedVaccineManufacturers = async (db: PrismaTransactionClient) => {
 
 export const seedVaccines = async (db: PrismaTransactionClient) => {
 	const [man1, man2, man3] = await db.vaccineManufacturer.findMany();
+	const supplier = await db.provider.findUnique({
+		where: { ruc: '1116429-0' },
+	});
+	if (!supplier) throw new Error('Supplier with ruc 1116429-0');
 	const [species1, species2] = await db.species.findMany();
 	const vaccinesData: Prisma.VaccineCreateInput[] = [
 		{
@@ -358,9 +376,10 @@ export const seedVaccines = async (db: PrismaTransactionClient) => {
 					name: 'Panleucopenia',
 					category: 'VACCINE',
 					iva: 0.1,
+					providerId: supplier.id,
 					code: `PROD-${genRandomStr()}`,
-					cost: 20000,
-					price: { create: { amount: 50000 } },
+					costs: { create: { cost: 20000 } },
+					prices: { create: { amount: 50000 } },
 				},
 			},
 		},
@@ -379,9 +398,10 @@ export const seedVaccines = async (db: PrismaTransactionClient) => {
 					name: 'Leptospirosis',
 					category: 'VACCINE',
 					iva: 0.1,
+					providerId: supplier.id,
 					code: `PROD-${genRandomStr()}`,
-					cost: 12000,
-					price: { create: { amount: 36000 } },
+					costs: { create: { cost: 12000 } },
+					prices: { create: { amount: 36000 } },
 				},
 			},
 		},
@@ -399,10 +419,11 @@ export const seedVaccines = async (db: PrismaTransactionClient) => {
 				create: {
 					name: 'Parvovirus',
 					category: 'VACCINE',
+					providerId: supplier.id,
 					iva: 0.1,
 					code: `PROD-${genRandomStr()}`,
-					cost: 11000,
-					price: { create: { amount: 60000 } },
+					costs: { create: { cost: 11000 } },
+					prices: { create: { amount: 60000 } },
 				},
 			},
 		},
