@@ -243,16 +243,16 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 
 export const seedWorkPositions = async (db: PrismaTransactionClient) => {
 	const shiftsData = [
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 1 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 1 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 2 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 2 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 3 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 3 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 4 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 4 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 5 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 5 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 1 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 1 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 2 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 2 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 3 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 3 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 4 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 4 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 5 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 5 },
 	];
 
 	const workPositions: Prisma.WorkPositionCreateInput[] = [
@@ -276,7 +276,7 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			category: 'PRODUCT',
 			code: `PROD-${genRandomStr()}`,
 			cost: 20000,
-			iva: 0.1,
+			iva: 10,
 			price: {
 				create: {
 					amount: 24000,
@@ -289,7 +289,7 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			category: 'PRODUCT',
 			code: `PROD-${genRandomStr()}`,
 			cost: 24000,
-			iva: 0.1,
+			iva: 10,
 			price: {
 				create: {
 					amount: 28000,
@@ -302,7 +302,7 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			category: 'PRODUCT',
 			code: `PROD-${genRandomStr()}`,
 			cost: 18000,
-			iva: 0.1,
+			iva: 10,
 			price: {
 				create: {
 					amount: 20000,
@@ -315,7 +315,7 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			category: 'PRODUCT',
 			code: `PROD-${genRandomStr()}`,
 			cost: 12000,
-			iva: 0.1,
+			iva: 10,
 			price: {
 				create: {
 					amount: 15000,

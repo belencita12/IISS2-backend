@@ -1,3 +1,4 @@
+import { IsRuc } from '@lib/decorators/validation/is-ruc';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsEmail,
@@ -26,8 +27,8 @@ export class CreateUserDto {
 	@ApiProperty()
 	phoneNumber: string;
 
-	@IsString()
 	@ApiProperty()
+	@IsRuc()
 	ruc: string;
 
 	@IsString({ each: true })

@@ -52,6 +52,9 @@ export class ProductService {
 			category: query.category,
 			cost: { gte: query.minCost, lte: query.maxCost },
 			price: { amount: { gte: query.minPrice, lte: query.maxPrice } },
+			StockDetails: query.stockId
+				? { some: { stockId: query.stockId } }
+				: undefined,
 			tags: query.tags
 				? { some: { tag: { name: { in: query.tags } } } }
 				: undefined,

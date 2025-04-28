@@ -36,6 +36,8 @@ import { InvoiceModule } from './invoice-module/invoice.module';
 import { PaymentMethodModule } from './payment-method-module/payment-method/payment-method.module';
 import { InvoicePaymentMethodModule } from './payment-method-module/invoice-payment-method/invoice-payment-method.module';
 import { ServiceTypeModule } from './service-type/service-type.module';
+import { AppointmentModule } from './appointment-module/appointment/appointment.module';
+import { ScheduleService } from './appointment-module/schedule/schedule.service';
 
 @Module({
 	imports: [
@@ -75,6 +77,8 @@ import { ServiceTypeModule } from './service-type/service-type.module';
 		PaymentMethodModule,
 		InvoicePaymentMethodModule,
 		ServiceTypeModule,
+		AppointmentModule,
 	],
+	providers: [ScheduleService],
 })
 export class AppModule {}

@@ -6,10 +6,22 @@ import { InvoiceDetailService } from './invoice-detail/invoice-detail.service';
 import { InvoiceDetailController } from './invoice-detail/invoice-detail.controller';
 import { ReceiptController } from './receipt/receipt.controller';
 import { ReceiptService } from './receipt/receipt.service';
+import { StampedController } from './stamped/stamped.controller';
+import { StampedService } from './stamped/stamped.service';
 
 @Module({
 	imports: [PrismaModule],
-	controllers: [InvoiceController, InvoiceDetailController, ReceiptController],
-	providers: [InvoiceService, InvoiceDetailService, ReceiptService],
+	controllers: [
+		InvoiceController,
+		InvoiceDetailController,
+		ReceiptController,
+		StampedController,
+	],
+	providers: [
+		InvoiceService,
+		InvoiceDetailService,
+		ReceiptService,
+		StampedService,
+	],
 })
 export class InvoiceModule {}

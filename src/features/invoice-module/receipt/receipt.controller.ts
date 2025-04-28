@@ -7,6 +7,7 @@ import { ReceiptQueryDto } from './dto/receipt-query.dto';
 import { ReceiptService } from './receipt.service';
 import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
 import { ReceiptDto } from './dto/receipt.dto';
+import { ApiResponse } from '@nestjs/swagger';
 
 @AppController({ name: 'receipt', tag: 'Receipt' })
 @UseGuards(RolesGuard)
@@ -21,7 +22,7 @@ export class ReceiptController {
 	}
 
 	@Get(':id')
-	@ApiPaginatedResponse(ReceiptDto)
+	@ApiResponse({ type: ReceiptDto })
 	findOne(@Param('id') id: string) {
 		return this.receiptService.findOne(+id);
 	}
