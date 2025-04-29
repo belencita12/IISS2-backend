@@ -7,6 +7,7 @@ import { ScheduleService } from '@features/appointment-module/schedule/schedule.
 import { AppointmentQueryDto } from './dto/appointment-query.dto';
 import { AppointmentStatus, Prisma } from '@prisma/client';
 import { AppointmentCancelDto } from './dto/appointment-cancel.dto';
+import { contains } from 'class-validator';
 
 @Injectable()
 export class AppointmentService {
@@ -149,6 +150,16 @@ export class AppointmentService {
 				},
 			};
 		}
+
+		if (query.petId) {
+			where.pet = {
+				id: {
+					equals: query.petId
+				},
+			};
+		}
+		
+		
 
 		if (query.clientRuc) {
 			where.pet = {

@@ -12,6 +12,7 @@ interface EmployeeEntity extends Employee {
 
 export class EmployeeDto {
 	constructor(data: EmployeeEntity) {
+		this.phoneNumber = data.user.phoneNumber;
 		this.id = data.id;
 		this.fullName = data.user.fullName;
 		this.email = data.user.email;
@@ -41,6 +42,11 @@ export class EmployeeDto {
 	@IsNotEmpty()
 	@ApiProperty({ example: 'Roberto Gimenez' })
 	fullName: string;
+
+	@IsString()
+	@IsNotEmpty()
+	@ApiProperty({ example: '+595983123456' })
+	phoneNumber: string;
 
 	@IsOptional()
 	@IsString()
