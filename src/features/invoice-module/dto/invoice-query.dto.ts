@@ -3,12 +3,13 @@ import { IsDbDate } from '@lib/decorators/validation/is-db-date.decorator';
 import { IsId } from '@lib/decorators/validation/is-id.decorator';
 import { InvoiceType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsString } from 'class-validator';
 import { QueryParam } from '../../../lib/decorators/validation/query-param.decorator';
 
 export class InvoiceQueryDto extends PaginationQueryDto {
 	@QueryParam()
-	ruc?: string;
+	@IsString()
+	search?: string;
 
 	@Type(() => Number)
 	@IsId()

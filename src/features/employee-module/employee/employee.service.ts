@@ -88,6 +88,7 @@ export class EmployeeService {
 			},
 			user: {
 				update: {
+					phoneNumber: dto.phoneNumber,
 					ruc: dto.ruc,
 					email: dto.email,
 					fullName: dto.fullName,

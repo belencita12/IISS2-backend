@@ -79,4 +79,21 @@ export class SpeciesService {
 			data: { deletedAt: new Date() },
 		});
 	}
+
+	async restore(id: number) {
+		const species = await this.prisma.species.findFirst({
+			where: {
+				id,
+				deletedAt: { not: null },
+			},
+		});
+		if (!species)
+			throw new NotFoundException(
+				'Especie no encontrada o aun no fue eliminada',
+			);
+		return this.prisma.species.update({
+			where: { id },
+			data: { deletedAt: null },
+		});
+	}
 }
