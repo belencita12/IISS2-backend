@@ -83,14 +83,15 @@ export class RaceService {
 		});
 	}
 
-	async restore(id: number){
+	async restore(id: number) {
 		const race = await this.prisma.race.findFirst({
 			where: {
 				id,
-				deletedAt: {not: null} 
-			}
-		})
-		if(!race) throw new NotFoundException('Raza no encontrada o aun no fue eliminada');
+				deletedAt: { not: null },
+			},
+		});
+		if (!race)
+			throw new NotFoundException('Raza no encontrada o aun no fue eliminada');
 		return this.prisma.race.update({
 			where: { id },
 			data: { deletedAt: null },

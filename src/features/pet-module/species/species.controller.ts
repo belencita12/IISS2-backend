@@ -63,4 +63,11 @@ export class SpeciesController {
 	async remove(@Param('id') id: string) {
 		return this.speciesService.remove(+id);
 	}
+
+	@Roles(Role.Admin)
+	@Patch('/restore/:id')
+	@ApiResponse({ type: SpeciesDto })
+	async restore(@Param('id') id: string) {
+		return this.speciesService.restore(+id);
+	}
 }
