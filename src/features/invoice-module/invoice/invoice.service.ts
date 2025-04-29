@@ -160,8 +160,17 @@ export class InvoiceService {
 			...baseWhere,
 			stockId: dto.stockId,
 			type: dto.type,
-			client: dto.ruc
-				? { user: { ruc: { contains: dto.ruc, mode: 'insensitive' } } }
+			client: dto.search
+				? {
+						OR: [
+							{ user: { ruc: { contains: dto.search, mode: 'insensitive' } } },
+							{
+								user: {
+									fullName: { contains: dto.search, mode: 'insensitive' },
+								},
+							},
+						],
+					}
 				: undefined,
 			issueDate:
 				dto.fromIssueDate || dto.toIssueDate
