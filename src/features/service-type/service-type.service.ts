@@ -9,11 +9,13 @@ import Decimal from 'decimal.js';
 import { genRandomCode } from '@lib/utils/encrypt';
 import { ServiceTypeDto } from './dto/service-type.dto';
 import { Prisma } from '@prisma/client';
+import { ProductService } from '@features/product-module/product/product.service';
 
 @Injectable()
 export class ServiceTypeService {
 	constructor(
 		private readonly db: PrismaService,
+		private readonly productService: ProductService,
 		private readonly tagService: TagService,
 		private readonly imgService: ImageService,
 	) {}
@@ -71,17 +73,8 @@ export class ServiceTypeService {
 
 	async update(id: number, dto: UpdateServiceTypeDto) {
 		const prevST = await this.db.serviceType.findFirst({
+			...this.getInclude(),
 			where: { id },
-			include: {
-				product: {
-					include: {
-						costs: { where: { isActive: true } },
-						prices: { where: { isActive: true } },
-						image: true,
-						tags: { include: { tag: true } },
-					},
-				},
-			},
 		});
 
 		if (!prevST) throw new NotFoundException('Servicio no encontrado');
@@ -97,30 +90,38 @@ export class ServiceTypeService {
 		const isSamePrice = price && prevST.product.prices[0].amount.eq(price);
 		const isSameCost = cost && prevST.product.costs[0].cost.eq(cost);
 
-		const serviceType = await this.db.serviceType.update({
-			...this.getInclude(),
-			where: { id },
-			data: {
-				...data,
-				product: {
-					update: {
-						data: {
-							tags: tags
-								? this.tagService.handleUpdateTags(prevTags, tags)
-								: undefined,
-							image: newImg ? { connect: { id: newImg.id } } : undefined,
-							prices: isSamePrice
-								? { create: { amount: new Decimal(price) } }
-								: undefined,
-							costs: isSameCost
-								? { create: { cost: new Decimal(cost) } }
-								: undefined,
-							name: data.name,
-							iva: iva,
+		const serviceType = await this.db.$transaction(async (tx) => {
+			if (!isSameCost)
+				this.productService.resetProductCostHistory(tx, prevST.productId);
+
+			if (!isSamePrice)
+				this.productService.resetProductPriceHistory(tx, prevST.productId);
+
+			return await this.db.serviceType.update({
+				...this.getInclude(),
+				where: { id },
+				data: {
+					...data,
+					product: {
+						update: {
+							data: {
+								tags: tags
+									? this.tagService.handleUpdateTags(prevTags, tags)
+									: undefined,
+								image: newImg ? { connect: { id: newImg.id } } : undefined,
+								prices: isSamePrice
+									? { create: { amount: new Decimal(price) } }
+									: undefined,
+								costs: isSameCost
+									? { create: { cost: new Decimal(cost) } }
+									: undefined,
+								name: data.name,
+								iva: iva,
+							},
 						},
 					},
 				},
-			},
+			});
 		});
 		return new ServiceTypeDto(serviceType);
 	}

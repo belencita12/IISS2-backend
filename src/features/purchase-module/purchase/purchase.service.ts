@@ -3,16 +3,16 @@ import {
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
-import { CreatePurchaseDto } from './dto/create-purchase.dto';
-import { Prisma } from '@prisma/client';
 import {
 	ExtendedTransaction,
 	PrismaService,
 } from '@features/prisma/prisma.service';
-import { PurchaseQueryDto } from './dto/purchase-query.dto';
-import { PurchaseDto } from './dto/purchase.dto';
 import { CreatePurchaseDetailDto } from '../purchase-detail/dto/create-purchase-detail.dto';
+import { PurchaseQueryDto } from './dto/purchase-query.dto';
+import { CreatePurchaseDto } from './dto/create-purchase.dto';
+import { PurchaseDto } from './dto/purchase.dto';
 import { ProductInfoDto } from './dto/product-info.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PurchaseService {
@@ -129,13 +129,12 @@ export class PurchaseService {
 
 		for (const d of details) {
 			const p = productMap.get(d.productId)!;
+
 			const partialAmount = p.costs[0].cost.mul(d.quantity);
+			const partialAmountVAT = partialAmount.mul(100).div(100 + p.iva);
 
-			const ivaAmount = partialAmount.mul(p.iva);
-			const totalDetail = partialAmount.add(ivaAmount);
-
-			ivaTotal += ivaAmount.toNumber();
-			total += totalDetail.toNumber();
+			ivaTotal += partialAmountVAT.toNumber();
+			total += partialAmount.toNumber();
 
 			productsData.push({
 				where: { id: p.id },
@@ -152,7 +151,7 @@ export class PurchaseService {
 				productId: p.id,
 				unitCost: p.costs[0].cost.toNumber(),
 				partialAmount: partialAmount.toNumber(),
-				partialAmountVAT: totalDetail.toNumber(),
+				partialAmountVAT: partialAmountVAT.toNumber(),
 				quantity: d.quantity,
 			});
 		}
@@ -176,6 +175,9 @@ export class PurchaseService {
 		details: CreatePurchaseDetailDto[],
 		providerId: number,
 	) {
+		const providerExists = await tx.provider.isExists({ id: providerId });
+		if (!providerExists) throw new NotFoundException('El proveedor no existe');
+
 		const products = await tx.product.findMany({
 			where: { id: { in: prodId }, providerId },
 			select: {
@@ -188,7 +190,7 @@ export class PurchaseService {
 
 		if (products.length !== details.length) {
 			throw new NotFoundException(
-				'Existen productos que no pertenecen a ningun proveedor',
+				'Existen productos que no pertenecen al proveedor',
 			);
 		}
 

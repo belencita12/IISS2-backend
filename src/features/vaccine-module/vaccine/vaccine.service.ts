@@ -103,14 +103,14 @@ export class VaccineService {
 
 		if (productImg || dto.name || cost || iva || price) {
 			await this.productService.update(existingVaccine.product.id, {
-				productImg,
+				price: price ?? existingVaccine.product.prices[0].amount.toNumber(),
+				cost: cost ?? existingVaccine.product.costs[0].cost.toNumber(),
+				name: dto.name ?? existingVaccine.product.name,
 				iva: dto.iva ?? existingVaccine.product.iva,
 				description: dto.description,
-				cost: cost ?? existingVaccine.product.costs[0].cost.toNumber(),
-				category: 'VACCINE',
-				price: price ?? existingVaccine.product.prices[0].amount.toNumber(),
 				providerId: dto.providerId,
-				name: dto.name ?? existingVaccine.product.name,
+				category: 'VACCINE',
+				productImg,
 			});
 		}
 
@@ -144,9 +144,9 @@ export class VaccineService {
 				manufacturer: true,
 				product: {
 					include: {
-						prices: true,
-						costs: true,
 						image: true,
+						prices: { where: { isActive: true } },
+						costs: { where: { isActive: true } },
 						tags: { include: { tag: true } },
 					},
 				},

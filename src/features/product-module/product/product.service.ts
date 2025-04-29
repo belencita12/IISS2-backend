@@ -5,10 +5,11 @@ import Decimal from 'decimal.js';
 import { ProductQueryDto } from './dto/product-query.dto';
 import { Prisma } from '@prisma/client';
 import { ImageService } from '@features/media-module/image/image.service';
-import { PrismaService } from '@features/prisma/prisma.service';
+import {
+	ExtendedTransaction,
+	PrismaService,
+} from '@features/prisma/prisma.service';
 import { TagService } from '../tag/tag.service';
-import { ProductPriceService } from '../product-price/product-price.service';
-import { ProductCostService } from '../product-cost/product-cost.service';
 
 @Injectable()
 export class ProductService {
@@ -16,8 +17,6 @@ export class ProductService {
 		private readonly db: PrismaService,
 		private readonly imgService: ImageService,
 		private readonly tagService: TagService,
-		private readonly productPriceService: ProductPriceService,
-		private readonly productCostService: ProductCostService,
 	) {}
 
 	async create(dto: CreateProductDto) {
@@ -45,16 +44,6 @@ export class ProductService {
 				},
 				...this.getInclude(),
 			});
-			await this.productPriceService.desactivateExceptById(
-				tx,
-				product.id,
-				product.prices[0].id,
-			);
-			await this.productCostService.desactivateExceptById(
-				tx,
-				product.id,
-				product.costs[0].id,
-			);
 			return product;
 		});
 		return new ProductDto(product);
@@ -102,7 +91,9 @@ export class ProductService {
 		const prevTags = prodToUpd.tags;
 
 		const updatedProduct = await this.db.$transaction(async (tx) => {
-			const updatedProduct = await this.db.product.update({
+			if (!isSameCost) await this.resetProductCostHistory(tx, prodToUpd.id);
+			if (!isSamePrice) await this.resetProductPriceHistory(tx, prodToUpd.id);
+			const updatedProduct = await tx.product.update({
 				...this.getInclude(),
 				where: { id },
 				data: {
@@ -118,19 +109,6 @@ export class ProductService {
 						: undefined,
 				},
 			});
-			if (!updatedProduct) {
-				throw new HttpException('Error al actualizar el producto', 500);
-			}
-			await this.productPriceService.desactivateExceptById(
-				tx,
-				updatedProduct.id,
-				updatedProduct.prices[0].id,
-			);
-			await this.productCostService.desactivateExceptById(
-				tx,
-				updatedProduct.id,
-				updatedProduct.costs[0].id,
-			);
 			return updatedProduct;
 		});
 		return new ProductDto(updatedProduct);
@@ -148,6 +126,20 @@ export class ProductService {
 				where: { productId: product.id },
 				data: { deletedAt: new Date() },
 			});
+		});
+	}
+
+	async resetProductCostHistory(tx: ExtendedTransaction, productId: number) {
+		await tx.productCost.updateMany({
+			where: { productId, isActive: true },
+			data: { isActive: false },
+		});
+	}
+
+	async resetProductPriceHistory(tx: ExtendedTransaction, productId: number) {
+		await tx.productPrice.updateMany({
+			where: { productId, isActive: true },
+			data: { isActive: false },
 		});
 	}
 
