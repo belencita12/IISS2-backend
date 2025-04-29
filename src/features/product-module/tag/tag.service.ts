@@ -46,7 +46,7 @@ export class TagService {
 			},
 		});
 		if (!tag)
-			throw new NotFoundException('Tag no encontrado o aun no fue eliminadoF');
+			throw new NotFoundException('Tag no encontrado o aun no fue eliminado');
 		return await this.db.tag.update({
 			where: { id },
 			data: { deletedAt: null },
