@@ -38,6 +38,21 @@ export class TagService {
 		return await this.db.tag.softDelete({ id });
 	}
 
+	async restore(id: number) {
+		const tag = await this.db.tag.findFirst({
+			where: {
+				id,
+				deletedAt: { not: null },
+			},
+		});
+		if (!tag)
+			throw new NotFoundException('Tag no encontrado o aun no fue eliminadoF');
+		return await this.db.tag.update({
+			where: { id },
+			data: { deletedAt: null },
+		});
+	}
+
 	connectTags(tags?: string[]) {
 		return tags
 			? {
