@@ -32,7 +32,15 @@ export class StockDetailsService {
 
 	async findOne(id: number) {
 		const stockDetails = await this.prisma.stockDetails.findUnique({
-			include: { product: { include: { price: true, image: true } } },
+			include: {
+				product: {
+					include: {
+						prices: { where: { isActive: true } },
+						costs: { where: { isActive: true } },
+						image: true,
+					},
+				},
+			},
 			where: { id },
 		});
 		if (!stockDetails)
@@ -56,7 +64,15 @@ export class StockDetailsService {
 		}
 
 		const stockDetails = await this.prisma.stockDetails.update({
-			include: { product: { include: { price: true, image: true } } },
+			include: {
+				product: {
+					include: {
+						prices: { where: { isActive: true } },
+						costs: { where: { isActive: true } },
+						image: true,
+					},
+				},
+			},
 			where: { id },
 			data: dto,
 		});
@@ -82,7 +98,15 @@ export class StockDetailsService {
 		};
 		return await Promise.all([
 			this.prisma.stockDetails.findMany({
-				include: { product: { include: { price: true, image: true } } },
+				include: {
+					product: {
+						include: {
+							prices: { where: { isActive: true } },
+							costs: { where: { isActive: true } },
+							image: true,
+						},
+					},
+				},
 				...this.prisma.paginate(dto),
 				where,
 			}),

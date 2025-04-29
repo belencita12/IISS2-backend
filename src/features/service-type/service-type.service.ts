@@ -19,7 +19,7 @@ export class ServiceTypeService {
 	) {}
 
 	async create(dto: CreateServiceTypeDto) {
-		const { img, tags, price, iva, ...data } = dto;
+		const { img, tags, price, iva, cost, ...data } = dto;
 		const newImg = img ? await this.imgService.create(img) : null;
 		const serviceType = await this.db.serviceType.create({
 			...this.getInclude(),
@@ -27,14 +27,14 @@ export class ServiceTypeService {
 				...data,
 				product: {
 					create: {
-						image: newImg ? { connect: { id: newImg.id } } : undefined,
-						price: { create: { amount: new Decimal(price) } },
+						imageId: newImg ? newImg.id : undefined,
+						prices: { create: { amount: new Decimal(price) } },
+						costs: { create: { cost: new Decimal(cost) } },
 						tags: this.tagService.connectTags(tags),
 						code: genRandomCode(),
 						category: 'SERVICE',
 						name: data.name,
 						iva: iva,
-						cost: 0,
 					},
 				},
 			},
@@ -73,19 +73,29 @@ export class ServiceTypeService {
 		const prevST = await this.db.serviceType.findFirst({
 			where: { id },
 			include: {
-				product: { include: { image: true, tags: { include: { tag: true } } } },
+				product: {
+					include: {
+						costs: { where: { isActive: true } },
+						prices: { where: { isActive: true } },
+						image: true,
+						tags: { include: { tag: true } },
+					},
+				},
 			},
 		});
 
 		if (!prevST) throw new NotFoundException('Servicio no encontrado');
 
-		const { img, tags, price, iva, ...data } = dto;
+		const { img, tags, price, cost, iva, ...data } = dto;
 
 		const newImg = img
 			? await this.imgService.upsert(prevST?.product.image, img)
 			: null;
 
 		const prevTags = prevST.product.tags;
+
+		const isSamePrice = price && prevST.product.prices[0].amount.eq(price);
+		const isSameCost = cost && prevST.product.costs[0].cost.eq(cost);
 
 		const serviceType = await this.db.serviceType.update({
 			...this.getInclude(),
@@ -99,7 +109,12 @@ export class ServiceTypeService {
 								? this.tagService.handleUpdateTags(prevTags, tags)
 								: undefined,
 							image: newImg ? { connect: { id: newImg.id } } : undefined,
-							price: price ? { create: { amount: price } } : undefined,
+							prices: isSamePrice
+								? { create: { amount: new Decimal(price) } }
+								: undefined,
+							costs: isSameCost
+								? { create: { cost: new Decimal(cost) } }
+								: undefined,
 							name: data.name,
 							iva: iva,
 						},
@@ -133,7 +148,8 @@ export class ServiceTypeService {
 				product: {
 					include: {
 						image: true,
-						price: true,
+						prices: { where: { isActive: true } },
+						costs: { where: { isActive: true } },
 						tags: { include: { tag: true } },
 					},
 				},
@@ -147,9 +163,14 @@ export class ServiceTypeService {
 			...baseWhere,
 			name: dto.name,
 			product: {
-				price:
+				prices:
 					dto.minPrice || dto.maxPrice
-						? { amount: { gte: dto.minPrice, lte: dto.maxPrice } }
+						? {
+								some: {
+									amount: { gte: dto.minPrice, lte: dto.maxPrice },
+									isActive: true,
+								},
+							}
 						: undefined,
 				tags: dto.tags
 					? { some: { tag: { name: { in: dto.tags } } } }

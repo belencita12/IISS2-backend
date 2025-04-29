@@ -8,6 +8,7 @@ import { IsId } from '@lib/decorators/validation/is-id.decorator';
 export class CreateVaccineDto {
 	@ApiProperty({ example: 1 })
 	@Type(() => Number)
+	@IsId()
 	speciesId: number;
 
 	@ApiProperty({ example: 'Vacuna X' })
@@ -15,9 +16,14 @@ export class CreateVaccineDto {
 	@IsDefined()
 	name: string;
 
+	@IsString()
+	@IsOptional()
+	@ApiPropertyOptional({ example: 'Descripcion Vacuna X' })
+	description?: string;
+
 	@ApiProperty({ example: 5 })
 	@Type(() => Number)
-	@IsIVA()
+	@IsId()
 	manufacturerId: number;
 
 	@ApiProperty({ example: 10000 })

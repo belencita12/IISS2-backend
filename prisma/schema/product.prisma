@@ -1,11 +1,12 @@
 model Product {
-    id       Int      @id @default(autoincrement())
-    code     String   @unique
-    name     String
-    iva      Float
-    imageId  Int?
-    image    Image?   @relation(fields: [imageId], references: [id])
-    category Category @default(PRODUCT)
+    id          Int      @id @default(autoincrement())
+    code        String   @unique
+    name        String
+    description String?
+    iva         Float
+    imageId     Int?
+    image       Image?   @relation(fields: [imageId], references: [id])
+    category    Category @default(PRODUCT)
 
     vaccine     Vaccine?
     serviceType ServiceType?
@@ -22,8 +23,8 @@ model Product {
     updatedAt DateTime         @updatedAt
     deletedAt DateTime?
 
-    provider   Provider @relation(fields: [providerId], references: [id])
-    providerId Int
+    provider   Provider? @relation(fields: [providerId], references: [id])
+    providerId Int?
 
     costs  ProductCost[]
     prices ProductPrice[]

@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductDto } from './dto/product.dto';
 import Decimal from 'decimal.js';
@@ -8,6 +8,7 @@ import { ImageService } from '@features/media-module/image/image.service';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { TagService } from '../tag/tag.service';
 import { ProductPriceService } from '../product-price/product-price.service';
+import { ProductCostService } from '../product-cost/product-cost.service';
 
 @Injectable()
 export class ProductService {
@@ -16,10 +17,18 @@ export class ProductService {
 		private readonly imgService: ImageService,
 		private readonly tagService: TagService,
 		private readonly productPriceService: ProductPriceService,
+		private readonly productCostService: ProductCostService,
 	) {}
 
 	async create(dto: CreateProductDto) {
 		const { price, productImg, tags, cost, ...rest } = dto;
+
+		if (dto.category !== 'SERVICE' && !dto.providerId) {
+			throw new BadRequestException(
+				'El producto debe pertenecer a un proveedor',
+			);
+		}
+
 		const prodImg = productImg
 			? await this.imgService.create(productImg)
 			: null;
@@ -38,7 +47,13 @@ export class ProductService {
 			});
 			await this.productPriceService.desactivateExceptById(
 				tx,
+				product.id,
 				product.prices[0].id,
+			);
+			await this.productCostService.desactivateExceptById(
+				tx,
+				product.id,
+				product.costs[0].id,
 			);
 			return product;
 		});
@@ -96,7 +111,7 @@ export class ProductService {
 					tags: this.tagService.handleUpdateTags(prevTags, tags),
 					imageId: prodImg ? prodImg.id : undefined,
 					costs: !isSameCost
-						? { create: { cost: new Decimal(price) } }
+						? { create: { cost: new Decimal(cost) } }
 						: undefined,
 					prices: !isSamePrice
 						? { create: { amount: new Decimal(price) } }
@@ -108,7 +123,13 @@ export class ProductService {
 			}
 			await this.productPriceService.desactivateExceptById(
 				tx,
+				updatedProduct.id,
 				updatedProduct.prices[0].id,
+			);
+			await this.productCostService.desactivateExceptById(
+				tx,
+				updatedProduct.id,
+				updatedProduct.costs[0].id,
 			);
 			return updatedProduct;
 		});
@@ -136,6 +157,7 @@ export class ProductService {
 			...baseWhere,
 			name: { contains: query.name, mode: 'insensitive' },
 			code: { contains: query.code },
+			providerId: query.providerId,
 			category: query.category,
 			costs:
 				query.minCost || query.maxCost
@@ -168,18 +190,10 @@ export class ProductService {
 	private getInclude() {
 		return {
 			include: {
-				prices: {
-					where: { isActive: true },
-					take: 1,
-					orderBy: { createdAt: Prisma.SortOrder.desc },
-				},
-				costs: {
-					where: { isActive: true },
-					take: 1,
-					orderBy: { createdAt: Prisma.SortOrder.desc },
-				},
-				image: true,
+				prices: { where: { isActive: true } },
+				costs: { where: { isActive: true } },
 				tags: { include: { tag: true } },
+				image: true,
 			},
 		};
 	}

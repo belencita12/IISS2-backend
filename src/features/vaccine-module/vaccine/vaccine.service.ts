@@ -29,6 +29,7 @@ export class VaccineService {
 
 		const newProduct = await this.productService.create({
 			...dto,
+			description: dto.description,
 			category: 'VACCINE',
 		});
 
@@ -102,20 +103,21 @@ export class VaccineService {
 
 		if (productImg || dto.name || cost || iva || price) {
 			await this.productService.update(existingVaccine.product.id, {
-				price: price ?? existingVaccine.product.prices[0].amount.toNumber(),
-				cost: cost ?? existingVaccine.product.costs[0].cost.toNumber(),
-				providerId: dto.providerId ?? existingVaccine.product.providerId,
-				name: dto.name ?? existingVaccine.product.name,
-				iva: iva ?? existingVaccine.product.iva,
-				category: 'VACCINE',
 				productImg,
+				iva: dto.iva ?? existingVaccine.product.iva,
+				description: dto.description,
+				cost: cost ?? existingVaccine.product.costs[0].cost.toNumber(),
+				category: 'VACCINE',
+				price: price ?? existingVaccine.product.prices[0].amount.toNumber(),
+				providerId: dto.providerId,
+				name: dto.name ?? existingVaccine.product.name,
 			});
 		}
 
 		return this.db.vaccine.update({
 			where: { id },
 			data: {
-				...vaccineUpdateData,
+				name: vaccineUpdateData.name,
 				species: speciesId ? { connect: { id: speciesId } } : undefined,
 				manufacturer: manufacturerId
 					? { connect: { id: manufacturerId } }

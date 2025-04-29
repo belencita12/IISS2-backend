@@ -1,29 +1,18 @@
 import { HttpException, Injectable } from '@nestjs/common';
-import { CreateProductPriceDto } from './dto/create-product-price.dto';
 import { ProductPriceQueryDto } from './dto/product-price-query.dto';
 import { Prisma } from '@prisma/client';
 import {
 	ExtendedTransaction,
 	PrismaService,
 } from '@features/prisma/prisma.service';
+import { ProductPriceDto } from './dto/product-price.dto';
 
 @Injectable()
 export class ProductPriceService {
 	constructor(private readonly db: PrismaService) {}
 
-	async create(tx: ExtendedTransaction, dto: CreateProductPriceDto) {
-		const newProductPrice = await tx.productPrice.create({ data: dto });
-		this.desactivateExceptById(tx, newProductPrice.id);
-		return newProductPrice;
-	}
-
 	async findAll(query: ProductPriceQueryDto) {
-		const { baseWhere } = this.db.getBaseWhere(query);
-		const mountQuery = { gte: query.fromAmount, lte: query.toAmount };
-		const where: Prisma.ProductPriceWhereInput = {
-			...baseWhere,
-			amount: mountQuery,
-		};
+		const where = this.getFindAllWhere(query);
 		const [data, total] = await Promise.all([
 			this.db.productPrice.findMany({
 				...this.db.paginate(query),
@@ -35,7 +24,7 @@ export class ProductPriceService {
 			page: query.page,
 			size: query.size,
 			total,
-			data,
+			data: data.map((pp) => new ProductPriceDto(pp)),
 		});
 	}
 
@@ -44,22 +33,36 @@ export class ProductPriceService {
 			where: { id, deletedAt: null },
 		});
 		if (!price) throw new HttpException('Precio no encontrado', 404);
-		return price;
+		return new ProductPriceDto(price);
 	}
 
-	async desactivateExceptById(tx: ExtendedTransaction, id: number) {
+	async desactivateExceptById(
+		tx: ExtendedTransaction,
+		productId: number,
+		id: number,
+	) {
 		await tx.productPrice.updateMany({
-			where: { id: { not: id } },
+			where: { id: { not: id }, productId },
 			data: { isActive: false },
 		});
 	}
 
 	async remove(id: number) {
-		const price = await this.db.productPrice.findUnique({ where: { id } });
+		const price = await this.db.productPrice.isExists({ id });
 		if (!price) throw new HttpException('Precio no encontrado', 404);
-		await this.db.productPrice.update({
-			where: { id },
-			data: { deletedAt: new Date() },
-		});
+		return await this.db.productPrice.softDelete({ id });
+	}
+
+	private getFindAllWhere(query: ProductPriceQueryDto) {
+		const { baseWhere } = this.db.getBaseWhere(query);
+		const where: Prisma.ProductPriceWhereInput = { ...baseWhere };
+
+		if (query.fromAmount || query.toAmount) {
+			where.amount = { gte: query.fromAmount, lte: query.toAmount };
+		}
+		if (query.productId) where.productId = query.productId;
+		if (query.active !== undefined) where.isActive = query.active;
+
+		return where;
 	}
 }

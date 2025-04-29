@@ -1,6 +1,5 @@
-import { Product, StockDetails } from '@prisma/client';
-import Decimal from 'decimal.js';
+import { Product, ProductPrice, StockDetails } from '@prisma/client';
 
 export interface StockDetailInfo extends StockDetails {
-	product: Product & { price: { amount: Decimal } };
+	product: Product & { prices: ProductPrice[] };
 }

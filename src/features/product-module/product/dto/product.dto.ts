@@ -24,6 +24,11 @@ export class ProductDto {
 	@ApiProperty({ example: 'Wiskas Cachorros 500gr' })
 	name: string;
 
+	@ApiProperty({
+		example: 'Es un paquete de comida de la marca Wiskas y trae 500gr',
+	})
+	description: string;
+
 	@ApiProperty({ example: '127319231972' })
 	code: string;
 
@@ -61,6 +66,7 @@ export class ProductDto {
 		this.name = data.name;
 		this.id = data.id;
 		this.code = data.code;
+		this.description = data.description || '';
 		this.cost = data.costs[0].cost.toNumber();
 		this.iva = data.iva;
 		this.image = data.image

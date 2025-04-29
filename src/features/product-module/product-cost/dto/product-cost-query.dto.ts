@@ -6,24 +6,24 @@ import { ToBoolean } from '@lib/decorators/validation/to-boolean.decorator';
 import { Type } from 'class-transformer';
 import { IsBoolean } from 'class-validator';
 
-export class ProductPriceQueryDto extends PaginationQueryDto {
+export class ProductCostQueryDto extends PaginationQueryDto {
+	@IsId()
+	@Type(() => Number)
+	@QueryParam()
+	productId: number;
+
 	@ToBoolean()
 	@IsBoolean()
 	@QueryParam()
-	active?: boolean;
+	isActive: boolean;
 
 	@Type(() => Number)
 	@IsPositiveNumber()
 	@QueryParam()
-	fromAmount?: number;
+	fromCost: number;
 
 	@Type(() => Number)
 	@IsPositiveNumber()
 	@QueryParam()
-	toAmount?: number;
-
-	@Type(() => Number)
-	@IsId()
-	@QueryParam()
-	productId?: number;
+	toCost: number;
 }

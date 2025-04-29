@@ -18,20 +18,26 @@ export class CreateProductDto {
 	@ApiProperty({ example: 'Wiskas Cachorros 500gr' })
 	name: string;
 
+	@IsString()
+	@IsOptional()
+	@ApiPropertyOptional({ example: 'Comida para cachorros 500gr' })
+	description?: string;
+
 	@IsOptional()
 	@IsEnum(Category)
 	@ApiProperty({ enum: Category })
 	category?: Category;
 
+	@Type(() => Number)
 	@IsIVA()
-	@Transform(() => Number)
 	@ApiProperty({ example: 10 })
 	iva: number;
 
 	@IsId()
+	@IsOptional()
 	@Type(() => Number)
 	@ApiProperty({ example: 1 })
-	providerId: number;
+	providerId?: number;
 
 	@IsOptional()
 	@ApiPropertyOptional({ type: 'string', format: 'binary' })
@@ -47,6 +53,7 @@ export class CreateProductDto {
 	@ApiProperty({ example: 10000 })
 	cost: number;
 
+	@IsOptional()
 	@IsArray()
 	@Transform(({ value }: { value: string }) =>
 		Array.isArray(value) ? value : value.split(',').map((tag) => tag.trim()),
