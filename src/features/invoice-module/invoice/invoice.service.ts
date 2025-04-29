@@ -201,12 +201,16 @@ export class InvoiceService {
 
 		const servicesProdDetails = await tx.product.findMany({
 			where: { id: { in: servicesId }, category: 'SERVICE' },
-			include: { price: true },
+			include: {
+				prices: { where: { isActive: true } },
+			},
 		});
 
 		const stockDetails = await tx.stockDetails.findMany({
 			where: { productId: { in: productsId }, stockId },
-			include: { product: { include: { price: true } } },
+			include: {
+				product: { include: { prices: { where: { isActive: true } } } },
+			},
 		});
 
 		if (stockDetails.length !== productsId.length) {
@@ -251,7 +255,7 @@ export class InvoiceService {
 	}
 
 	private buildServiceDetailsData(
-		services: (Product & { price: ProductPrice })[],
+		services: (Product & { prices: ProductPrice[] })[],
 		details: CreateInvoiceDetailDto[],
 	) {
 		const invoiceData: Prisma.InvoiceDetailCreateManyInvoiceInput[] = [];
@@ -261,7 +265,7 @@ export class InvoiceService {
 		for (const d of details) {
 			const service = services.find((s) => s.id === d.productId)!;
 
-			const partialAmount = service.price.amount.mul(d.quantity);
+			const partialAmount = service.prices[0].amount.mul(d.quantity);
 			const partialAmountVAT = partialAmount
 				.mul(service.iva)
 				.div(Decimal.add(100, service.iva));
@@ -274,7 +278,7 @@ export class InvoiceService {
 				partialAmountVAT,
 				productId: service.id,
 				quantity: d.quantity,
-				unitCost: service.price.amount,
+				unitCost: service.prices[0].amount,
 			});
 		}
 
@@ -338,13 +342,16 @@ export class InvoiceService {
 		for (const d of details) {
 			const currentSD = products.find((p) => p.product.id === d.productId)!;
 
-			if (currentSD.amount < d.quantity) {
+			if (
+				currentSD.amount < d.quantity ||
+				currentSD.product.quantity < d.quantity
+			) {
 				throw new BadRequestException(
 					`La cantidad en stock de "${currentSD.product.name}" es insuficiente para realizar la venta`,
 				);
 			}
 
-			const partialAmount = currentSD.product.price.amount.mul(d.quantity);
+			const partialAmount = currentSD.product.prices[0].amount.mul(d.quantity);
 			const partialAmountVAT = partialAmount
 				.mul(currentSD.product.iva)
 				.div(Decimal.add(100, currentSD.product.iva));
@@ -372,7 +379,7 @@ export class InvoiceService {
 				partialAmountVAT,
 				productId: currentSD.product.id,
 				quantity: d.quantity,
-				unitCost: currentSD.product.price.amount,
+				unitCost: currentSD.product.prices[0].amount,
 			});
 		}
 

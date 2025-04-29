@@ -3,16 +3,16 @@ import {
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
-import { CreatePurchaseDto } from './dto/create-purchase.dto';
-import { Prisma } from '@prisma/client';
 import {
 	ExtendedTransaction,
 	PrismaService,
 } from '@features/prisma/prisma.service';
-import { PurchaseQueryDto } from './dto/purchase-query.dto';
-import { PurchaseDto } from './dto/purchase.dto';
 import { CreatePurchaseDetailDto } from '../purchase-detail/dto/create-purchase-detail.dto';
+import { PurchaseQueryDto } from './dto/purchase-query.dto';
+import { CreatePurchaseDto } from './dto/create-purchase.dto';
+import { PurchaseDto } from './dto/purchase.dto';
 import { ProductInfoDto } from './dto/product-info.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PurchaseService {
@@ -28,14 +28,17 @@ export class PurchaseService {
 		const isProvider = await this.db.provider.isExists({
 			id: dto.providerId,
 		});
-
 		if (!isProvider) throw new NotFoundException('Proveedor no encontrado');
+
 		return this.db.$transaction(
 			async (tx: ExtendedTransaction) => {
 				const { details, ...data } = dto;
-
-				const purchase = await this.processPurchase(tx, details, data);
-
+				const purchase = await this.processPurchase(
+					tx,
+					details,
+					data,
+					dto.providerId,
+				);
 				return new PurchaseDto(purchase);
 			},
 			{ timeout: 15000 },
@@ -85,9 +88,15 @@ export class PurchaseService {
 		tx: ExtendedTransaction,
 		details: CreatePurchaseDetailDto[],
 		purchase: Omit<CreatePurchaseDto, 'details'>,
+		providerId: number,
 	) {
 		const productsId = details.map((d) => d.productId);
-		const productMap = await this.validateDetails(tx, productsId, details);
+		const productMap = await this.validateDetails(
+			tx,
+			productsId,
+			details,
+			providerId,
+		);
 
 		const { ivaTotal, total, detail, stockDetailData, productsData } =
 			this.calculateDetails(details, productMap, purchase.stockId);
@@ -120,13 +129,12 @@ export class PurchaseService {
 
 		for (const d of details) {
 			const p = productMap.get(d.productId)!;
-			const partialAmount = p.cost.mul(d.quantity);
 
-			const ivaAmount = partialAmount.mul(p.iva);
-			const totalDetail = partialAmount.add(ivaAmount);
+			const partialAmount = p.costs[0].cost.mul(d.quantity);
+			const partialAmountVAT = partialAmount.mul(100).div(100 + p.iva);
 
-			ivaTotal += ivaAmount.toNumber();
-			total += totalDetail.toNumber();
+			ivaTotal += partialAmountVAT.toNumber();
+			total += partialAmount.toNumber();
 
 			productsData.push({
 				where: { id: p.id },
@@ -141,9 +149,9 @@ export class PurchaseService {
 
 			detailsData.push({
 				productId: p.id,
-				unitCost: p.cost.toNumber(),
+				unitCost: p.costs[0].cost.toNumber(),
 				partialAmount: partialAmount.toNumber(),
-				partialAmountVAT: totalDetail.toNumber(),
+				partialAmountVAT: partialAmountVAT.toNumber(),
 				quantity: d.quantity,
 			});
 		}
@@ -165,24 +173,24 @@ export class PurchaseService {
 		tx: ExtendedTransaction,
 		prodId: number[],
 		details: CreatePurchaseDetailDto[],
+		providerId: number,
 	) {
+		const providerExists = await tx.provider.isExists({ id: providerId });
+		if (!providerExists) throw new NotFoundException('El proveedor no existe');
+
 		const products = await tx.product.findMany({
-			where: { id: { in: prodId } },
+			where: { id: { in: prodId }, providerId },
 			select: {
+				costs: { where: { isActive: true } },
 				id: true,
 				name: true,
 				iva: true,
-				cost: true,
 			},
 		});
 
 		if (products.length !== details.length) {
-			const notFounds = products.filter(
-				(p) => !details.some((d) => d.productId === p.id),
-			);
-			const notFoundNames = notFounds.map((p) => p.name);
 			throw new NotFoundException(
-				`Productos ${notFoundNames.join(', ')} no encontrados`,
+				'Existen productos que no pertenecen al proveedor',
 			);
 		}
 

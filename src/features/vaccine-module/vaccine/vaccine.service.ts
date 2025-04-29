@@ -14,8 +14,7 @@ export class VaccineService {
 		private readonly productService: ProductService,
 	) {}
 	async create(createVaccineDto: CreateVaccineDto) {
-		const { speciesId, manufacturerId, productImg, cost, iva, price, ...dto } =
-			createVaccineDto;
+		const { speciesId, manufacturerId, ...dto } = createVaccineDto;
 
 		const [species, manufacturer] = await Promise.all([
 			this.db.species.findUnique({ where: { id: speciesId } }),
@@ -29,13 +28,9 @@ export class VaccineService {
 		}
 
 		const newProduct = await this.productService.create({
-			name: dto.name,
-			description : dto.description,
+			...dto,
+			description: dto.description,
 			category: 'VACCINE',
-			cost,
-			iva,
-			price,
-			productImg,
 		});
 
 		return this.db.vaccine.create({
@@ -88,10 +83,10 @@ export class VaccineService {
 		return new VaccineDto(vaccine);
 	}
 
-	async update(id: number, updateVaccineDto: UpdateVaccineDto) {
+	async update(id: number, dto: UpdateVaccineDto) {
 		const existingVaccine = await this.db.vaccine.findUnique({
+			include: { product: { include: { costs: true, prices: true } } },
 			where: { id },
-			include: { product: true },
 		});
 
 		if (!existingVaccine) throw new NotFoundException('Vacuna no encontrada.');
@@ -104,24 +99,25 @@ export class VaccineService {
 			iva,
 			price,
 			...vaccineUpdateData
-		} = updateVaccineDto;
+		} = dto;
 
-		if (productImg || updateVaccineDto.name || cost || iva || price) {
+		if (productImg || dto.name || cost || iva || price) {
 			await this.productService.update(existingVaccine.product.id, {
-				productImg,
-				name: updateVaccineDto.name ?? existingVaccine.product.name,
-				description: updateVaccineDto.description,
-				cost: cost ?? existingVaccine.product.cost.toNumber(),
+				price: price ?? existingVaccine.product.prices[0].amount.toNumber(),
+				cost: cost ?? existingVaccine.product.costs[0].cost.toNumber(),
+				name: dto.name ?? existingVaccine.product.name,
+				iva: dto.iva ?? existingVaccine.product.iva,
+				description: dto.description,
+				providerId: dto.providerId,
 				category: 'VACCINE',
-				iva: iva ?? existingVaccine.product.iva,
-				price: price ?? existingVaccine.product.priceId,
+				productImg,
 			});
 		}
 
 		return this.db.vaccine.update({
 			where: { id },
 			data: {
-				name : vaccineUpdateData.name,
+				name: vaccineUpdateData.name,
 				species: speciesId ? { connect: { id: speciesId } } : undefined,
 				manufacturer: manufacturerId
 					? { connect: { id: manufacturerId } }
@@ -148,8 +144,9 @@ export class VaccineService {
 				manufacturer: true,
 				product: {
 					include: {
-						price: true,
 						image: true,
+						prices: { where: { isActive: true } },
+						costs: { where: { isActive: true } },
 						tags: { include: { tag: true } },
 					},
 				},

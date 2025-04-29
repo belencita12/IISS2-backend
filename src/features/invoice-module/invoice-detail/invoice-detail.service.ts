@@ -13,17 +13,9 @@ export class InvoiceDetailService {
 		const where = this.applyFilters(dto);
 		const [data, count] = await Promise.all([
 			this.db.invoiceDetail.findMany({
+				...this.getInclude(),
 				...this.db.paginate(dto),
 				where,
-				include: {
-					product: {
-						include: {
-							image: true,
-							price: true,
-							tags: { include: { tag: true } },
-						},
-					},
-				},
 			}),
 			this.db.invoiceDetail.count({ where }),
 		]);
@@ -37,15 +29,7 @@ export class InvoiceDetailService {
 
 	async findOne(id: number) {
 		const invoiceDetail = await this.db.invoiceDetail.findUnique({
-			include: {
-				product: {
-					include: {
-						image: true,
-						price: true,
-						tags: { include: { tag: true } },
-					},
-				},
-			},
+			...this.getInclude(),
 			where: { id },
 		});
 		if (!invoiceDetail) throw new NotFoundException('Factura no encontrada');
@@ -57,6 +41,21 @@ export class InvoiceDetailService {
 		if (!isExists)
 			throw new NotFoundException('Detalle de Factura no encontrada');
 		await this.db.invoiceDetail.softDelete({ id });
+	}
+
+	private getInclude() {
+		return {
+			include: {
+				product: {
+					include: {
+						image: true,
+						costs: { where: { isActive: true } },
+						prices: { where: { isActive: true } },
+						tags: { include: { tag: true } },
+					},
+				},
+			},
+		};
 	}
 
 	private applyFilters(dto: InvoiceDetailQueryDto) {

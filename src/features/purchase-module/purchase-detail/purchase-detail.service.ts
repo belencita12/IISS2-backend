@@ -29,11 +29,15 @@ export class PurchaseDetailService {
 
 		const product = await tx.product.findUnique({
 			where: { id: productId },
-			include: { price: true, image: true },
+			include: {
+				prices: true,
+				costs: { where: { isActive: true } },
+				image: true,
+			},
 		});
 		if (!product) throw new NotFoundException('Producto no encontrado');
 
-		const unitCost = new Decimal(product.cost);
+		const unitCost = new Decimal(product.costs[0].cost);
 		const quantityDec = new Decimal(quantity);
 		const ivaPercentage = new Decimal(product.iva);
 		const partialAmount = unitCost.mul(quantity);
@@ -81,7 +85,24 @@ export class PurchaseDetailService {
 	async findOne(id: number) {
 		const purchaseDetail = await this.prisma.purchaseDetail.findUnique({
 			where: { id },
-			include: { product: { include: { price: true, image: true } } },
+			include: {
+				product: {
+					include: {
+						prices: {
+							take: 1,
+							where: { isActive: true },
+							orderBy: { createdAt: Prisma.SortOrder.desc },
+						},
+						costs: {
+							take: 1,
+							where: { isActive: true },
+							orderBy: { createdAt: Prisma.SortOrder.desc },
+						},
+						image: true,
+						tags: { include: { tag: true } },
+					},
+				},
+			},
 		});
 		if (!purchaseDetail)
 			throw new NotFoundException('Detalle de compra no encontrado');
@@ -108,7 +129,16 @@ export class PurchaseDetailService {
 				include: {
 					product: {
 						include: {
-							price: true,
+							prices: {
+								take: 1,
+								where: { isActive: true },
+								orderBy: { createdAt: Prisma.SortOrder.desc },
+							},
+							costs: {
+								take: 1,
+								where: { isActive: true },
+								orderBy: { createdAt: Prisma.SortOrder.desc },
+							},
 							image: true,
 							tags: { include: { tag: true } },
 						},

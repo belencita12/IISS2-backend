@@ -12,6 +12,7 @@ import {
 	seedVaccineRegistries,
 	seedVaccines,
 	seedWorkPositions,
+	seedProviders,
 } from './data';
 
 export const seeder = async () => {
@@ -40,6 +41,9 @@ export const seeder = async () => {
 
 			await seedEmployees(tx);
 			console.log('Employees were seeded successfully\n');
+
+			await seedProviders(tx);
+			console.log('Providers were seeded successgully\n');
 
 			await seedProducts(tx);
 			console.log('Products were seeded successfully\n');

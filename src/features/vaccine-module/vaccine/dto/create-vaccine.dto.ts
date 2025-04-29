@@ -1,15 +1,17 @@
+import { IsIVA } from '@lib/decorators/validation/is-iva';
+import { IsPositiveNumber } from '@lib/decorators/validation/is-money.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsDefined, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsId } from '@lib/decorators/validation/is-id.decorator';
 
 export class CreateVaccineDto {
-	@ApiProperty({ example: 1, required: true })
-	@Transform(({ value }) => Number(value))
-	@IsNumber()
-	@IsDefined()
+	@ApiProperty({ example: 1 })
+	@Type(() => Number)
+	@IsId()
 	speciesId: number;
 
-	@ApiProperty({ example: 'Vacuna X', required: true })
+	@ApiProperty({ example: 'Vacuna X' })
 	@IsString()
 	@IsDefined()
 	name: string;
@@ -19,25 +21,29 @@ export class CreateVaccineDto {
 	@ApiPropertyOptional({ example: 'Descripcion Vacuna X' })
 	description?: string;
 
-	@ApiProperty({ example: 5, required: true })
-	@Transform(({ value }) => Number(value))
-	@IsNumber()
-	@IsDefined()
+	@ApiProperty({ example: 5 })
+	@Type(() => Number)
+	@IsId()
 	manufacturerId: number;
 
 	@ApiProperty({ example: 10000 })
-	@Transform(({ value }) => Number(value))
-	@IsNumber()
+	@Type(() => Number)
+	@IsPositiveNumber()
 	cost: number;
 
-	@ApiProperty({ example: 0.1 })
-	@Transform(({ value }) => Number(value))
-	@IsNumber()
+	@ApiProperty({ example: 10 })
+	@Type(() => Number)
+	@IsIVA()
 	iva: number;
 
+	@ApiProperty()
+	@Type(() => Number)
+	@IsId()
+	providerId: number;
+
 	@ApiProperty({ example: 40000 })
-	@Transform(({ value }) => Number(value))
-	@IsNumber()
+	@Type(() => Number)
+	@IsPositiveNumber()
 	price: number;
 
 	@ApiPropertyOptional({ type: 'string', format: 'binary' })
