@@ -63,4 +63,14 @@ export class TagController {
 	remove(@Param('id', IdValidationPipe) id: number) {
 		return this.tagService.remove(id);
 	}
+
+	@Patch('/restore/:id')
+	@Roles(Role.Admin)
+	@ApiResponse({
+		type: TagDto,
+		description: 'Etiqueta restaurada correctamente',
+	})
+	restore(@Param('id', IdValidationPipe) id: number) {
+		return this.tagService.restore(id);
+	}
 }
