@@ -10,6 +10,7 @@ import {
 	Provider,
 	Tag,
 } from '@prisma/client';
+import { ProductProvider } from './product-provider.dto';
 
 export interface ProductEntity extends Product {
 	prices: ProductPrice[];
@@ -40,8 +41,8 @@ export class ProductDto {
 	@ApiProperty({ example: 0.1 })
 	iva: number;
 
-	@ApiProperty({ example: 'Proveedor S.A.' })
-	provider?: string;
+	@ApiProperty({ type: ProductProvider })
+	provider?: ProductProvider;
 
 	@ApiProperty({ enum: Category })
 	category: Category;
@@ -72,7 +73,12 @@ export class ProductDto {
 		this.id = data.id;
 		this.code = data.code;
 		this.description = data.description || '';
-		this.provider = data.provider?.businessName;
+		this.provider = data.provider
+			? {
+					id: data.provider.id,
+					name: data.provider.businessName,
+				}
+			: undefined;
 		this.cost = data.costs[0].cost.toNumber();
 		this.iva = data.iva;
 		this.image = data.image
