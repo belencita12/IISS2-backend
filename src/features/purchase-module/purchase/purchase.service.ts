@@ -131,7 +131,7 @@ export class PurchaseService {
 			const p = productMap.get(d.productId)!;
 
 			const partialAmount = p.costs[0].cost.mul(d.quantity);
-			const partialAmountVAT = partialAmount.mul(100).div(100 + p.iva);
+			const partialAmountVAT = partialAmount.mul(p.iva).div(100 + p.iva);
 
 			ivaTotal += partialAmountVAT.toNumber();
 			total += partialAmount.toNumber();
