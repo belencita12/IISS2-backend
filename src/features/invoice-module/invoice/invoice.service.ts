@@ -16,6 +16,7 @@ import { InvoiceDto } from '../dto/invoice.dto';
 import { InvoiceQueryDto } from '../dto/invoice-query.dto';
 import { InvoicePaymentMethodDetailDto } from '../dto/invoice-payment-method-detail.dto';
 import { PayCreditInvoiceDto } from '../dto/pay-credit-invoice.dto';
+import { normalizeDate } from '@lib/utils/date';
 
 @Injectable()
 export class InvoiceService {
@@ -25,6 +26,11 @@ export class InvoiceService {
 		const { details, issueDate, paymentMethods, services, ...data } = dto;
 		const invoice = await this.db.$transaction(
 			async (tx) => {
+				const { stamped, invoiceNumber } = await this.getInvoiceInfo(
+					tx,
+					dto.stockId,
+					issueDate,
+				);
 				const { invoiceData, productData, stockDetailData, total, totalVat } =
 					await this.processDetails(tx, data.stockId, details, services);
 				await this.handleUpdateStock(tx, stockDetailData, productData);
@@ -33,6 +39,8 @@ export class InvoiceService {
 					data: {
 						...data,
 						total,
+						invoiceNumber,
+						stamped,
 						totalVat,
 						totalPayed: data.type === 'CASH' ? total : 0,
 						issueDate: new Date(issueDate),
@@ -188,6 +196,38 @@ export class InvoiceService {
 					: undefined,
 		};
 		return where;
+	}
+
+	private async getInvoiceInfo(
+		tx: ExtendedTransaction,
+		stockId: number,
+		date: string,
+	) {
+		const stockData = await tx.stock.findUnique({
+			where: { id: stockId },
+			include: { stamped: true },
+		});
+		if (!stockData) throw new NotFoundException('El deposito no existe');
+		if (
+			date > normalizeDate(stockData.stamped.toDate) ||
+			date < normalizeDate(stockData.stamped.fromDate)
+		)
+			throw new BadRequestException(
+				'La fecha de la factura es invalida para este timbrado',
+			);
+		if (stockData.stamped.currentNum >= stockData.stamped.toNum)
+			throw new BadRequestException(
+				'El timbrado ya no tiene numeros disponibles',
+			);
+		const stamped = stockData.stamped.stampedNum;
+		const invoiceNumber = `${stockData.stockNum.toString().padStart(3, '0')}-001-${(stockData.stamped.currentNum + 1).toString().padStart(7, '0')}`;
+
+		await tx.stamped.update({
+			where: { id: stockData.stampedId },
+			data: { currentNum: stockData.stamped.currentNum + 1 },
+		});
+
+		return { stamped, invoiceNumber };
 	}
 
 	private async processDetails(

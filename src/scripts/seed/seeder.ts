@@ -13,6 +13,7 @@ import {
 	seedVaccines,
 	seedWorkPositions,
 	seedProviders,
+	seedStampe,
 } from './data';
 
 export const seeder = async () => {
@@ -26,6 +27,9 @@ export const seeder = async () => {
 
 			await seedClients(tx);
 			console.log('Clients were seeded successfully\n');
+
+			await seedStampe(tx);
+			console.log('Stampeds were seeded successfully\n');
 
 			await seedSpecies(tx);
 			console.log('Species were seeded successfully\n');
