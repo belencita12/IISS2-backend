@@ -31,21 +31,24 @@ export class ProductService {
 		const prodImg = productImg
 			? await this.imgService.create(productImg)
 			: null;
-		const product = await this.db.$transaction(async (tx) => {
-			const product = await tx.product.create({
-				data: {
-					...rest,
-					code: this.genProdCode(),
-					category: rest.category,
-					imageId: prodImg ? prodImg.id : undefined,
-					tags: tags ? this.tagService.connectTags(tags) : undefined,
-					prices: { create: { amount: new Decimal(price) } },
-					costs: { create: { cost: new Decimal(cost) } },
-				},
-				...this.getInclude(),
-			});
-			return product;
-		});
+		const product = await this.db.$transaction(
+			async (tx) => {
+				const product = await tx.product.create({
+					data: {
+						...rest,
+						code: this.genProdCode(),
+						category: rest.category,
+						imageId: prodImg ? prodImg.id : undefined,
+						tags: tags ? this.tagService.connectTags(tags) : undefined,
+						prices: { create: { amount: new Decimal(price) } },
+						costs: { create: { cost: new Decimal(cost) } },
+					},
+					...this.getInclude(),
+				});
+				return product;
+			},
+			{ timeout: 15000 },
+		);
 		return new ProductDto(product);
 	}
 
