@@ -45,6 +45,7 @@ export class AppointmentDto {
 
 	constructor(data: AppointmentEntity) {
 		this.id = data.id;
+		this.service = data.service.name;
 		this.designatedDate = data.designatedDate;
 		this.details = data.details || undefined;
 		this.status = data.status;
