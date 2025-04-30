@@ -31,21 +31,24 @@ export class ProductService {
 		const prodImg = productImg
 			? await this.imgService.create(productImg)
 			: null;
-		const product = await this.db.$transaction(async (tx) => {
-			const product = await tx.product.create({
-				data: {
-					...rest,
-					code: this.genProdCode(),
-					category: rest.category,
-					imageId: prodImg ? prodImg.id : undefined,
-					tags: tags ? this.tagService.connectTags(tags) : undefined,
-					prices: { create: { amount: new Decimal(price) } },
-					costs: { create: { cost: new Decimal(cost) } },
-				},
-				...this.getInclude(),
-			});
-			return product;
-		});
+		const product = await this.db.$transaction(
+			async (tx) => {
+				const product = await tx.product.create({
+					data: {
+						...rest,
+						code: this.genProdCode(),
+						category: rest.category,
+						imageId: prodImg ? prodImg.id : undefined,
+						tags: tags ? this.tagService.connectTags(tags) : undefined,
+						prices: { create: { amount: new Decimal(price) } },
+						costs: { create: { cost: new Decimal(cost) } },
+					},
+					...this.getInclude(),
+				});
+				return product;
+			},
+			{ timeout: 15000 },
+		);
 		return new ProductDto(product);
 	}
 
@@ -90,27 +93,30 @@ export class ProductService {
 		const isSameCost = prodToUpd.costs[0].cost.eq(cost);
 		const prevTags = prodToUpd.tags;
 
-		const updatedProduct = await this.db.$transaction(async (tx) => {
-			if (!isSameCost) await this.resetProductCostHistory(tx, prodToUpd.id);
-			if (!isSamePrice) await this.resetProductPriceHistory(tx, prodToUpd.id);
-			const updatedProduct = await tx.product.update({
-				...this.getInclude(),
-				where: { id },
-				data: {
-					...rest,
-					category: rest.category,
-					tags: this.tagService.handleUpdateTags(prevTags, tags),
-					imageId: prodImg ? prodImg.id : undefined,
-					costs: !isSameCost
-						? { create: { cost: new Decimal(cost) } }
-						: undefined,
-					prices: !isSamePrice
-						? { create: { amount: new Decimal(price) } }
-						: undefined,
-				},
-			});
-			return updatedProduct;
-		});
+		const updatedProduct = await this.db.$transaction(
+			async (tx) => {
+				if (!isSameCost) await this.resetProductCostHistory(tx, prodToUpd.id);
+				if (!isSamePrice) await this.resetProductPriceHistory(tx, prodToUpd.id);
+				const updatedProduct = await tx.product.update({
+					...this.getInclude(),
+					where: { id },
+					data: {
+						...rest,
+						category: rest.category,
+						tags: this.tagService.handleUpdateTags(prevTags, tags),
+						imageId: prodImg ? prodImg.id : undefined,
+						costs: !isSameCost
+							? { create: { cost: new Decimal(cost) } }
+							: undefined,
+						prices: !isSamePrice
+							? { create: { amount: new Decimal(price) } }
+							: undefined,
+					},
+				});
+				return updatedProduct;
+			},
+			{ timeout: 15000 },
+		);
 		return new ProductDto(updatedProduct);
 	}
 
