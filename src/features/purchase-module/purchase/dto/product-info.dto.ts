@@ -1,11 +1,8 @@
-import { Product } from '@prisma/client';
-import Decimal from 'decimal.js';
+import { Product, ProductCost } from '@prisma/client';
 
-export class ProductInfoDto
-	implements Pick<Product, 'id' | 'name' | 'iva' | 'cost'>
-{
+export class ProductInfoDto implements Pick<Product, 'id' | 'name' | 'iva'> {
 	id: number;
 	name: string;
 	iva: number;
-	cost: Decimal;
+	costs: ProductCost[];
 }

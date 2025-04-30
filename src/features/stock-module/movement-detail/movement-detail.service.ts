@@ -19,7 +19,8 @@ export class MovementDetailService {
 				product: {
 					include: {
 						image: true,
-						price: true,
+						prices: { where: { isActive: true } },
+						costs: { where: { isActive: true } },
 						tags: { include: { tag: true } },
 					},
 				},
@@ -48,7 +49,8 @@ export class MovementDetailService {
 					product: {
 						include: {
 							image: true,
-							price: true,
+							prices: { where: { isActive: true } },
+							costs: { where: { isActive: true } },
 							tags: { include: { tag: true } },
 						},
 					},

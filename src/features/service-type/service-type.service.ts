@@ -9,17 +9,19 @@ import Decimal from 'decimal.js';
 import { genRandomCode } from '@lib/utils/encrypt';
 import { ServiceTypeDto } from './dto/service-type.dto';
 import { Prisma } from '@prisma/client';
+import { ProductService } from '@features/product-module/product/product.service';
 
 @Injectable()
 export class ServiceTypeService {
 	constructor(
 		private readonly db: PrismaService,
+		private readonly productService: ProductService,
 		private readonly tagService: TagService,
 		private readonly imgService: ImageService,
 	) {}
 
 	async create(dto: CreateServiceTypeDto) {
-		const { img, tags, price, iva, ...data } = dto;
+		const { img, tags, price, iva, cost, ...data } = dto;
 		const newImg = img ? await this.imgService.create(img) : null;
 		const serviceType = await this.db.serviceType.create({
 			...this.getInclude(),
@@ -27,14 +29,14 @@ export class ServiceTypeService {
 				...data,
 				product: {
 					create: {
-						image: newImg ? { connect: { id: newImg.id } } : undefined,
-						price: { create: { amount: new Decimal(price) } },
+						imageId: newImg ? newImg.id : undefined,
+						prices: { create: { amount: new Decimal(price) } },
+						costs: { create: { cost: new Decimal(cost) } },
 						tags: this.tagService.connectTags(tags),
 						code: genRandomCode(),
 						category: 'SERVICE',
 						name: data.name,
 						iva: iva,
-						cost: 0,
 					},
 				},
 			},
@@ -71,15 +73,13 @@ export class ServiceTypeService {
 
 	async update(id: number, dto: UpdateServiceTypeDto) {
 		const prevST = await this.db.serviceType.findFirst({
+			...this.getInclude(),
 			where: { id },
-			include: {
-				product: { include: { image: true, tags: { include: { tag: true } } } },
-			},
 		});
 
 		if (!prevST) throw new NotFoundException('Servicio no encontrado');
 
-		const { img, tags, price, iva, ...data } = dto;
+		const { img, tags, price, cost, iva, ...data } = dto;
 
 		const newImg = img
 			? await this.imgService.upsert(prevST?.product.image, img)
@@ -87,25 +87,41 @@ export class ServiceTypeService {
 
 		const prevTags = prevST.product.tags;
 
-		const serviceType = await this.db.serviceType.update({
-			...this.getInclude(),
-			where: { id },
-			data: {
-				...data,
-				product: {
-					update: {
-						data: {
-							tags: tags
-								? this.tagService.handleUpdateTags(prevTags, tags)
-								: undefined,
-							image: newImg ? { connect: { id: newImg.id } } : undefined,
-							price: price ? { create: { amount: price } } : undefined,
-							name: data.name,
-							iva: iva,
+		const isSamePrice = price && prevST.product.prices[0].amount.eq(price);
+		const isSameCost = cost && prevST.product.costs[0].cost.eq(cost);
+
+		const serviceType = await this.db.$transaction(async (tx) => {
+			if (!isSameCost)
+				this.productService.resetProductCostHistory(tx, prevST.productId);
+
+			if (!isSamePrice)
+				this.productService.resetProductPriceHistory(tx, prevST.productId);
+
+			return await this.db.serviceType.update({
+				...this.getInclude(),
+				where: { id },
+				data: {
+					...data,
+					product: {
+						update: {
+							data: {
+								tags: tags
+									? this.tagService.handleUpdateTags(prevTags, tags)
+									: undefined,
+								image: newImg ? { connect: { id: newImg.id } } : undefined,
+								prices: isSamePrice
+									? { create: { amount: new Decimal(price) } }
+									: undefined,
+								costs: isSameCost
+									? { create: { cost: new Decimal(cost) } }
+									: undefined,
+								name: data.name,
+								iva: iva,
+							},
 						},
 					},
 				},
-			},
+			});
 		});
 		return new ServiceTypeDto(serviceType);
 	}
@@ -133,7 +149,8 @@ export class ServiceTypeService {
 				product: {
 					include: {
 						image: true,
-						price: true,
+						prices: { where: { isActive: true } },
+						costs: { where: { isActive: true } },
 						tags: { include: { tag: true } },
 					},
 				},
@@ -147,9 +164,14 @@ export class ServiceTypeService {
 			...baseWhere,
 			name: dto.name,
 			product: {
-				price:
+				prices:
 					dto.minPrice || dto.maxPrice
-						? { amount: { gte: dto.minPrice, lte: dto.maxPrice } }
+						? {
+								some: {
+									amount: { gte: dto.minPrice, lte: dto.maxPrice },
+									isActive: true,
+								},
+							}
 						: undefined,
 				tags: dto.tags
 					? { some: { tag: { name: { in: dto.tags } } } }

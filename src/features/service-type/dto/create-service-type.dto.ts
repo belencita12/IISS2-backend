@@ -1,5 +1,6 @@
 import { IsDuration } from '@lib/decorators/validation/is-duration.decorator';
 import { IsIVA } from '@lib/decorators/validation/is-iva';
+import { IsPositiveNumber } from '@lib/decorators/validation/is-money.decorator';
 import { IsSlug } from '@lib/decorators/validation/is-slug.decorator';
 import { IsStrLen } from '@lib/decorators/validation/is-str-len.decorator';
 import { IsTag } from '@lib/decorators/validation/is-tag.decorator';
@@ -43,6 +44,11 @@ export class CreateServiceTypeDto {
 	@Max(5)
 	@ApiPropertyOptional({ example: 3 })
 	maxColabs?: number;
+
+	@Type(() => Number)
+	@IsPositiveNumber()
+	@ApiProperty()
+	cost: number;
 
 	@IsOptional()
 	@Type(() => Boolean)
