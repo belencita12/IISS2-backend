@@ -192,6 +192,7 @@ export class ProductService {
 				costs: { where: { isActive: true } },
 				tags: { include: { tag: true } },
 				image: true,
+				provider: true,
 			},
 		};
 	}
