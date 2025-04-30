@@ -145,6 +145,7 @@ export class VaccineService {
 				product: {
 					include: {
 						image: true,
+						provider: true,
 						prices: { where: { isActive: true } },
 						costs: { where: { isActive: true } },
 						tags: { include: { tag: true } },
