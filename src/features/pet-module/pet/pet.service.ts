@@ -12,7 +12,7 @@ import { Role } from '@lib/constants/role.enum';
 @Injectable()
 export class PetService {
 	constructor(
-		private prisma: PrismaService,
+		private readonly db: PrismaService,
 		private readonly imgService: ImageService,
 	) {}
 	async create(createPetDto: CreatePetDto) {
@@ -26,8 +26,8 @@ export class PetService {
 		const imgData = profileImg
 			? await this.imgService.create(profileImg)
 			: undefined;
-		const pet = await this.prisma.pet.create({
-			include: { species: true, race: true, profileImg: true },
+		const pet = await this.db.pet.create({
+			...this.getInclude(),
 			data: {
 				...dto,
 				client: { connect: { id: userId } },
@@ -40,7 +40,7 @@ export class PetService {
 	}
 
 	async findAll(dto: PetQueryDto) {
-		const { baseWhere } = this.prisma.getBaseWhere(dto);
+		const { baseWhere } = this.db.getBaseWhere(dto);
 		const where: Prisma.PetWhereInput = {
 			...baseWhere,
 			speciesId: dto.speciesId,
@@ -50,20 +50,15 @@ export class PetService {
 		};
 
 		const [data, total] = await Promise.all([
-			this.prisma.pet.findMany({
-				...this.prisma.paginate(dto),
+			this.db.pet.findMany({
+				...this.getInclude(),
+				...this.db.paginate(dto),
 				where,
-				include: {
-					species: true,
-					race: true,
-					profileImg: true,
-					vaccines: { include: { vaccine: true } },
-				},
 			}),
-			this.prisma.pet.count({ where }),
+			this.db.pet.count({ where }),
 		]);
 
-		return this.prisma.getPagOutput({
+		return this.db.getPagOutput({
 			page: dto.page,
 			size: dto.size,
 			total,
@@ -73,16 +68,16 @@ export class PetService {
 
 	async findOne(id: number, user: TokenPayload) {
 		const { roles, clientId } = user;
-		const pet = await this.prisma.pet.findUnique({
+		const pet = await this.db.pet.findUnique({
 			where: { id, clientId: roles.includes(Role.User) ? clientId : undefined },
-			include: { species: true, race: true, profileImg: true },
+			...this.getInclude(),
 		});
 		if (!pet) throw new NotFoundException(`Mascota no encontrada`);
 		return new PetDto(pet);
 	}
 
 	async update(id: number, dto: UpdatePetDto) {
-		const pet = await this.prisma.pet.findFirst({
+		const pet = await this.db.pet.findFirst({
 			where: { id },
 			select: { profileImg: true },
 		});
@@ -90,9 +85,9 @@ export class PetService {
 
 		const { profileImg, raceId, clientId: clientId, speciesId, ...rest } = dto;
 		const newImg = await this.imgService.upsert(pet.profileImg, profileImg);
-		const newPet = await this.prisma.pet.update({
+		const newPet = await this.db.pet.update({
+			...this.getInclude(),
 			where: { id, deletedAt: null },
-			include: { profileImg: true, species: true, race: true },
 			data: {
 				...rest,
 				client: clientId ? { connect: { id: clientId } } : undefined,
@@ -105,8 +100,19 @@ export class PetService {
 	}
 
 	async remove(id: number) {
-		const pet = await this.prisma.pet.isExists({ id });
+		const pet = await this.db.pet.isExists({ id });
 		if (!pet) throw new NotFoundException(`Mascota no encontrada`);
-		await this.prisma.pet.softDelete({ id });
+		await this.db.pet.softDelete({ id });
+	}
+
+	private getInclude() {
+		return {
+			include: {
+				profileImg: true,
+				client: { include: { user: true } },
+				species: true,
+				race: true,
+			},
+		};
 	}
 }

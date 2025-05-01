@@ -22,7 +22,7 @@ export const seedEmployees = async (db: PrismaTransactionClient) => {
 					ruc: '1234567-1',
 					username: 'employee_2@example',
 					password,
-					phoneNumber: '595985764321',
+					phoneNumber: '+595985764321',
 					roles: { connect: [{ name: 'EMPLOYEE' }] },
 					fullName: 'Richard Valgaba',
 					email: 'employee2@gmail.com',
@@ -38,7 +38,7 @@ export const seedEmployees = async (db: PrismaTransactionClient) => {
 					ruc: '7654321-2',
 					username: 'employee_1@example',
 					password,
-					phoneNumber: '595985764322',
+					phoneNumber: '+595985764322',
 					roles: { connect: [{ name: 'EMPLOYEE' }] },
 					fullName: 'Fernando Valgaba',
 					email: 'employee1@gmail.com',
@@ -54,7 +54,7 @@ export const seedEmployees = async (db: PrismaTransactionClient) => {
 					username: 'admin@example',
 					password,
 					ruc: '7777789-1',
-					phoneNumber: '595985764323',
+					phoneNumber: '+595985764323',
 					fullName: 'Florentino Valgaba',
 					email: 'admin@gmail.com',
 					roles: { connect: [{ name: 'ADMIN' }, { name: 'EMPLOYEE' }] },
@@ -75,7 +75,7 @@ export const seedClients = async (db: PrismaTransactionClient) => {
 				create: {
 					username: 'richard@example',
 					password,
-					phoneNumber: '595985764333',
+					phoneNumber: '+595985764333',
 					ruc: '5622567-1',
 					adress: 'E/ Posadas y Lomas Valentinas',
 					roles: { connect: [{ name: 'USER' }] },
@@ -89,7 +89,7 @@ export const seedClients = async (db: PrismaTransactionClient) => {
 				create: {
 					username: 'adrian@example',
 					password,
-					phoneNumber: '595985764324',
+					phoneNumber: '+595985764324',
 					ruc: '8373829-1',
 					adress: 'Av Irrazabal - Esq. 25 de Mayo',
 					roles: { connect: [{ name: 'USER' }] },
@@ -103,7 +103,7 @@ export const seedClients = async (db: PrismaTransactionClient) => {
 				create: {
 					username: 'jose@example',
 					password,
-					phoneNumber: '595922764325',
+					phoneNumber: '+595922764325',
 					ruc: '3748492-1',
 					adress: 'Calle Independencia Esq. Villarica',
 					roles: { connect: [{ name: 'USER' }] },
@@ -292,6 +292,22 @@ export const seedProviders = async (db: PrismaTransactionClient) => {
 	}
 };
 
+export const seedTags = async (db: PrismaTransactionClient) => {
+	const TAGS_NAMES = [
+		'perro',
+		'gato',
+		'juguete',
+		'comida',
+		'nutricion',
+		'medicamento',
+		'aseo',
+		'cachorro',
+		'correa',
+		'pelota',
+	];
+	await db.tag.createMany({ data: TAGS_NAMES.map((t) => ({ name: t })) });
+};
+
 export const seedProducts = async (db: PrismaTransactionClient) => {
 	const [{ id: prov1Id }, { id: _prov2Id }, { id: prov3Id }] =
 		await db.provider.findMany();
@@ -301,40 +317,99 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			name: 'Desparasitante Perro',
 			category: 'PRODUCT',
 			provider: { connect: { id: prov3Id } },
-			code: `PROD-${genRandomStr()}`,
+			code: `${genRandomStr()}`,
 			prices: { create: { amount: 24000 } },
 			costs: { create: { cost: 20000 } },
 			iva: 10,
-			quantity: 12,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'perro' } } },
+					{ tag: { connect: { name: 'medicamento' } } },
+				],
+			},
 		},
 		{
 			name: 'Desparasitante Gato',
 			category: 'PRODUCT',
 			provider: { connect: { id: prov3Id } },
-			code: `PROD-${genRandomStr()}`,
+			code: `${genRandomStr()}`,
 			prices: { create: { amount: 28000 } },
 			costs: { create: { cost: 2400 } },
 			iva: 10,
-			quantity: 10,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'gato' } } },
+					{ tag: { connect: { name: 'medicamento' } } },
+				],
+			},
 		},
 		{
 			name: 'Pelota Juguete Perro',
 			category: 'PRODUCT',
 			provider: { connect: { id: prov1Id } },
-			code: `PROD-${genRandomStr()}`,
+			code: `${genRandomStr()}`,
 			prices: { create: { amount: 20000 } },
 			costs: { create: { cost: 18000 } },
 			iva: 10,
-			quantity: 15,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'juguete' } } },
+					{ tag: { connect: { name: 'pelota' } } },
+					{ tag: { connect: { name: 'perro' } } },
+				],
+			},
 		},
 		{
 			name: 'Shampoo Perro 1Lt',
 			provider: { connect: { id: prov1Id } },
 			category: 'PRODUCT',
-			code: `PROD-${genRandomStr()}`,
+			code: `${genRandomStr()}`,
 			costs: { create: { cost: 12000 } },
 			prices: { create: { amount: 15000 } },
 			iva: 10,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'aseo' } } },
+					{ tag: { connect: { name: 'perro' } } },
+				],
+			},
+		},
+		{
+			name: 'Shampoo Gato 1Lt',
+			provider: { connect: { id: prov1Id } },
+			category: 'PRODUCT',
+			code: `${genRandomStr()}`,
+			costs: { create: { cost: 13000 } },
+			prices: { create: { amount: 16000 } },
+			iva: 10,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'aseo' } } },
+					{ tag: { connect: { name: 'gato' } } },
+				],
+			},
+		},
+		{
+			name: 'Pelota Juguete Gato',
+			provider: { connect: { id: prov1Id } },
+			category: 'PRODUCT',
+			code: `${genRandomStr()}`,
+			costs: { create: { cost: 21000 } },
+			prices: { create: { amount: 19000 } },
+			iva: 10,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'juguete' } } },
+					{ tag: { connect: { name: 'gato' } } },
+					{ tag: { connect: { name: 'pelota' } } },
+				],
+			},
 		},
 	];
 	for (const p of productsData) {
@@ -375,9 +450,9 @@ export const seedVaccines = async (db: PrismaTransactionClient) => {
 				create: {
 					name: 'Panleucopenia',
 					category: 'VACCINE',
-					iva: 0.1,
+					iva: 10,
 					providerId: supplier.id,
-					code: `PROD-${genRandomStr()}`,
+					code: `${genRandomStr()}`,
 					costs: { create: { cost: 20000 } },
 					prices: { create: { amount: 50000 } },
 				},
@@ -397,9 +472,9 @@ export const seedVaccines = async (db: PrismaTransactionClient) => {
 				create: {
 					name: 'Leptospirosis',
 					category: 'VACCINE',
-					iva: 0.1,
+					iva: 10,
 					providerId: supplier.id,
-					code: `PROD-${genRandomStr()}`,
+					code: `${genRandomStr()}`,
 					costs: { create: { cost: 12000 } },
 					prices: { create: { amount: 36000 } },
 				},
@@ -420,8 +495,8 @@ export const seedVaccines = async (db: PrismaTransactionClient) => {
 					name: 'Parvovirus',
 					category: 'VACCINE',
 					providerId: supplier.id,
-					iva: 0.1,
-					code: `PROD-${genRandomStr()}`,
+					iva: 10,
+					code: `${genRandomStr()}`,
 					costs: { create: { cost: 11000 } },
 					prices: { create: { amount: 60000 } },
 				},
@@ -465,29 +540,72 @@ export const seedVaccineRegistries = async (db: PrismaTransactionClient) => {
 	}
 };
 
+export const seedStampe = async (db: PrismaTransactionClient) => {
+	let baseStamped = Math.floor(10000000 + Math.random() * 90000000);
+	const fromDate = new Date();
+	const toDate = new Date(fromDate);
+	toDate.setFullYear(toDate.getFullYear() + 1);
+	const fromNum = 1;
+	const toNum = 1000;
+	const stampedData: Prisma.StampedCreateInput[] = [
+		{ stampedNum: baseStamped.toString(), fromNum, toNum, fromDate, toDate },
+		{
+			stampedNum: (++baseStamped).toString(),
+			fromNum,
+			toNum,
+			fromDate,
+			toDate,
+		},
+		{
+			stampedNum: (++baseStamped).toString(),
+			fromNum,
+			toNum,
+			fromDate,
+			toDate,
+		},
+	];
+	for (const s of stampedData) await db.stamped.create({ data: s });
+};
+
 export const seedStock = async (db: PrismaTransactionClient) => {
-	const [prod1, prod2, prod3] = await db.product.findMany({
+	const [prod1, prod2, prod3, prod4, prod5, prod6] = await db.product.findMany({
+		select: { id: true },
+	});
+	const [smtp1, smtp2, smtp3] = await db.stamped.findMany({
 		select: { id: true },
 	});
 	const stockData: Prisma.StockCreateInput[] = [
 		{
-			address: 'Av. Caballero 800',
+			address: 'Encarnacion, Av. Caballero 800',
 			name: 'Deposito Original',
-			details: { create: { productId: prod1.id, amount: 12 } },
-		},
-		{
-			address: 'Av. Irrazabal 976',
-			name: 'Deposito Reserva',
-			details: { create: { productId: prod2.id, amount: 10 } },
-		},
-		{
-			address: 'Av. Japon 111',
-			name: 'Deposito Extra',
+			stamped: { connect: { id: smtp1.id } },
 			details: {
-				create: {
-					productId: prod3.id,
-					amount: 15,
-				},
+				create: [
+					{ productId: prod1.id, amount: 720 },
+					{ productId: prod4.id, amount: 720 },
+				],
+			},
+		},
+		{
+			address: 'Fram, e/ Jose Leandro Oviedo & Itapua',
+			name: 'Deposito Reserva',
+			stamped: { connect: { id: smtp2.id } },
+			details: {
+				create: [
+					{ productId: prod2.id, amount: 720 },
+					{ productId: prod5.id, amount: 720 },
+				],
+			},
+		},
+		{
+			address: 'Hohenau, Av. Osvaldo Tischler 600',
+			name: 'Deposito Extra',
+			stamped: { connect: { id: smtp3.id } },
+			details: {
+				create: [
+					{ productId: prod3.id, amount: 720 },
+					{ productId: prod6.id, amount: 720 },
+				],
 			},
 		},
 	];

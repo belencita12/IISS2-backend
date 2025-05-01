@@ -1,19 +1,17 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { QueryParam } from '@lib/decorators/validation/query-param.decorator';
+import { IsString } from 'class-validator';
 
 export class StockQueryDto extends PaginationQueryDto {
-	@IsOptional()
 	@IsString()
-	@ApiPropertyOptional({
-		description: 'Filtrar por nombre del stock',
-	})
+	@QueryParam()
 	name?: string;
 
-	@IsOptional()
 	@IsString()
-	@ApiPropertyOptional({
-		description: 'Filtrar por dirección del stock',
-	})
+	@QueryParam()
 	address?: string;
+
+	@IsString()
+	@QueryParam()
+	stamped?: string;
 }

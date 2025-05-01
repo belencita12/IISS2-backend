@@ -6,8 +6,6 @@ import { IsEnum, IsOptional, ValidateNested } from 'class-validator';
 import { IsDbDate } from '@lib/decorators/validation/is-db-date.decorator';
 import { IsPositiveNumber } from '@lib/decorators/validation/is-money.decorator';
 import { InvoiceType } from '@prisma/client';
-import { IsInvoiceStamped } from '@lib/decorators/validation/is-invoice-stamped.decorator';
-import { IsInvoiceNumber } from '@lib/decorators/validation/is-invoice-number.decorator';
 import { NoDuplicatesBy } from '@lib/decorators/validation/no-duplicated-by.decorator';
 import { InvoicePaymentMethodDetailDto } from './invoice-payment-method-detail.dto';
 
@@ -19,14 +17,6 @@ export class CreateInvoiceDto {
 	@ApiProperty()
 	@IsId('El identificador del deposito')
 	stockId: number;
-
-	@ApiProperty()
-	@IsInvoiceNumber()
-	invoiceNumber: string;
-
-	@ApiProperty()
-	@IsInvoiceStamped()
-	stamped: string;
 
 	@ApiProperty({ example: '2025-12-11' })
 	@IsDbDate()

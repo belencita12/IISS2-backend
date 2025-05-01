@@ -74,6 +74,26 @@ export class StampedService {
 		return await this.db.stamped.softDelete({ id });
 	}
 
+	async isStampedUsable(id: number) {
+		const stamped = await this.db.stamped.findUnique({
+			where: { id },
+			include: { stock: true },
+		});
+		if (!stamped) throw new NotFoundException('El timbrado no existe');
+		if (stamped.stock !== null)
+			throw new BadRequestException(
+				'El timbrado ya esta en uso por otro deposito',
+			);
+		const { fromDate, toDate, fromNum, toNum } = stamped;
+		this.validateDtoRanges({
+			fromDate: normalizeDate(fromDate),
+			toDate: normalizeDate(toDate),
+			fromNum,
+			toNum,
+		});
+		return true;
+	}
+
 	private getWhere(query: StampedQueryDto) {
 		const { baseWhere } = this.db.getBaseWhere(query);
 		const where: Prisma.StampedWhereInput = { ...baseWhere };
@@ -95,33 +115,38 @@ export class StampedService {
 		return where;
 	}
 
-	private validateDtoRanges(dto: CreateStampedDto) {
-		this.isDateRangeValid(dto.fromDate, dto.toDate);
-		this.isNumRangeValid(dto.fromNum, dto.toNum);
+	private validateDtoRanges(dto: Omit<CreateStampedDto, 'stampedNum'>) {
+		const { fromDate, toDate, fromNum, toNum } = dto;
+
+		if (!this.isFromAndToAfterToday(fromDate, toDate)) {
+			throw new BadRequestException(
+				'Las fechas deben ser posteriores a la fecha actual',
+			);
+		}
+
+		if (!this.isFromBeforeTo(fromDate, toDate)) {
+			throw new BadRequestException(
+				'La fecha límite debe ser después de la fecha de inicio',
+			);
+		}
+
+		if (!this.isNumRangeValid(fromNum, toNum)) {
+			throw new BadRequestException(
+				'El límite del número debe ser mayor al inicio',
+			);
+		}
 	}
 
-	private isDateRangeValid(from: string, to: string) {
+	private isFromAndToAfterToday(from: string, to: string): boolean {
 		const today = normalizeDate(getToday());
-
-		if (today > from || today > to) {
-			throw new BadRequestException(
-				'Las fechas deben ser posteriores a la actual',
-			);
-		}
-
-		if (from >= to) {
-			throw new BadRequestException(
-				'La fecha limite debe ser después de la fecha de inicio',
-			);
-		}
+		return today < from && today < to;
 	}
 
-	private isNumRangeValid(from: number, to: number) {
-		if (from >= to) {
-			throw new BadRequestException(
-				'El limite del número debe ser mayor al inicio',
-			);
-		}
-		return true;
+	private isFromBeforeTo(from: string, to: string): boolean {
+		return from < to;
+	}
+
+	private isNumRangeValid(from: number, to: number): boolean {
+		return from < to;
 	}
 }

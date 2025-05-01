@@ -49,6 +49,7 @@ export class InvoiceDetailService {
 				product: {
 					include: {
 						image: true,
+						provider: true,
 						costs: { where: { isActive: true } },
 						prices: { where: { isActive: true } },
 						tags: { include: { tag: true } },

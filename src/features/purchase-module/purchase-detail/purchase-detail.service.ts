@@ -85,24 +85,7 @@ export class PurchaseDetailService {
 	async findOne(id: number) {
 		const purchaseDetail = await this.prisma.purchaseDetail.findUnique({
 			where: { id },
-			include: {
-				product: {
-					include: {
-						prices: {
-							take: 1,
-							where: { isActive: true },
-							orderBy: { createdAt: Prisma.SortOrder.desc },
-						},
-						costs: {
-							take: 1,
-							where: { isActive: true },
-							orderBy: { createdAt: Prisma.SortOrder.desc },
-						},
-						image: true,
-						tags: { include: { tag: true } },
-					},
-				},
-			},
+			...this.getInclude(),
 		});
 		if (!purchaseDetail)
 			throw new NotFoundException('Detalle de compra no encontrado');
@@ -126,24 +109,7 @@ export class PurchaseDetailService {
 		};
 		const [data, total] = await Promise.all([
 			this.prisma.purchaseDetail.findMany({
-				include: {
-					product: {
-						include: {
-							prices: {
-								take: 1,
-								where: { isActive: true },
-								orderBy: { createdAt: Prisma.SortOrder.desc },
-							},
-							costs: {
-								take: 1,
-								where: { isActive: true },
-								orderBy: { createdAt: Prisma.SortOrder.desc },
-							},
-							image: true,
-							tags: { include: { tag: true } },
-						},
-					},
-				},
+				...this.getInclude(),
 				...this.prisma.paginate(dto),
 				where,
 			}),
@@ -186,5 +152,29 @@ export class PurchaseDetailService {
 				total: total.toNumber(),
 			},
 		});
+	}
+
+	private getInclude() {
+		return {
+			include: {
+				product: {
+					include: {
+						provider: true,
+						prices: {
+							take: 1,
+							where: { isActive: true },
+							orderBy: { createdAt: Prisma.SortOrder.desc },
+						},
+						costs: {
+							take: 1,
+							where: { isActive: true },
+							orderBy: { createdAt: Prisma.SortOrder.desc },
+						},
+						image: true,
+						tags: { include: { tag: true } },
+					},
+				},
+			},
+		};
 	}
 }

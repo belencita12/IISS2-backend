@@ -32,16 +32,8 @@ export class StockDetailsService {
 
 	async findOne(id: number) {
 		const stockDetails = await this.prisma.stockDetails.findUnique({
-			include: {
-				product: {
-					include: {
-						prices: { where: { isActive: true } },
-						costs: { where: { isActive: true } },
-						image: true,
-					},
-				},
-			},
 			where: { id },
+			...this.getInclude(),
 		});
 		if (!stockDetails)
 			throw new NotFoundException('Detalle del deposito no encontrado');
@@ -64,15 +56,7 @@ export class StockDetailsService {
 		}
 
 		const stockDetails = await this.prisma.stockDetails.update({
-			include: {
-				product: {
-					include: {
-						prices: { where: { isActive: true } },
-						costs: { where: { isActive: true } },
-						image: true,
-					},
-				},
-			},
+			...this.getInclude(),
 			where: { id },
 			data: dto,
 		});
@@ -98,19 +82,26 @@ export class StockDetailsService {
 		};
 		return await Promise.all([
 			this.prisma.stockDetails.findMany({
-				include: {
-					product: {
-						include: {
-							prices: { where: { isActive: true } },
-							costs: { where: { isActive: true } },
-							image: true,
-						},
-					},
-				},
+				...this.getInclude(),
 				...this.prisma.paginate(dto),
 				where,
 			}),
 			this.prisma.stockDetails.count({ where }),
 		]);
+	}
+
+	private getInclude() {
+		return {
+			include: {
+				product: {
+					include: {
+						prices: { where: { isActive: true } },
+						costs: { where: { isActive: true } },
+						image: true,
+						provider: true,
+					},
+				},
+			},
+		};
 	}
 }
