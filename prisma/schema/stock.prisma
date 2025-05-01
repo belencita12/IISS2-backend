@@ -1,13 +1,17 @@
 model Stock {
-  id      Int            @id @default(autoincrement())
-  name    String         @unique
-  address String
+  id        Int    @id @default(autoincrement())
+  name      String @unique
+  address   String
+  stockNum  Int    @default(autoincrement())
+  stampedId Int    @unique
+
   details StockDetails[]
 
   invoices      Invoice[]
   movementsFrom Movement[] @relation("StockOrigin")
   movementsTo   Movement[] @relation("StockDestination")
   Purchase      Purchase[]
+  stamped       Stamped    @relation(fields: [stampedId], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

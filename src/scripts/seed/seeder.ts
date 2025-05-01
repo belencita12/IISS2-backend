@@ -13,6 +13,8 @@ import {
 	seedVaccines,
 	seedWorkPositions,
 	seedProviders,
+	seedStampe,
+	seedTags,
 } from './data';
 
 export const seeder = async () => {
@@ -21,11 +23,17 @@ export const seeder = async () => {
 
 	await prisma.$transaction(
 		async (tx) => {
+			await seedTags(tx);
+			console.log('Tags were seeded successfully\n');
+
 			await seedRoles(tx);
 			console.log('Roles were seeded successfully\n');
 
 			await seedClients(tx);
 			console.log('Clients were seeded successfully\n');
+
+			await seedStampe(tx);
+			console.log('Stampeds were seeded successfully\n');
 
 			await seedSpecies(tx);
 			console.log('Species were seeded successfully\n');

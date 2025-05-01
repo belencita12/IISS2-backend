@@ -7,5 +7,6 @@ import { StampedService } from './stamped.service';
 	providers: [StampedService],
 	controllers: [StampedController],
 	imports: [PrismaModule],
+	exports: [StampedService],
 })
 export class StampedModule {}

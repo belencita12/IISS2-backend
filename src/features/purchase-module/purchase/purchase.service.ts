@@ -62,7 +62,7 @@ export class PurchaseService {
 		const [data, total] = await Promise.all([
 			this.db.purchase.findMany({
 				...this.db.paginate(dto),
-				include: { provider: true, stock: true },
+				include: { provider: true, stock: { include: { stamped: true } } },
 				where,
 			}),
 			this.db.purchase.count({ where }),
@@ -78,7 +78,7 @@ export class PurchaseService {
 	async findOne(id: number) {
 		const purchase = await this.db.purchase.findUnique({
 			where: { id },
-			include: { provider: true, stock: true },
+			include: { provider: true, stock: { include: { stamped: true } } },
 		});
 		if (!purchase) throw new NotFoundException('Compra no encontrado');
 		return new PurchaseDto(purchase);
@@ -110,7 +110,7 @@ export class PurchaseService {
 				total,
 				detail,
 			},
-			include: { provider: true, stock: true },
+			include: { provider: true, stock: { include: { stamped: true } } },
 		});
 
 		return newPurchase;
