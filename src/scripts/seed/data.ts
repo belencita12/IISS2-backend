@@ -369,7 +369,8 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			code: `${genRandomStr()}`,
 			costs: { create: { cost: 12000 } },
 			prices: { create: { amount: 15000 } },
-			iva: 720,
+			iva: 10,
+			quantity: 720,
 			tags: {
 				create: [
 					{ tag: { connect: { name: 'aseo' } } },
@@ -384,7 +385,8 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			code: `${genRandomStr()}`,
 			costs: { create: { cost: 13000 } },
 			prices: { create: { amount: 16000 } },
-			iva: 720,
+			iva: 10,
+			quantity: 720,
 			tags: {
 				create: [
 					{ tag: { connect: { name: 'aseo' } } },
@@ -399,7 +401,8 @@ export const seedProducts = async (db: PrismaTransactionClient) => {
 			code: `${genRandomStr()}`,
 			costs: { create: { cost: 21000 } },
 			prices: { create: { amount: 19000 } },
-			iva: 720,
+			iva: 10,
+			quantity: 720,
 			tags: {
 				create: [
 					{ tag: { connect: { name: 'juguete' } } },
