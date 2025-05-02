@@ -11,8 +11,9 @@ import { InvoicePaymentMethodDetailDto } from './invoice-payment-method-detail.d
 
 export class CreateInvoiceDto {
 	@ApiProperty()
+	@IsOptional()
 	@IsId('El identificador del cliente')
-	clientId: number;
+	clientId?: number;
 
 	@ApiProperty()
 	@IsId('El identificador del deposito')

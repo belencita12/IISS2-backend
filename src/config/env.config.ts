@@ -89,6 +89,14 @@ class EnvironmentVariables {
 	@IsString()
 	@IsOptional()
 	SUPABASE_BUCKET: string = 'images';
+
+	@IsOptional()
+	@IsString()
+	CLIENT_EXPRESS_NAME: string = 'CLIENTE_EXPRESS';
+
+	@IsOptional()
+	@IsString()
+	CLIENT_EXPRESS_RUC: string = 'XXX';
 }
 
 export type EnvType = InstanceType<typeof EnvironmentVariables>;
