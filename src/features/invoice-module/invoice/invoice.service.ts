@@ -442,31 +442,43 @@ export class InvoiceService {
 	}
 
 	private async manageClient(clientId?: number) {
-		if (clientId) return { connect: { id: clientId } };
-		else {
-			const exUser = await this.db.user.findUnique({
-				where: { ruc: this.env.get('CLIENT_EXPRESS_RUC') },
-				select: { client: { select: { id: true } } },
-			});
-			return {
-				connectOrCreate: {
-					where: { id: exUser?.client?.id || 0 },
-					create: {
-						deletedAt: new Date(),
-						user: {
-							create: {
-								username: this.env.get('CLIENT_EXPRESS_NAME'),
-								email: this.env.get('CLIENT_EXPRESS_NAME'),
-								ruc: this.env.get('CLIENT_EXPRESS_RUC'),
-								password: this.env.get('CLIENT_EXPRESS_NAME'),
-								fullName: this.env.get('CLIENT_EXPRESS_NAME'),
-								phoneNumber: this.env.get('CLIENT_EXPRESS_NAME'),
-								deletedAt: new Date(),
-							},
+		if (clientId) {
+			return { connect: { id: clientId } };
+		} else {
+			const genericClientId = await this.getOrCreateGenericClientId();
+			return { connect: { id: genericClientId } };
+		}
+	}
+
+	private async getOrCreateGenericClientId(): Promise<number> {
+		const ruc = this.env.get('CLIENT_EXPRESS_RUC');
+		const fullName = this.env.get('CLIENT_EXPRESS_NAME');
+
+		let genericClient = await this.db.client.findFirst({
+			where: { user: { ruc } },
+			select: { id: true },
+		});
+
+		if (!genericClient) {
+			const createdClient = await this.db.client.create({
+				select: { id: true },
+				data: {
+					deletedAt: new Date(),
+					user: {
+						create: {
+							ruc,
+							fullName,
+							email: ruc,
+							password: ruc,
+							username: fullName,
+							phoneNumber: fullName,
+							deletedAt: new Date(),
 						},
 					},
 				},
-			};
+			});
+			genericClient = createdClient;
 		}
+		return genericClient.id;
 	}
 }
