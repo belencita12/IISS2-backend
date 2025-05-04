@@ -1,40 +1,68 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNumber, IsOptional, IsPositive } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+	IsArray,
+	IsEnum,
+	IsInt,
+	IsNumber,
+	IsPositive,
+	IsString,
+} from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { QueryParam } from '@lib/decorators/validation/query-param.decorator';
+import { IsPositiveNumber } from '@lib/decorators/validation/is-money.decorator';
+import { Category } from '@prisma/client';
 
 export class StockDetailsQueryDto extends PaginationQueryDto {
-	@IsOptional()
+	@QueryParam()
 	@Type(() => Number)
 	@IsNumber()
-	@ApiPropertyOptional({
-		description: 'Filtrar por ID del stock en detalles',
-	})
 	stockId?: number;
 
-	@IsOptional()
-	@Type(() => Number)
-	@IsNumber()
-	@ApiPropertyOptional({
-		description: 'Filtrar por ID de producto en detalles',
-	})
-	productId?: number;
+	@QueryParam()
+	@IsString()
+	productSearch?: string;
 
-	@IsOptional()
+	@QueryParam()
 	@Type(() => Number)
 	@IsInt()
 	@IsPositive()
-	@ApiPropertyOptional({
-		description: 'Filtrar desde cierta cantidad de productos en el deposito',
-	})
 	fromAmount?: number;
 
-	@IsOptional()
+	@QueryParam({ enum: Category })
+	@IsEnum(Category)
+	category?: Category;
+
+	@QueryParam()
+	@Type(() => Number)
+	@IsPositiveNumber()
+	minCost?: number;
+
+	@QueryParam()
+	@Type(() => Number)
+	@IsPositiveNumber()
+	maxCost?: number;
+
+	@QueryParam()
+	@Type(() => Number)
+	@IsPositiveNumber()
+	minPrice?: number;
+
+	@QueryParam()
+	@Type(() => Number)
+	@IsPositiveNumber()
+	maxPrice?: number;
+
+	@QueryParam()
+	@IsArray()
+	@IsString({ each: true })
+	@Transform(({ value }) =>
+		Array.isArray(value) ? value : value.split(',').map((tag) => tag.trim()),
+	)
+	tags?: string[];
+
 	@Type(() => Number)
 	@IsInt()
 	@IsPositive()
-	@ApiPropertyOptional({
-		description: 'Filtrar hasta cierta cantidad de productos en el deposito',
-	})
+	@QueryParam()
 	toAmount?: number;
 }
