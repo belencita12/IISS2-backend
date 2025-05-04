@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateServiceTypeDto } from './dto/create-service-type.dto';
-import { UpdateServiceTypeDto } from './dto/update-service-type.dto';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { ServiceTypeQueryDto } from './dto/service-type-query.dto';
 import { ImageService } from '@features/media-module/image/image.service';
@@ -71,7 +70,7 @@ export class ServiceTypeService {
 		return new ServiceTypeDto(service);
 	}
 
-	async update(id: number, dto: UpdateServiceTypeDto) {
+	async update(id: number, dto: CreateServiceTypeDto) {
 		const prevST = await this.db.serviceType.findFirst({
 			...this.getInclude(),
 			where: { id },
@@ -109,10 +108,10 @@ export class ServiceTypeService {
 									? this.tagService.handleUpdateTags(prevTags, tags)
 									: undefined,
 								image: newImg ? { connect: { id: newImg.id } } : undefined,
-								prices: isSamePrice
+								prices: !isSamePrice
 									? { create: { amount: new Decimal(price) } }
 									: undefined,
-								costs: isSameCost
+								costs: !isSameCost
 									? { create: { cost: new Decimal(cost) } }
 									: undefined,
 								name: data.name,
