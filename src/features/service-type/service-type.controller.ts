@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { ServiceTypeService } from './service-type.service';
 import { CreateServiceTypeDto } from './dto/create-service-type.dto';
-import { UpdateServiceTypeDto } from './dto/update-service-type.dto';
 import { AppController } from '@lib/decorators/router/app-controller.decorator';
 import { AdminOnly } from '@lib/decorators/auth/admin-only.decorator';
 import { ServiceTypeQueryDto } from './dto/service-type-query.dto';
@@ -55,10 +54,10 @@ export class ServiceTypeController {
 	@ApiConsumes('multipart/form-data')
 	@UseInterceptors(FileInterceptor('img'))
 	@ApiResponse({ type: ServiceTypeDto })
-	@ApiBody({ type: UpdateServiceTypeDto })
+	@ApiBody({ type: CreateServiceTypeDto })
 	update(
 		@Param('id') id: string,
-		@Body() dto: UpdateServiceTypeDto,
+		@Body() dto: CreateServiceTypeDto,
 		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
 		dto.img = img;
