@@ -101,14 +101,15 @@ export class StockDetailsService {
 
 		const where: Prisma.StockDetailsWhereInput = {
 			...baseWhere,
+			productId: query.productId,
 			product: {
+				category: query.category,
 				OR: query.productSearch
 					? [
 							{ name: { contains: query.productSearch, mode: 'insensitive' } },
 							{ code: { contains: query.productSearch, mode: 'insensitive' } },
 						]
 					: undefined,
-				category: query.category,
 				costs:
 					query.minCost || query.maxCost
 						? {
