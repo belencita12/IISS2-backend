@@ -1,6 +1,6 @@
 import { IsDbDate } from '@lib/decorators/validation/is-db-date.decorator';
 import { IsInvoiceStamped } from '@lib/decorators/validation/is-invoice-stamped.decorator';
-import { IsPositiveNumber } from '@lib/decorators/validation/is-money.decorator';
+import { IsStampedNum } from '@lib/decorators/validation/is-stamped-num.decorator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateStampedDto {
@@ -17,10 +17,10 @@ export class CreateStampedDto {
 	toDate: string;
 
 	@ApiProperty()
-	@IsPositiveNumber('El número de inicio')
+	@IsStampedNum()
 	fromNum: number;
 
 	@ApiProperty()
-	@IsPositiveNumber('El número de fin')
+	@IsStampedNum()
 	toNum: number;
 }

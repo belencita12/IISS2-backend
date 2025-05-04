@@ -17,13 +17,26 @@ import { InvoiceQueryDto } from '../dto/invoice-query.dto';
 import { InvoicePaymentMethodDetailDto } from '../dto/invoice-payment-method-detail.dto';
 import { PayCreditInvoiceDto } from '../dto/pay-credit-invoice.dto';
 import { normalizeDate } from '@lib/utils/date';
+import { EnvService } from '@features/global-module/env/env.service';
 
 @Injectable()
 export class InvoiceService {
-	constructor(private readonly db: PrismaService) {}
+	constructor(
+		private readonly db: PrismaService,
+		private readonly env: EnvService,
+	) {}
 
 	async create(dto: CreateInvoiceDto) {
-		const { details, issueDate, paymentMethods, services, ...data } = dto;
+		const {
+			details,
+			issueDate,
+			paymentMethods,
+			services,
+			clientId,
+			stockId,
+			...restDto
+		} = dto;
+		const clientData = await this.manageClient(clientId);
 		const invoice = await this.db.$transaction(
 			async (tx) => {
 				const { stamped, invoiceNumber } = await this.getInvoiceInfo(
@@ -32,24 +45,26 @@ export class InvoiceService {
 					issueDate,
 				);
 				const { invoiceData, productData, stockDetailData, total, totalVat } =
-					await this.processDetails(tx, data.stockId, details, services);
+					await this.processDetails(tx, stockId, details, services);
 				await this.handleUpdateStock(tx, stockDetailData, productData);
 				const createdInv = await tx.invoice.create({
 					include: { client: { include: { user: true } } },
 					data: {
-						...data,
+						...restDto,
 						total,
 						invoiceNumber,
 						stamped,
 						totalVat,
-						totalPayed: data.type === 'CASH' ? total : 0,
+						totalPayed: restDto.type === 'CASH' ? total : 0,
 						issueDate: new Date(issueDate),
+						client: clientData,
+						stock: { connect: { id: stockId } },
 						details: {
 							createMany: { data: invoiceData },
 						},
 					},
 				});
-				if (data.type === 'CASH') {
+				if (restDto.type === 'CASH') {
 					await this.applyPaymentMethods(
 						tx,
 						createdInv.id,
@@ -424,5 +439,46 @@ export class InvoiceService {
 		}
 
 		return { invoiceData, productData, stockDetailData, total, totalVat };
+	}
+
+	private async manageClient(clientId?: number) {
+		if (clientId) {
+			return { connect: { id: clientId } };
+		} else {
+			const genericClientId = await this.getOrCreateGenericClientId();
+			return { connect: { id: genericClientId } };
+		}
+	}
+
+	private async getOrCreateGenericClientId(): Promise<number> {
+		const ruc = this.env.get('CLIENT_EXPRESS_RUC');
+		const fullName = this.env.get('CLIENT_EXPRESS_NAME');
+
+		let genericClient = await this.db.client.findFirst({
+			where: { user: { ruc } },
+			select: { id: true },
+		});
+
+		if (!genericClient) {
+			const createdClient = await this.db.client.create({
+				select: { id: true },
+				data: {
+					deletedAt: new Date(),
+					user: {
+						create: {
+							ruc,
+							fullName,
+							email: ruc,
+							password: ruc,
+							username: fullName,
+							phoneNumber: fullName,
+							deletedAt: new Date(),
+						},
+					},
+				},
+			});
+			genericClient = createdClient;
+		}
+		return genericClient.id;
 	}
 }
