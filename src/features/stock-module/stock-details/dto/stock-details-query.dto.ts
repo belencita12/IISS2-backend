@@ -1,22 +1,21 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
-import {
-	IsArray,
-	IsEnum,
-	IsInt,
-	IsNumber,
-	IsPositive,
-	IsString,
-} from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsPositive, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { QueryParam } from '@lib/decorators/validation/query-param.decorator';
 import { IsPositiveNumber } from '@lib/decorators/validation/is-money.decorator';
 import { Category } from '@prisma/client';
+import { IsId } from '@lib/decorators/validation/is-id.decorator';
 
 export class StockDetailsQueryDto extends PaginationQueryDto {
-	@QueryParam()
 	@Type(() => Number)
-	@IsNumber()
+	@QueryParam()
+	@IsId()
 	stockId?: number;
+
+	@Type(() => Number)
+	@QueryParam()
+	@IsId()
+	productId?: number;
 
 	@QueryParam()
 	@IsString()
