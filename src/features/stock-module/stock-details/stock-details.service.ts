@@ -86,6 +86,7 @@ export class StockDetailsService {
 			include: {
 				product: {
 					include: {
+						tags: { include: { tag: true } },
 						prices: { where: { isActive: true } },
 						costs: { where: { isActive: true } },
 						image: true,
