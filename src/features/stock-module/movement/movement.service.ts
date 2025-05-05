@@ -19,7 +19,14 @@ export class MovementService {
 	) {}
 
 	async create(dto: CreateMovementDto) {
-		const { details, originStockId, destinationStockId, type, ...data } = dto;
+		const {
+			details,
+			originStockId,
+			destinationStockId,
+			type,
+			isReverse,
+			...data
+		} = dto;
 
 		this.validateMovementDto(dto);
 		await this.stockValidation.validateStockExistence(
@@ -35,6 +42,7 @@ export class MovementService {
 				data: {
 					...data,
 					type,
+					isReversable: !isReverse,
 					originStockId: type === 'INBOUND' ? undefined : originStockId,
 					destinationStockId:
 						type === 'OUTBOUND' ? undefined : destinationStockId,
@@ -75,11 +83,12 @@ export class MovementService {
 
 	async revertMovement(movementId: number, dto: RevertMovementDto = {}) {
 		const mov = await this.db.movement.findUnique({
-			where: { id: movementId },
+			where: { id: movementId, isReversable: true },
 			include: { details: true },
 		});
 
-		if (!mov) throw new NotFoundException(`Movimiento no encontrado`);
+		if (!mov)
+			throw new NotFoundException(`El movmiento no existe o ya fue revertido`);
 
 		if (mov.type !== MovementType.TRANSFER)
 			throw new BadRequestException(
@@ -91,11 +100,17 @@ export class MovementService {
 				'El movimiento no contiene detalles para revertir',
 			);
 
+		await this.db.movement.update({
+			where: { id: movementId },
+			data: { isReversable: false },
+		});
+
 		const revertDto: CreateMovementDto = {
 			description:
 				dto.description ||
 				`Reversión de "${mov.description || `Movimiento #${movementId}`}"`,
 			managerId: dto.managerId || mov.managerId,
+			isReverse: true,
 			type: MovementType.TRANSFER,
 			dateMovement: new Date(),
 			originStockId: mov.destinationStockId || undefined,
@@ -105,6 +120,7 @@ export class MovementService {
 				quantity: detail.quantity,
 			})),
 		};
+
 		const revertedMovement = await this.create(revertDto);
 		return revertedMovement;
 	}
