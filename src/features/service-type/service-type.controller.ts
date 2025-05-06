@@ -8,24 +8,28 @@ import {
 	Query,
 	UseInterceptors,
 	UploadedFile,
+	UseGuards,
 } from '@nestjs/common';
 import { ServiceTypeService } from './service-type.service';
 import { CreateServiceTypeDto } from './dto/create-service-type.dto';
 import { AppController } from '@lib/decorators/router/app-controller.decorator';
-import { AdminOnly } from '@lib/decorators/auth/admin-only.decorator';
 import { ServiceTypeQueryDto } from './dto/service-type-query.dto';
 import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
 import { ServiceTypeDto } from './dto/service-type.dto';
 import { ApiBody, ApiConsumes, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImgValidator } from '@lib/pipes/file-validator.pipe';
+import { RolesGuard } from '@lib/guard/role.guard';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
+import { Role } from '@lib/constants/role.enum';
 
 @AppController({ name: 'service-type', tag: 'Service Type' })
-@AdminOnly()
+@UseGuards(RolesGuard)
 export class ServiceTypeController {
 	constructor(private readonly serviceTypeService: ServiceTypeService) {}
 
 	@Post()
+	@Roles(Role.Admin, Role.Employee)
 	@ApiConsumes('multipart/form-data')
 	@UseInterceptors(FileInterceptor('img'))
 	@ApiResponse({ type: ServiceTypeDto })
@@ -51,6 +55,7 @@ export class ServiceTypeController {
 	}
 
 	@Patch(':id')
+	@Roles(Role.Admin, Role.Employee)
 	@ApiConsumes('multipart/form-data')
 	@UseInterceptors(FileInterceptor('img'))
 	@ApiResponse({ type: ServiceTypeDto })
@@ -65,6 +70,7 @@ export class ServiceTypeController {
 	}
 
 	@Delete(':id')
+	@Roles(Role.Admin)
 	remove(@Param('id') id: string) {
 		return this.serviceTypeService.remove(+id);
 	}
