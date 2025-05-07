@@ -117,6 +117,7 @@ export class VaccineRegistryService {
 				id: true,
 				vaccineId: true,
 				dose: true,
+				petId: true,
 				applicationDate: true,
 				expectedDate: true,
 				deletedAt: true,
