@@ -82,8 +82,8 @@ export class AppointmentService {
 		});
 	}
 
-	async findAll(query: AppointmentQueryDto) {
-		const where = this.getFindAllWhere(query);
+	async findAll(query: AppointmentQueryDto, user: TokenPayload) {
+		const where = this.getFindAllWhere(query, user);
 		const [data, count] = await Promise.all([
 			this.db.appointment.findMany({
 				...this.db.paginate(query),
@@ -123,9 +123,20 @@ export class AppointmentService {
 		return await this.db.appointment.softDelete({ id });
 	}
 
-	private getFindAllWhere(query: AppointmentQueryDto) {
+	private getFindAllWhere(query: AppointmentQueryDto, user: TokenPayload) {
 		const { baseWhere } = this.db.getBaseWhere(query);
-		const where: Prisma.AppointmentWhereInput = { ...baseWhere };
+		const where: Prisma.AppointmentWhereInput = {
+			...baseWhere,
+			pet: {
+				id: query.petId,
+				clientId: user.clientId,
+				client: query.clientRuc
+					? {
+							user: { ruc: { contains: query.clientRuc, mode: 'insensitive' } },
+						}
+					: undefined,
+			},
+		};
 
 		if (query.status) where.status = query.status;
 
@@ -146,22 +157,6 @@ export class AppointmentService {
 			where.employee = {
 				some: {
 					user: { ruc: { contains: query.employeeRuc, mode: 'insensitive' } },
-				},
-			};
-		}
-
-		if (query.petId) {
-			where.pet = {
-				id: {
-					equals: query.petId,
-				},
-			};
-		}
-
-		if (query.clientRuc) {
-			where.pet = {
-				client: {
-					user: { ruc: { contains: query.clientRuc, mode: 'insensitive' } },
 				},
 			};
 		}

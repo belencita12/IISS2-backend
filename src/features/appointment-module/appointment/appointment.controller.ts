@@ -38,8 +38,11 @@ export class AppointmentController {
 
 	@Get()
 	@ApiPaginatedResponse(AppointmentDto)
-	findAll(@Query() query: AppointmentQueryDto) {
-		return this.appointmentService.findAll(query);
+	findAll(
+		@Query() query: AppointmentQueryDto,
+		@CurrentUser() user: TokenPayload,
+	) {
+		return this.appointmentService.findAll(query, user);
 	}
 
 	@Get(':id')
