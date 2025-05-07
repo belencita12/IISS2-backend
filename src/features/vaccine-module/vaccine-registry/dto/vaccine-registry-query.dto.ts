@@ -31,4 +31,12 @@ export class VaccineRegistryQueryDto extends PaginationQueryDto {
 	@QueryParam()
 	@IsDateString()
 	fromExpectedDate?: string;
+
+	@QueryParam()
+	@IsDateString()
+	toApplicationDate?: string;
+
+	@QueryParam()
+	@IsDateString()
+	fromApplicationDate?: string;
 }

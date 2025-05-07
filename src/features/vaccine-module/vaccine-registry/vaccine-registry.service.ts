@@ -55,6 +55,14 @@ export class VaccineRegistryService {
 						},
 					}
 				: {}),
+			...(dto.toApplicationDate || dto.fromApplicationDate
+				? {
+						expectedDate: {
+							gte: dto.fromApplicationDate,
+							lte: dto.toApplicationDate,
+						},
+					}
+				: {}),
 		};
 
 		const [data, total] = await Promise.all([
