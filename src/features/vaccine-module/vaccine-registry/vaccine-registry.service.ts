@@ -57,7 +57,7 @@ export class VaccineRegistryService {
 				: {}),
 			...(dto.toApplicationDate || dto.fromApplicationDate
 				? {
-						expectedDate: {
+						applicationDate: {
 							gte: dto.fromApplicationDate,
 							lte: dto.toApplicationDate,
 						},
