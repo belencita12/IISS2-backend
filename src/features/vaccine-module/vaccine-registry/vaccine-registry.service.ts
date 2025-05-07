@@ -116,22 +116,25 @@ export class VaccineRegistryService {
 			select: {
 				id: true,
 				vaccineId: true,
-				petId: true,
 				dose: true,
 				applicationDate: true,
 				expectedDate: true,
 				deletedAt: true,
 				createdAt: true,
 				updatedAt: true,
+				pet: {
+					select: {
+						client: { select: { user: { select: { fullName: true } } } },
+						name: true,
+					},
+				},
 				vaccine: {
 					select: {
 						id: true,
 						speciesId: true,
 						name: true,
 						productId: true,
-						manufacturer: {
-							select: { name: true },
-						},
+						manufacturer: { select: { name: true } },
 					},
 				},
 			},
