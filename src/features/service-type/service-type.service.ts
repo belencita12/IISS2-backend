@@ -139,9 +139,7 @@ export class ServiceTypeService {
 			where: { id: serviceType.productId },
 			select: { id: true },
 		});
-		if (!product) throw new NotFoundException('Producto no encontrado');
-
-		await this.db.product.softDelete({ id: product.id });
+		if (product) await this.db.product.softDelete({ id: product.id });
 		await this.db.serviceType.softDelete({ id });
 	}
 
