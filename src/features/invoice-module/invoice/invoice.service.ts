@@ -123,7 +123,6 @@ export class InvoiceService {
 					create: {
 						total: amount,
 						issueDate: new Date(paymentDate),
-						receiptNumber: dto.receiptNumber,
 						paymentMethods: { createMany: { data: payMethodData } },
 					},
 				},

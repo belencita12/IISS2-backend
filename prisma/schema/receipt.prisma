@@ -1,6 +1,6 @@
 model Receipt {
     id             Int                    @id @default(autoincrement())
-    receiptNumber  String                 @unique
+    receiptNumber  Int                    @unique @default(autoincrement())
     invoiceId      Int
     issueDate      DateTime               @db.Date
     paymentMethods InvoicePaymentMethod[]
