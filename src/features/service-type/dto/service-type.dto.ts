@@ -1,4 +1,4 @@
-import { ProductEntity } from '@features/product-module/product/dto/product.dto';
+import { ProductEntity } from '@features/product-module/product/product.mapper';
 import { ImageDto } from '@lib/commons/image.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ServiceType } from '@prisma/client';

@@ -9,6 +9,7 @@ import { genRandomCode } from '@lib/utils/encrypt';
 import { ServiceTypeDto } from './dto/service-type.dto';
 import { Prisma } from '@prisma/client';
 import { ProductService } from '@features/product-module/product/product.service';
+import { ProductPricingService } from '@features/product-module/product/product-pricing.service';
 
 @Injectable()
 export class ServiceTypeService {
@@ -17,6 +18,7 @@ export class ServiceTypeService {
 		private readonly productService: ProductService,
 		private readonly tagService: TagService,
 		private readonly imgService: ImageService,
+		private readonly productPricingService: ProductPricingService,
 	) {}
 
 	async create(dto: CreateServiceTypeDto) {
@@ -92,10 +94,16 @@ export class ServiceTypeService {
 		const serviceType = await this.db.$transaction(
 			async (tx) => {
 				if (!isSameCost)
-					this.productService.resetProductCostHistory(tx, prevST.productId);
+					this.productPricingService.resetProductCostHistory(
+						tx,
+						prevST.productId,
+					);
 
 				if (!isSamePrice)
-					this.productService.resetProductPriceHistory(tx, prevST.productId);
+					this.productPricingService.resetProductPriceHistory(
+						tx,
+						prevST.productId,
+					);
 
 				return await this.db.serviceType.update({
 					...this.getInclude(),
