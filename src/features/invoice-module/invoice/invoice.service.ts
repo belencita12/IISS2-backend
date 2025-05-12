@@ -18,6 +18,7 @@ import { InvoicePaymentMethodDetailDto } from '../dto/invoice-payment-method-det
 import { PayCreditInvoiceDto } from '../dto/pay-credit-invoice.dto';
 import { normalizeDate } from '@lib/utils/date';
 import { EnvService } from '@features/global-module/env/env.service';
+import { InvoiceFilter } from './invoice.filter';
 
 @Injectable()
 export class InvoiceService {
@@ -84,12 +85,24 @@ export class InvoiceService {
 
 		const invoice = await this.db.invoice.findUnique({ where: { id } });
 		if (!invoice) throw new NotFoundException('Factura no encontrada');
+
 		if (invoice.type != 'CREDIT')
 			throw new BadRequestException('Solo pueden pagarse facturas a credito');
+
 		if (invoice.issueDate > new Date(paymentDate))
 			throw new BadRequestException(
 				'La fecha del recibo no puede ser anterior a la factura',
 			);
+
+		const arePmExists = await this.arePaymentMethodsExists(
+			paymentMethods.map((pm) => pm.methodId),
+		);
+
+		if (!arePmExists) {
+			throw new NotFoundException(
+				'Alguno de los metodos de pago no fue encontrado',
+			);
+		}
 
 		let total = 0;
 		const payMethodData: Prisma.InvoicePaymentMethodCreateManyInput[] = [];
@@ -133,7 +146,8 @@ export class InvoiceService {
 	}
 
 	async findAll(dto: InvoiceQueryDto) {
-		const where = this.applyFilters(dto);
+		const { baseWhere } = this.db.getBaseWhere(dto);
+		const where = InvoiceFilter.getWhere(baseWhere, dto);
 		const [data, count] = await Promise.all([
 			this.db.invoice.findMany({
 				...this.db.paginate(dto),
@@ -176,40 +190,11 @@ export class InvoiceService {
 		});
 	}
 
-	private applyFilters(dto: InvoiceQueryDto) {
-		const { baseWhere } = this.db.getBaseWhere(dto);
-		const where: Prisma.InvoiceWhereInput = {
-			...baseWhere,
-			stockId: dto.stockId,
-			type: dto.type,
-			client: dto.search
-				? {
-						OR: [
-							{ user: { ruc: { contains: dto.search, mode: 'insensitive' } } },
-							{
-								user: {
-									fullName: { contains: dto.search, mode: 'insensitive' },
-								},
-							},
-						],
-					}
-				: undefined,
-			issueDate:
-				dto.fromIssueDate || dto.toIssueDate
-					? {
-							gte: dto.fromIssueDate ? new Date(dto.fromIssueDate) : undefined,
-							lte: dto.toIssueDate ? new Date(dto.toIssueDate) : undefined,
-						}
-					: undefined,
-			total:
-				dto.fromTotal || dto.toTotal
-					? {
-							gte: dto.fromTotal,
-							lte: dto.toTotal,
-						}
-					: undefined,
-		};
-		return where;
+	private async arePaymentMethodsExists(idArray: number[]) {
+		const verifiedPaymentMethods = await this.db.paymentMethod.findMany({
+			where: { id: { in: idArray } },
+		});
+		return verifiedPaymentMethods.length === idArray.length;
 	}
 
 	private async getInvoiceInfo(
