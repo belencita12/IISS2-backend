@@ -52,6 +52,8 @@ export class ProductMapper {
 			category: data.category,
 			description: data.description || '',
 			iva: data.iva,
+			code: data.code,
+			quantity: data.quantity,
 			price: data.prices[0].amount.toNumber(),
 			cost: data.costs[0].cost.toNumber(),
 			tags: data.tags ? data.tags.map((t) => t.tag.name) : [],
