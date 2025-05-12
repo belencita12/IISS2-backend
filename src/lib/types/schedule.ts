@@ -8,8 +8,6 @@ export type TimeRange = {
 export type ShiftInfo = Pick<WorkShift, 'startTime' | 'endTime' | 'weekDay'>[];
 
 export type AppointmentInfo = {
-	designatedDate: Date;
-	service: {
-		durationMin: number;
-	};
+	startAt: Date;
+	partialDuration: number;
 };

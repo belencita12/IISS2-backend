@@ -17,6 +17,34 @@ export const isInThisYear = (date: string | Date) => {
 	return thisYear === dateToCompare.getFullYear() || thisMonth !== 11;
 };
 
+export const getUTCStartAndEndOfDay = (date: Date): [Date, Date] => {
+	const startOfDay = new Date(
+		Date.UTC(
+			date.getUTCFullYear(),
+			date.getUTCMonth(),
+			date.getUTCDate(),
+			0,
+			0,
+			0,
+			0,
+		),
+	);
+
+	const endOfDay = new Date(
+		Date.UTC(
+			date.getUTCFullYear(),
+			date.getUTCMonth(),
+			date.getUTCDate(),
+			23,
+			59,
+			59,
+			999,
+		),
+	);
+
+	return [startOfDay, endOfDay];
+};
+
 export const toUtcDate = (dateStr: string): Date => {
 	const [date, time] = dateStr.split('T');
 	const [year, month, day] = date.split('-').map(Number);
