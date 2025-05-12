@@ -1,8 +1,9 @@
 import { SpeciesDto } from '@features/pet-module/species/dto/species.dto';
+import { ProductDto } from '@features/product-module/product/dto/product.dto';
 import {
-	ProductDto,
 	ProductEntity,
-} from '@features/product-module/product/dto/product.dto';
+	ProductMapper,
+} from '@features/product-module/product/product.mapper';
 import { VaccineManufacturerDto } from '@features/vaccine-module/vaccine-manufacturer/dto/vaccine-manufacturer.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Species, Vaccine, VaccineManufacturer } from '@prisma/client';
@@ -37,6 +38,6 @@ export class VaccineDto {
 			id: data.manufacturerId,
 			name: data.manufacturer.name,
 		};
-		this.product = new ProductDto(data.product);
+		this.product = ProductMapper.toDto(data.product);
 	}
 }
