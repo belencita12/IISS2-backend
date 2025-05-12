@@ -51,7 +51,7 @@ export class AppointmentCreatorService {
 				appointmentDetails: { create: appointmentDetailData },
 			},
 		});
-		AppointmentMapper.toDto(appointment);
+		return AppointmentMapper.toDto(appointment);
 	}
 
 	private async areAppDetailsValid(
@@ -104,8 +104,6 @@ export class AppointmentCreatorService {
 		return {
 			include: {
 				pet: { include: { race: true, client: { include: { user: true } } } },
-				employee: { include: { user: true } },
-				service: true,
 			},
 		};
 	}

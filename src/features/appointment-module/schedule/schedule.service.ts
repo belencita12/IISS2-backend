@@ -43,7 +43,13 @@ export class ScheduleService {
 		}
 
 		const appointments = await this.getAppointmentsFromEmplId(emplId, date);
+
+		console.log(appointments);
+
 		const busyRanges = this.getBusyRanges(appointments);
+
+		console.log(busyRanges);
+
 		return this.calculateScheduleByDate(shiftByDay, busyRanges);
 	}
 
@@ -72,7 +78,7 @@ export class ScheduleService {
 			duration,
 		);
 
-		const areEmplAppOverlaped = await this.areEmplsAvaiable(
+		const areEmplAppOverlaped = await this.areEmplsOverlaped(
 			emplIds,
 			startAtDate,
 			endAtDate,
@@ -94,7 +100,7 @@ export class ScheduleService {
 		return employees.length === ids.length;
 	}
 
-	private async areEmplsAvaiable(
+	private async areEmplsOverlaped(
 		emplIds: number[],
 		startAt: Date,
 		endAt: Date,
@@ -115,7 +121,7 @@ export class ScheduleService {
 			},
 			select: { id: true },
 		});
-		return emplData.length === 0;
+		return emplData.length !== 0;
 	}
 
 	private getDateRangeFromAppointment(
@@ -185,6 +191,7 @@ export class ScheduleService {
 
 	private async getAppointmentsFromEmplId(id: number, date: Date) {
 		const [startOfDay, endOfDay] = getUTCStartAndEndOfDay(date);
+		console.log(startOfDay, endOfDay);
 		return await this.db.appointmentDetail.findMany({
 			where: {
 				appointment: { status: 'PENDING' },
