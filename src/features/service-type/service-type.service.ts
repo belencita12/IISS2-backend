@@ -163,7 +163,12 @@ export class ServiceTypeService {
 		const { baseWhere } = this.db.getBaseWhere(dto);
 		const where: Prisma.ServiceTypeWhereInput = {
 			...baseWhere,
-			name: dto.name,
+			name: dto.name
+				? {
+						contains: dto.name,
+						mode: 'insensitive',
+					}
+				: undefined,
 			product: {
 				prices:
 					dto.minPrice || dto.maxPrice
