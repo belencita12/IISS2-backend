@@ -104,6 +104,8 @@ export class AppointmentService {
 		return {
 			include: {
 				pet: { include: { race: true, client: { include: { user: true } } } },
+				appointmentDetails: { include: { service: true } },
+				employee: { include: { user: true } },
 			},
 		};
 	}

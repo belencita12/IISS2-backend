@@ -6,16 +6,4 @@ export class ServiceTypeSummaryDto {
 
 	@ApiProperty()
 	name: string;
-
-	@ApiProperty()
-	description: string;
-
-	@ApiProperty()
-	durationMin: number;
-
-	@ApiProperty()
-	price: number;
-
-	@ApiProperty()
-	cost: number;
 }

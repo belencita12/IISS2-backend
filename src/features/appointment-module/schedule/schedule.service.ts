@@ -28,33 +28,24 @@ export class ScheduleService {
 	async getScheduleByEmployeeId(emplId: number, date: Date) {
 		const weekDay = date.getUTCDay();
 		this.validateDesignatedDay(date);
-
 		const emplData = await this.db.employee.findUnique({
 			where: { id: emplId },
 			select: this.getEmplSelectHelper(),
 		});
 		if (!emplData) throw new NotFoundException('El empleado no existe');
-
 		const shiftByDay = this.isInShift(emplData.position.shifts, weekDay);
 		if (!shiftByDay) {
 			throw new BadRequestException(
 				`${emplData.user.fullName} no trabaja en la fecha designada`,
 			);
 		}
-
 		const appointments = await this.getAppointmentsFromEmplId(emplId, date);
-
-		console.log(appointments);
-
 		const busyRanges = this.getBusyRanges(appointments);
-
-		console.log(busyRanges);
-
 		return this.calculateScheduleByDate(shiftByDay, busyRanges);
 	}
 
 	async validateAppByEmployees(
-		emplIds: number[],
+		emplId: number,
 		designatedDate: string,
 		designatedTime: string,
 		duration: number,
@@ -65,12 +56,8 @@ export class ScheduleService {
 			);
 		}
 
-		const areEmplExists = await this.areEmplsExists(emplIds);
-		if (!areEmplExists) {
-			throw new NotFoundException(
-				'Uno o mas empleados seleccionados no fueron encontrados',
-			);
-		}
+		const isEmplExists = await this.db.employee.isExists({ id: emplId });
+		if (!isEmplExists) throw new NotFoundException('Empleado no encontrado');
 
 		const [startAtDate, endAtDate, nextTime] = this.getDateRangeFromAppointment(
 			designatedDate,
@@ -78,44 +65,39 @@ export class ScheduleService {
 			duration,
 		);
 
-		const areEmplAppOverlaped = await this.areEmplsOverlaped(
-			emplIds,
+		const isEmplScheduleOverlaped = await this.isEmplScheduleOverlaped(
+			emplId,
 			startAtDate,
 			endAtDate,
 		);
-		if (!areEmplAppOverlaped) {
+		if (isEmplScheduleOverlaped) {
 			throw new BadRequestException(
-				'No todos los empleados están disponibles para la cita propuesta',
+				'El empleado no se encuentra disponible en la fecha dada',
 			);
 		}
-
 		return [startAtDate, endAtDate, nextTime];
 	}
 
-	private async areEmplsExists(ids: number[]) {
-		const employees = await this.db.employee.findMany({
-			where: { id: { in: ids } },
-			select: { id: true },
-		});
-		return employees.length === ids.length;
-	}
-
-	private async areEmplsOverlaped(
-		emplIds: number[],
+	private async isEmplScheduleOverlaped(
+		emplId: number,
 		startAt: Date,
 		endAt: Date,
 	) {
 		const emplData = await this.db.employee.findMany({
 			where: {
-				id: { in: emplIds },
+				id: emplId,
 				position: { shifts: { some: { weekDay: startAt.getUTCDay() } } },
 				appointments: {
-					none: {
-						AND: [
-							{ appointment: { status: 'PENDING' } },
-							{ startAt: { lt: endAt } },
-							{ endAt: { gt: startAt } },
-						],
+					some: {
+						appointmentDetails: {
+							some: {
+								AND: [
+									{ appointment: { status: 'PENDING' } },
+									{ startAt: { lt: endAt } },
+									{ endAt: { gt: startAt } },
+								],
+							},
+						},
 					},
 				},
 			},
@@ -194,10 +176,9 @@ export class ScheduleService {
 		console.log(startOfDay, endOfDay);
 		return await this.db.appointmentDetail.findMany({
 			where: {
-				appointment: { status: 'PENDING' },
+				appointment: { status: 'PENDING', employeeId: id },
 				startAt: { gte: startOfDay },
 				endAt: { lte: endOfDay },
-				employees: { some: { id } },
 			},
 			select: { startAt: true, partialDuration: true },
 		});

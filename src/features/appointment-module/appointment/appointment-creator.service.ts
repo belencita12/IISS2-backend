@@ -8,7 +8,6 @@ import {
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
 import { AppointmentMapper } from './appointment.mapper';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
-import { CreateAppointmentDetailDto } from '../appointment-detail/dto/create-appointment-detail.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -20,10 +19,11 @@ export class AppointmentCreatorService {
 
 	async create(dto: CreateAppointmentDto, user: TokenPayload) {
 		const {
-			appointmentDetails,
+			serviceIds,
 			designatedDate,
 			designatedTime,
 			petId,
+			employeeId,
 			...rest
 		} = dto;
 
@@ -38,7 +38,8 @@ export class AppointmentCreatorService {
 			await this.areAppDetailsValid(
 				designatedDate,
 				designatedTime,
-				appointmentDetails,
+				employeeId,
+				serviceIds,
 			);
 
 		const appointment = await this.db.appointment.create({
@@ -46,6 +47,7 @@ export class AppointmentCreatorService {
 			data: {
 				...rest,
 				petId,
+				employeeId,
 				totalDuration,
 				designatedDate: appStart,
 				appointmentDetails: { create: appointmentDetailData },
@@ -57,7 +59,8 @@ export class AppointmentCreatorService {
 	private async areAppDetailsValid(
 		initDate: string,
 		initTime: string,
-		appDetails: CreateAppointmentDetailDto[],
+		employeeId: number,
+		servicesIds: number[],
 	) {
 		const appointmentDetailData: Omit<
 			Prisma.AppointmentDetailCreateInput,
@@ -66,18 +69,16 @@ export class AppointmentCreatorService {
 		let totalDuration = 0;
 		let designatedTime = initTime;
 		const appStart = new Date(`${initDate}T${initTime}`);
-		for (const appDetail of appDetails) {
-			const { serviceId, employeeIds } = appDetail;
-			const service = await this.validateService(serviceId, employeeIds);
+		for (const serviceId of servicesIds) {
+			const service = await this.validateService(serviceId);
 			const [startAt, endAt, nextTime] =
 				await this.scheduleService.validateAppByEmployees(
-					employeeIds,
+					employeeId,
 					initDate,
 					designatedTime,
 					service.durationMin,
 				);
 			appointmentDetailData.push({
-				employees: { connect: employeeIds.map((id) => ({ id })) },
 				service: { connect: { id: service.id } },
 				partialDuration: service.durationMin,
 				startAt,
@@ -89,14 +90,9 @@ export class AppointmentCreatorService {
 		return { totalDuration, appStart, appointmentDetailData };
 	}
 
-	private async validateService(id: number, employeeIds: number[]) {
+	private async validateService(id: number) {
 		const service = await this.db.serviceType.findUnique({ where: { id } });
 		if (!service) throw new BadRequestException('El servicio no existe');
-		if (service.maxColabs && service.maxColabs < employeeIds.length) {
-			throw new BadRequestException(
-				'La cant. de empleados excede a la cant. maxima de colaboradores que soporta el servicio.',
-			);
-		}
 		return service;
 	}
 
@@ -104,6 +100,8 @@ export class AppointmentCreatorService {
 		return {
 			include: {
 				pet: { include: { race: true, client: { include: { user: true } } } },
+				appointmentDetails: { include: { service: true } },
+				employee: { include: { user: true } },
 			},
 		};
 	}

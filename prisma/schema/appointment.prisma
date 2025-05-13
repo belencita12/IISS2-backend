@@ -6,6 +6,7 @@ model Appointment {
     completedDate  DateTime?
     details        String?
     petId          Int
+    employeeId     Int
 
     deletedAt DateTime?
     createdAt DateTime  @default(now())
@@ -15,6 +16,7 @@ model Appointment {
     cancelation        AppointmentCancelation?
     status             AppointmentStatus       @default(PENDING)
     pet                Pet                     @relation(fields: [petId], references: [id])
+    employee           Employee                @relation(fields: [employeeId], references: [id])
 }
 
 model AppointmentDetail {
@@ -32,7 +34,6 @@ model AppointmentDetail {
 
     appointment Appointment @relation(fields: [appointmentId], references: [id])
     service     ServiceType @relation(fields: [serviceId], references: [id])
-    employees   Employee[]  @relation("EmplyeeAppointmentDetail")
 }
 
 model AppointmentCancelation {

@@ -6,9 +6,9 @@ import { ImageService } from '@features/media-module/image/image.service';
 import { TagService } from '@features/product-module/tag/tag.service';
 import Decimal from 'decimal.js';
 import { genRandomCode } from '@lib/utils/encrypt';
-import { ServiceTypeDto } from './dto/service-type.dto';
-import { Prisma } from '@prisma/client';
 import { ProductService } from '@features/product-module/product/product.service';
+import { ServiceTypeMapper } from './service-type.mapper';
+import { ServiceTypeFilter } from './service-type.filter';
 
 @Injectable()
 export class ServiceTypeService {
@@ -40,11 +40,12 @@ export class ServiceTypeService {
 				},
 			},
 		});
-		return new ServiceTypeDto(serviceType);
+		return ServiceTypeMapper.toDto(serviceType);
 	}
 
 	async findAll(dto: ServiceTypeQueryDto) {
-		const where = this.applyFilters(dto);
+		const { baseWhere } = this.db.getBaseWhere(dto);
+		const where = ServiceTypeFilter.getWhere(baseWhere, dto);
 		const [data, count] = await Promise.all([
 			this.db.serviceType.findMany({
 				...this.db.paginate(dto),
@@ -57,7 +58,7 @@ export class ServiceTypeService {
 			total: count,
 			page: dto.page,
 			size: dto.size,
-			data: data.map((s) => new ServiceTypeDto(s)),
+			data: data.map((s) => ServiceTypeMapper.toDto(s)),
 		});
 	}
 
@@ -67,7 +68,7 @@ export class ServiceTypeService {
 			...this.getInclude(),
 		});
 		if (!service) throw new NotFoundException('Servicio no encontrado');
-		return new ServiceTypeDto(service);
+		return ServiceTypeMapper.toDto(service);
 	}
 
 	async update(id: number, dto: CreateServiceTypeDto) {
@@ -125,7 +126,7 @@ export class ServiceTypeService {
 			},
 			{ timeout: 15000 },
 		);
-		return new ServiceTypeDto(serviceType);
+		return ServiceTypeMapper.toDto(serviceType);
 	}
 
 	async remove(id: number) {
@@ -157,35 +158,5 @@ export class ServiceTypeService {
 				},
 			},
 		};
-	}
-
-	private applyFilters(dto: ServiceTypeQueryDto) {
-		const { baseWhere } = this.db.getBaseWhere(dto);
-		const where: Prisma.ServiceTypeWhereInput = {
-			...baseWhere,
-			name: dto.name,
-			product: {
-				prices:
-					dto.minPrice || dto.maxPrice
-						? {
-								some: {
-									amount: { gte: dto.minPrice, lte: dto.maxPrice },
-									isActive: true,
-								},
-							}
-						: undefined,
-				tags: dto.tags
-					? { some: { tag: { name: { in: dto.tags } } } }
-					: undefined,
-			},
-			durationMin:
-				dto.fromDuration || dto.toDuration
-					? {
-							gte: dto.fromDuration,
-							lte: dto.toDuration,
-						}
-					: undefined,
-		};
-		return where;
 	}
 }

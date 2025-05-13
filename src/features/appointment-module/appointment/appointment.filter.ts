@@ -21,10 +21,10 @@ export class AppointmentFilter {
 			},
 		};
 
-		if (query.status) where.status = query.status;
+		if (query.status) newWhere.status = query.status;
 
 		if (query.fromDesignatedDate || query.toDesignatedDate) {
-			where.designatedDate = {
+			newWhere.designatedDate = {
 				gte: query.fromDesignatedDate
 					? new Date(query.fromDesignatedDate)
 					: undefined,
@@ -35,23 +35,12 @@ export class AppointmentFilter {
 		}
 
 		if (query.employeeRuc) {
-			where.appointmentDetails = {
-				some: {
-					employees: {
-						some: {
-							user: {
-								OR: [
-									{ ruc: { contains: query.employeeRuc, mode: 'insensitive' } },
-									{
-										fullName: {
-											contains: query.employeeRuc,
-											mode: 'insensitive',
-										},
-									},
-								],
-							},
-						},
-					},
+			newWhere.employee = {
+				user: {
+					OR: [
+						{ ruc: { contains: query.employeeRuc, mode: 'insensitive' } },
+						{ fullName: { contains: query.employeeRuc, mode: 'insensitive' } },
+					],
 				},
 			};
 		}

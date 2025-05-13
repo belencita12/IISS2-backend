@@ -1,11 +1,22 @@
-import { ServiceTypeSummaryDto } from '@features/service-type/dto/service-type-summary.dto';
-import { VaccineRegistrySummaryDto } from '@features/vaccine-module/vaccine-registry/dto/vaccine-registry-summary.dto';
+import { ServiceTypeDto } from '@features/service-type/dto/service-type.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AppointmentDetailDto {
-	@ApiProperty({ type: ServiceTypeSummaryDto })
-	service: ServiceTypeSummaryDto;
+	@ApiProperty()
+	id: number;
 
-	@ApiProperty({ type: [VaccineRegistrySummaryDto] })
-	vaccineRegistries: VaccineRegistrySummaryDto[];
+	@ApiProperty({ type: ServiceTypeDto })
+	service: ServiceTypeDto;
+
+	@ApiProperty()
+	appointmentId: number;
+
+	@ApiProperty()
+	startAt: Date;
+
+	@ApiProperty()
+	endAt: Date;
+
+	@ApiProperty()
+	partialDuration: number;
 }

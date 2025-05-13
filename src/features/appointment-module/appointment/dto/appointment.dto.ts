@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AppointmentStatus } from '@prisma/client';
 import { AppointmentEmployeeDto } from './appointment-employee.dto';
 import { AppointmentPetDto } from './appointment-pet.dto';
+import { ServiceTypeSummaryDto } from '@features/service-type/dto/service-type-summary.dto';
 
 export class AppointmentDto {
 	@ApiProperty()
@@ -16,15 +17,15 @@ export class AppointmentDto {
 	@ApiPropertyOptional()
 	details?: string;
 
-	@ApiProperty()
-	service: string;
-
 	@ApiProperty({ type: AppointmentPetDto })
 	pet: AppointmentPetDto;
 
 	@ApiProperty({ enum: AppointmentStatus })
 	status: AppointmentStatus;
 
-	@ApiProperty({ type: [AppointmentEmployeeDto] })
-	employees: AppointmentEmployeeDto[];
+	@ApiProperty({ type: [ServiceTypeSummaryDto] })
+	services: ServiceTypeSummaryDto[];
+
+	@ApiProperty({ type: AppointmentEmployeeDto })
+	employee: AppointmentEmployeeDto;
 }
