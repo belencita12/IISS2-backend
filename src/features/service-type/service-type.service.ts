@@ -6,7 +6,6 @@ import { ImageService } from '@features/media-module/image/image.service';
 import { TagService } from '@features/product-module/tag/tag.service';
 import Decimal from 'decimal.js';
 import { genRandomCode } from '@lib/utils/encrypt';
-import { ProductService } from '@features/product-module/product/product.service';
 import { ProductPricingService } from '@features/product-module/product/product-pricing.service';
 import { ServiceTypeMapper } from './service-type.mapper';
 import { ServiceTypeFilter } from './service-type.filter';
