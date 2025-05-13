@@ -9,7 +9,7 @@ import { IsEnum, IsString } from 'class-validator';
 export class AppointmentQueryDto extends PaginationQueryDto {
 	@QueryParam()
 	@IsString()
-	clientRuc?: string;
+	search?: string;
 
 	@QueryParam()
 	@IsString()
