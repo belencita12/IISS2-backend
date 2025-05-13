@@ -20,6 +20,7 @@ import { AppController } from '@lib/decorators/router/app-controller.decorator';
 import { RolesGuard } from '@lib/guard/role.guard';
 import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { Role } from '@lib/constants/role.enum';
+import { Public } from '@lib/decorators/auth/public.decorator';
 
 @AppController({ name: 'tag', tag: 'Tag' })
 @UseGuards(RolesGuard)
@@ -35,12 +36,14 @@ export class TagController {
 	}
 
 	@Get()
+	@Public()
 	@ApiPaginatedResponse(TagDto)
 	findAll(@Query() query: TagQueryDto) {
 		return this.tagService.findAll(query);
 	}
 
 	@Get(':id')
+	@Public()
 	@ApiResponse({ type: TagDto })
 	findOne(@Param('id', IdValidationPipe) id: number) {
 		return this.tagService.findOne(id);
