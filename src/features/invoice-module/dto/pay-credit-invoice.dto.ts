@@ -1,7 +1,6 @@
 import { IsDbDate } from '@lib/decorators/validation/is-db-date.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	IsNotEmpty,
 	IsNumber,
 	IsPositive,
 	IsString,
@@ -21,11 +20,6 @@ export class PayCreditInvoiceDto {
 	@IsString()
 	@ApiProperty()
 	paymentDate: string;
-
-	@IsString()
-	@IsNotEmpty()
-	@ApiProperty()
-	receiptNumber: string;
 
 	@Type(() => InvoicePaymentMethodDetailDto)
 	@ValidateNested({ each: true })

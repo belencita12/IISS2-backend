@@ -1,15 +1,14 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
-import { ProductDto } from './dto/product.dto';
-import Decimal from 'decimal.js';
 import { ProductQueryDto } from './dto/product-query.dto';
-import { Prisma } from '@prisma/client';
 import { ImageService } from '@features/media-module/image/image.service';
-import {
-	ExtendedTransaction,
-	PrismaService,
-} from '@features/prisma/prisma.service';
+import { PrismaService } from '@features/prisma/prisma.service';
 import { TagService } from '../tag/tag.service';
+import { ProductFilter } from './product.filter';
+import { ProductPricingService } from './product-pricing.service';
+import { ProductMapper } from './product.mapper';
+import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class ProductService {
@@ -17,6 +16,7 @@ export class ProductService {
 		private readonly db: PrismaService,
 		private readonly imgService: ImageService,
 		private readonly tagService: TagService,
+		private readonly productPricingService: ProductPricingService,
 	) {}
 
 	async create(dto: CreateProductDto) {
@@ -49,11 +49,13 @@ export class ProductService {
 			},
 			{ timeout: 15000 },
 		);
-		return new ProductDto(product);
+		return ProductMapper.toDto(product);
 	}
 
-	async findAll(query: ProductQueryDto) {
-		const where = this.getWhere(query);
+	async findAll(query: ProductQueryDto, user?: TokenPayload) {
+		const isPublic = !user || user.clientId !== undefined;
+		const { baseWhere } = this.db.getBaseWhere(query);
+		const where = ProductFilter.getWhere(baseWhere, query);
 		const [data, total] = await Promise.all([
 			this.db.product.findMany({
 				...this.db.paginate(query),
@@ -63,20 +65,21 @@ export class ProductService {
 			this.db.product.count({ where }),
 		]);
 		return this.db.getPagOutput({
+			data: data.map((p) => ProductMapper.toDto(p, isPublic)),
 			page: query.page,
 			size: query.size,
 			total,
-			data: data.map((p) => new ProductDto(p)),
 		});
 	}
 
-	async findOne(id: number) {
+	async findOne(id: number, user?: TokenPayload) {
+		const isPublic = !user || user.clientId !== undefined;
 		const prod = await this.db.product.findUnique({
 			...this.getInclude(),
 			where: { id },
 		});
 		if (!prod) throw new HttpException('Producto no encontrado', 404);
-		return new ProductDto(prod);
+		return ProductMapper.toDto(prod, isPublic);
 	}
 
 	async update(id: number, dto: CreateProductDto) {
@@ -95,8 +98,16 @@ export class ProductService {
 
 		const updatedProduct = await this.db.$transaction(
 			async (tx) => {
-				if (!isSameCost) await this.resetProductCostHistory(tx, prodToUpd.id);
-				if (!isSamePrice) await this.resetProductPriceHistory(tx, prodToUpd.id);
+				if (!isSameCost)
+					await this.productPricingService.resetProductCostHistory(
+						tx,
+						prodToUpd.id,
+					);
+				if (!isSamePrice)
+					await this.productPricingService.resetProductPriceHistory(
+						tx,
+						prodToUpd.id,
+					);
 				const updatedProduct = await tx.product.update({
 					...this.getInclude(),
 					where: { id },
@@ -117,7 +128,7 @@ export class ProductService {
 			},
 			{ timeout: 15000 },
 		);
-		return new ProductDto(updatedProduct);
+		return ProductMapper.toDto(updatedProduct);
 	}
 
 	async remove(id: number) {
@@ -133,56 +144,6 @@ export class ProductService {
 				data: { deletedAt: new Date() },
 			});
 		});
-	}
-
-	async resetProductCostHistory(tx: ExtendedTransaction, productId: number) {
-		await tx.productCost.updateMany({
-			where: { productId, isActive: true },
-			data: { isActive: false },
-		});
-	}
-
-	async resetProductPriceHistory(tx: ExtendedTransaction, productId: number) {
-		await tx.productPrice.updateMany({
-			where: { productId, isActive: true },
-			data: { isActive: false },
-		});
-	}
-
-	private getWhere(query: ProductQueryDto) {
-		const { baseWhere } = this.db.getBaseWhere(query);
-		const where: Prisma.ProductWhereInput = {
-			...baseWhere,
-			name: { contains: query.name, mode: 'insensitive' },
-			code: { contains: query.code },
-			providerId: query.providerId,
-			category: query.category,
-			costs:
-				query.minCost || query.maxCost
-					? {
-							some: {
-								isActive: true,
-								cost: { gte: query.minCost, lte: query.maxCost },
-							},
-						}
-					: undefined,
-			prices:
-				query.minPrice || query.maxPrice
-					? {
-							some: {
-								isActive: true,
-								amount: { gte: query.minPrice, lte: query.maxPrice },
-							},
-						}
-					: undefined,
-			StockDetails: query.stockId
-				? { some: { stockId: query.stockId } }
-				: undefined,
-			tags: query.tags
-				? { some: { tag: { name: { in: query.tags } } } }
-				: undefined,
-		};
-		return where;
 	}
 
 	private getInclude() {

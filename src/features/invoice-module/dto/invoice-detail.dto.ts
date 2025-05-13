@@ -1,7 +1,8 @@
+import { ProductDto } from '@features/product-module/product/dto/product.dto';
 import {
-	ProductDto,
 	ProductEntity,
-} from '@features/product-module/product/dto/product.dto';
+	ProductMapper,
+} from '@features/product-module/product/product.mapper';
 import { ApiProperty } from '@nestjs/swagger';
 import { InvoiceDetail } from '@prisma/client';
 import { Type } from 'class-transformer';
@@ -38,7 +39,7 @@ export class InvoiceDetailDto {
 		this.invoiceId = data.invoiceId;
 		this.partialAmount = data.partialAmount.toNumber();
 		this.partialAmountVAT = data.partialAmountVAT.toNumber();
-		this.product = new ProductDto(data.product);
+		this.product = ProductMapper.toDto(data.product);
 		this.quantity = data.quantity;
 		this.unitCost = data.unitCost.toNumber();
 	}

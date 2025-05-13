@@ -1,24 +1,7 @@
 import { ImageDto } from '@lib/commons/image.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	Category,
-	Image,
-	Product,
-	ProductCost,
-	ProductPrice,
-	ProductTag,
-	Provider,
-	Tag,
-} from '@prisma/client';
+import { Category } from '@prisma/client';
 import { ProductProvider } from './product-provider.dto';
-
-export interface ProductEntity extends Product {
-	prices: ProductPrice[];
-	costs: ProductCost[];
-	image: Image | null;
-	provider: Provider | null;
-	tags?: (ProductTag & { tag: Tag })[];
-}
 
 export class ProductDto {
 	@ApiProperty({ example: 1 })
@@ -67,33 +50,4 @@ export class ProductDto {
 
 	@ApiPropertyOptional()
 	deletedAt: Date | null;
-
-	constructor(data: ProductEntity) {
-		this.name = data.name;
-		this.id = data.id;
-		this.code = data.code;
-		this.description = data.description || '';
-		this.provider = data.provider
-			? {
-					id: data.provider.id,
-					name: data.provider.businessName,
-				}
-			: undefined;
-		this.cost = data.costs[0].cost.toNumber();
-		this.iva = data.iva;
-		this.image = data.image
-			? {
-					id: data.image.id,
-					originalUrl: data.image.originalUrl,
-					previewUrl: data.image.previewUrl,
-				}
-			: undefined;
-		this.category = data.category;
-		this.price = data.prices[0].amount.toNumber();
-		this.quantity = data.quantity;
-		this.tags = data.tags ? data.tags.map((t) => t.tag.name) : [];
-		this.createdAt = data.createdAt;
-		this.updatedAt = data.updatedAt;
-		this.deletedAt = data.deletedAt;
-	}
 }

@@ -23,6 +23,9 @@ import { ImgValidator } from '@lib/pipes/file-validator.pipe';
 import { AppController } from '@lib/decorators/router/app-controller.decorator';
 import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { Role } from '@lib/constants/role.enum';
+import { CurrentUser } from '@lib/decorators/auth/current-user.decoratot';
+import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
+import { Public } from '@lib/decorators/auth/public.decorator';
 
 @AppController({ name: 'product', tag: 'Product' })
 @UseGuards(RolesGuard)
@@ -43,17 +46,20 @@ export class ProductController {
 	}
 
 	@Get()
-	@Roles(Role.Admin, Role.Employee, Role.User)
+	@Public()
 	@ApiPaginatedResponse(ProductDto)
-	findAll(@Query() query: ProductQueryDto) {
-		return this.productService.findAll(query);
+	findAll(@Query() query: ProductQueryDto, @CurrentUser() user?: TokenPayload) {
+		return this.productService.findAll(query, user);
 	}
 
 	@Get(':id')
-	@Roles(Role.Admin, Role.Employee, Role.User)
+	@Public()
 	@ApiResponse({ type: ProductDto })
-	findOne(@Param('id', IdValidationPipe) id: number) {
-		return this.productService.findOne(id);
+	findOne(
+		@Param('id', IdValidationPipe) id: number,
+		@CurrentUser() user?: TokenPayload,
+	) {
+		return this.productService.findOne(id, user);
 	}
 
 	@Patch(':id')

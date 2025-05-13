@@ -7,6 +7,7 @@ import { TagService } from '@features/product-module/tag/tag.service';
 import Decimal from 'decimal.js';
 import { genRandomCode } from '@lib/utils/encrypt';
 import { ProductService } from '@features/product-module/product/product.service';
+import { ProductPricingService } from '@features/product-module/product/product-pricing.service';
 import { ServiceTypeMapper } from './service-type.mapper';
 import { ServiceTypeFilter } from './service-type.filter';
 
@@ -14,9 +15,9 @@ import { ServiceTypeFilter } from './service-type.filter';
 export class ServiceTypeService {
 	constructor(
 		private readonly db: PrismaService,
-		private readonly productService: ProductService,
 		private readonly tagService: TagService,
 		private readonly imgService: ImageService,
+		private readonly productPricingService: ProductPricingService,
 	) {}
 
 	async create(dto: CreateServiceTypeDto) {
@@ -93,10 +94,16 @@ export class ServiceTypeService {
 		const serviceType = await this.db.$transaction(
 			async (tx) => {
 				if (!isSameCost)
-					this.productService.resetProductCostHistory(tx, prevST.productId);
+					this.productPricingService.resetProductCostHistory(
+						tx,
+						prevST.productId,
+					);
 
 				if (!isSamePrice)
-					this.productService.resetProductPriceHistory(tx, prevST.productId);
+					this.productPricingService.resetProductPriceHistory(
+						tx,
+						prevST.productId,
+					);
 
 				return await this.db.serviceType.update({
 					...this.getInclude(),
