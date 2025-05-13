@@ -2,9 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
-import { TagDto } from './dto/tag.dto';
 import { TagQueryDto } from './dto/tag-query.dto';
-import { Prisma, ProductTag, Tag } from '@prisma/client';
+import { ProductTag, Tag } from '@prisma/client';
+import { TagFilter } from './tag.filter';
+import { TagMapper } from './tag.mapper';
 
 @Injectable()
 export class TagService {
@@ -12,24 +13,38 @@ export class TagService {
 
 	async create(dto: CreateTagDto) {
 		const tag = await this.db.tag.create({ data: dto });
-		return new TagDto(tag);
+		return TagMapper.toDto(tag);
 	}
 
 	async findOne(id: number) {
 		const tag = await this.db.tag.findUnique({ where: { id } });
 		if (!tag) throw new NotFoundException('Tag no encontrada');
-		return new TagDto(tag);
+		return TagMapper.toDto(tag);
 	}
 
 	async findAll(query: TagQueryDto) {
-		return await this.filterTags(query);
+		const { baseWhere } = this.db.getBaseWhere(query);
+		const where = TagFilter.getWhere(baseWhere, query);
+		const [data, total] = await Promise.all([
+			this.db.tag.findMany({
+				...this.db.paginate(query),
+				where,
+			}),
+			this.db.tag.count({ where }),
+		]);
+		return this.db.getPagOutput({
+			page: query.page,
+			size: query.size,
+			total,
+			data: data.map((t) => TagMapper.toDto(t)),
+		});
 	}
 
 	async update(id: number, dto: UpdateTagDto) {
 		const exists = await this.db.tag.isExists({ id });
 		if (!exists) throw new NotFoundException('Tag no encontrada');
 		const updated = await this.db.tag.update({ where: { id }, data: dto });
-		return new TagDto(updated);
+		return TagMapper.toDto(updated);
 	}
 
 	async remove(id: number) {
@@ -40,13 +55,11 @@ export class TagService {
 
 	async restore(id: number) {
 		const tag = await this.db.tag.findFirst({
-			where: {
-				id,
-				deletedAt: { not: null },
-			},
+			where: { id, deletedAt: { not: null } },
 		});
-		if (!tag)
+		if (!tag) {
 			throw new NotFoundException('Tag no encontrado o aun no fue eliminado');
+		}
 		return await this.db.tag.update({
 			where: { id },
 			data: { deletedAt: null },
@@ -57,11 +70,7 @@ export class TagService {
 		return tags
 			? {
 					create: tags.map((tName) => ({
-						tag: {
-							connect: {
-								name: tName,
-							},
-						},
+						tag: { connect: { name: tName } },
 					})),
 				}
 			: undefined;
@@ -82,26 +91,5 @@ export class TagService {
 			})),
 			deleteMany: { tagId: { in: tagToDel } },
 		};
-	}
-
-	private async filterTags(query: TagQueryDto) {
-		const { baseWhere } = this.db.getBaseWhere(query);
-		const where: Prisma.TagWhereInput = {
-			...baseWhere,
-			name: { contains: query.name, mode: 'insensitive' },
-		};
-		const [data, total] = await Promise.all([
-			this.db.tag.findMany({
-				...this.db.paginate(query),
-				where,
-			}),
-			this.db.tag.count({ where }),
-		]);
-		return this.db.getPagOutput({
-			page: query.page,
-			size: query.size,
-			total,
-			data: data.map((t) => new TagDto(t)),
-		});
 	}
 }
