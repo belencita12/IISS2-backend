@@ -104,26 +104,7 @@ export class AppointmentService {
 		return {
 			include: {
 				pet: { include: { race: true, client: { include: { user: true } } } },
-				employee: { include: { user: true } },
-				service: true,
 			},
 		};
-	}
-
-	private connectEmployees(idList: number[]) {
-		return {
-			connect: idList.map((id) => ({
-				id,
-			})),
-		};
-	}
-
-	private async getPet(petId: number, user: TokenPayload) {
-		return await this.db.pet.findUnique({
-			where: {
-				id: petId,
-				clientId: user.clientId ? user.clientId : undefined,
-			},
-		});
 	}
 }
