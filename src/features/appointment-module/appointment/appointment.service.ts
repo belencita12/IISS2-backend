@@ -130,9 +130,14 @@ export class AppointmentService {
 			pet: {
 				id: query.petId,
 				clientId: user.clientId,
-				client: query.clientRuc
+				client: query.search
 					? {
-							user: { ruc: { contains: query.clientRuc, mode: 'insensitive' } },
+							user: {
+								OR: [
+									{ ruc: { contains: query.search, mode: 'insensitive' } },
+									{ fullName: { contains: query.search, mode: 'insensitive' } },
+								],
+							},
 						}
 					: undefined,
 			},
