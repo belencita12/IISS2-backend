@@ -13,9 +13,14 @@ export class AppointmentFilter {
 			pet: {
 				id: query.petId,
 				clientId: user.clientId,
-				client: query.clientRuc
+				client: query.search
 					? {
-							user: { ruc: { contains: query.clientRuc, mode: 'insensitive' } },
+							user: {
+								OR: [
+									{ fullName: { contains: query.search, mode: 'insensitive' } },
+									{ ruc: { contains: query.search, mode: 'insensitive' } },
+								],
+							},
 						}
 					: undefined,
 			},
