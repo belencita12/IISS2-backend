@@ -11,7 +11,7 @@ services:
     volumes:
       - /etc/nginx/certs:/etc/nginx/certs:ro
       - /etc/nginx/vhost.d
-      - /usr/share/nginx/html
+      - nginx_html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
     networks:
       - app-network
@@ -25,7 +25,7 @@ services:
     volumes:
       - /etc/nginx/certs:/etc/nginx/certs
       - /etc/nginx/vhost.d
-      - /usr/share/nginx/html
+      - nginx_html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - app-network
@@ -68,3 +68,4 @@ networks:
 
 volumes:
   pgdata:
+  nginx_html:
