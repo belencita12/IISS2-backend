@@ -1,14 +1,15 @@
 model VaccineRegistry {
-  id                Int             @id @default(autoincrement())
-  vaccineId         Int
-  vaccine           Vaccine         @relation(fields: [vaccineId], references: [id])
-  petId             Int
-  pet               Pet             @relation(fields: [petId], references:[id])
-  dose              Float
-  applicationDate   DateTime?
-  expectedDate      DateTime
+  id              Int       @id @default(autoincrement())
+  vaccineId       Int
+  petId           Int
+  dose            Float
+  applicationDate DateTime?
+  expectedDate    DateTime
 
   deletedAt DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  vaccine           Vaccine           @relation(fields: [vaccineId], references: [id])
+  pet               Pet               @relation(fields: [petId], references: [id])
 }

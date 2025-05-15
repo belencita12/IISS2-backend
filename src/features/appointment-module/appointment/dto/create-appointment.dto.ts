@@ -22,12 +22,11 @@ export class CreateAppointmentDto {
 	@ApiPropertyOptional()
 	details?: string;
 
+	@IsId('El identificador del empleado no es valido')
 	@ApiProperty()
-	@IsId()
-	serviceId: number;
+	employeeId: number;
 
 	@ApiProperty({ type: [Number] })
-	@ArrayMinSize(1, { message: 'Debe haber al menos un empleado' })
-	@IsId('El identificador del empleado', { each: true })
-	employeesId: number[];
+	@ArrayMinSize(1, { message: 'La cita debe contener al menos un servicio' })
+	serviceIds: number[];
 }

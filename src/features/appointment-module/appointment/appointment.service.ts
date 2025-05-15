@@ -2,48 +2,24 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
-import { AppointmentDto } from './dto/appointment.dto';
 import { ScheduleService } from '@features/appointment-module/schedule/schedule.service';
 import { AppointmentQueryDto } from './dto/appointment-query.dto';
-import { AppointmentStatus, Prisma } from '@prisma/client';
+import { AppointmentStatus } from '@prisma/client';
 import { AppointmentCancelDto } from './dto/appointment-cancel.dto';
+import { AppointmentFilter } from './appointment.filter';
+import { AppointmentMapper } from './appointment.mapper';
+import { AppointmentCreatorService } from './appointment-creator.service';
 
 @Injectable()
 export class AppointmentService {
 	constructor(
 		private readonly db: PrismaService,
 		private readonly scheduleService: ScheduleService,
+		private readonly appointmentCreationService: AppointmentCreatorService,
 	) {}
 
 	async create(dto: CreateAppointmentDto, user: TokenPayload) {
-		const service = await this.db.serviceType.findUnique({
-			where: { id: dto.serviceId },
-			select: { durationMin: true },
-		});
-		if (!service) throw new NotFoundException('Servicio no encontrado');
-
-		const pet = await this.getPet(dto.petId, user);
-		if (!pet) throw new NotFoundException('La mascota no fue encontrada');
-
-		const { employeesId, designatedDate, designatedTime, ...data } = dto;
-
-		const appDay = await this.scheduleService.validateAppByEmployees(
-			employeesId,
-			designatedDate,
-			designatedTime,
-			service.durationMin,
-		);
-
-		const appointment = await this.db.appointment.create({
-			data: {
-				...data,
-				designatedDate: appDay,
-				employee: this.connectEmployees(employeesId),
-			},
-			...this.getInclude(),
-		});
-
-		return new AppointmentDto(appointment);
+		return await this.appointmentCreationService.create(dto, user);
 	}
 
 	async cancelAppointment(
@@ -83,7 +59,8 @@ export class AppointmentService {
 	}
 
 	async findAll(query: AppointmentQueryDto, user: TokenPayload) {
-		const where = this.getFindAllWhere(query, user);
+		const { baseWhere } = this.db.getBaseWhere(query);
+		const where = AppointmentFilter.getWhere(baseWhere, query, user);
 		const [data, count] = await Promise.all([
 			this.db.appointment.findMany({
 				...this.db.paginate(query),
@@ -96,7 +73,7 @@ export class AppointmentService {
 			page: query.page,
 			size: query.size,
 			total: count,
-			data: data.map((a) => new AppointmentDto(a)),
+			data: data.map((a) => AppointmentMapper.toDto(a)),
 		});
 	}
 
@@ -114,7 +91,7 @@ export class AppointmentService {
 		if (!appointment)
 			throw new NotFoundException('No se ha encontrado la cita');
 
-		return new AppointmentDto(appointment);
+		return AppointmentMapper.toDto(appointment);
 	}
 
 	async remove(id: number) {
@@ -123,76 +100,13 @@ export class AppointmentService {
 		return await this.db.appointment.softDelete({ id });
 	}
 
-	private getFindAllWhere(query: AppointmentQueryDto, user: TokenPayload) {
-		const { baseWhere } = this.db.getBaseWhere(query);
-		const where: Prisma.AppointmentWhereInput = {
-			...baseWhere,
-			pet: {
-				id: query.petId,
-				clientId: user.clientId,
-				client: query.search
-					? {
-							user: {
-								OR: [
-									{ ruc: { contains: query.search, mode: 'insensitive' } },
-									{ fullName: { contains: query.search, mode: 'insensitive' } },
-								],
-							},
-						}
-					: undefined,
-			},
-		};
-
-		if (query.status) where.status = query.status;
-
-		if (query.serviceId) where.serviceId = query.serviceId;
-
-		if (query.fromDesignatedDate || query.toDesignatedDate) {
-			where.designatedDate = {
-				gte: query.fromDesignatedDate
-					? new Date(query.fromDesignatedDate)
-					: undefined,
-				lte: query.toDesignatedDate
-					? new Date(`${query.toDesignatedDate}T23:59:59.000Z`)
-					: undefined,
-			};
-		}
-
-		if (query.employeeRuc) {
-			where.employee = {
-				some: {
-					user: { ruc: { contains: query.employeeRuc, mode: 'insensitive' } },
-				},
-			};
-		}
-
-		return where;
-	}
-
 	private getInclude() {
 		return {
 			include: {
 				pet: { include: { race: true, client: { include: { user: true } } } },
+				appointmentDetails: { include: { service: true } },
 				employee: { include: { user: true } },
-				service: true,
 			},
 		};
-	}
-
-	private connectEmployees(idList: number[]) {
-		return {
-			connect: idList.map((id) => ({
-				id,
-			})),
-		};
-	}
-
-	private async getPet(petId: number, user: TokenPayload) {
-		return await this.db.pet.findUnique({
-			where: {
-				id: petId,
-				clientId: user.clientId ? user.clientId : undefined,
-			},
-		});
 	}
 }

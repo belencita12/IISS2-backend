@@ -38,6 +38,7 @@ import { InvoicePaymentMethodModule } from './payment-method-module/invoice-paym
 import { ServiceTypeModule } from './service-type/service-type.module';
 import { AppointmentModule } from './appointment-module/appointment/appointment.module';
 import { ScheduleService } from './appointment-module/schedule/schedule.service';
+import { AppointmentDetailModule } from './appointment-module/appointment-detail/appointment-detail.module';
 
 @Module({
 	imports: [
@@ -78,6 +79,7 @@ import { ScheduleService } from './appointment-module/schedule/schedule.service'
 		InvoicePaymentMethodModule,
 		ServiceTypeModule,
 		AppointmentModule,
+		AppointmentDetailModule,
 	],
 	providers: [ScheduleService],
 })
