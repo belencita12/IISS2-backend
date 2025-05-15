@@ -1,36 +1,21 @@
-version: '3.8'
+version: '3'
 
 services:
-  nginx-proxy:
-    image: jwilder/nginx-proxy
-    container_name: nginx-proxy
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /etc/nginx/certs:/etc/nginx/certs:ro
-      - /etc/nginx/vhost.d
-      - nginx_html:/usr/share/nginx/html
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-    networks:
-      - app-network
-
-  nginx-letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion
-    container_name: nginx-letsencrypt
-    restart: always
+  nginx:
+    image: jonasal/nginx-certbot:latest
+    restart: unless-stopped
     environment:
-      - NGINX_PROXY_CONTAINER=nginx-proxy
-    volumes:
-      - /etc/nginx/certs:/etc/nginx/certs
-      - /etc/nginx/vhost.d
-      - nginx_html:/usr/share/nginx/html
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - CERTBOT_EMAIL
+    env_file:
+      - ./nginx-certbot.env
+    ports:
+      - 80:80
+      - 443:443
+    volumes:                                    
+      - nginx_secrets:/etc/letsencrypt   
+      - ./user_conf.d:/etc/nginx/user_conf.d 
     networks:
-      - app-network
-    depends_on:
-      - nginx-proxy
+      - public
 
   nestjs:
     build: .
@@ -38,16 +23,12 @@ services:
     restart: always
     env_file: .env
     ports:
-      - "8080:8080"
+      - "${PORT:-8080}:${PORT:-8080}"
     expose:
-      - "8080"
-    environment: 
-      - VIRTUAL_HOST=${VIRTUAL_HOST}
-      - VIRTUAL_PORT=${VIRTUAL_PORT}
-      - LETSENCRYPT_HOST=${LETSENCRYPT_HOST}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - "${PORT:-8080}"
     networks:
-      - app-network
+      - public
+      - private
     depends_on:
       - postgres
 
@@ -60,12 +41,13 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
-      - app-network
+      - private
 
 networks:
-  app-network:
+  public:
+  private:
     driver: bridge
 
 volumes:
+  nginx_secrets:
   pgdata:
-  nginx_html:
