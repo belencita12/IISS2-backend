@@ -1,4 +1,4 @@
-import { ChartComponent } from '../chart/chart.types';
+import { ChartComponent, SupportedCharts } from '../chart/chart.types';
 
 export type ReportRow = {
 	values: string[];
@@ -12,6 +12,7 @@ export type SummaryItem = {
 
 export interface ReportChartConfig {
 	title: string;
+	type: SupportedCharts;
 	components: ChartComponent[];
 }
 

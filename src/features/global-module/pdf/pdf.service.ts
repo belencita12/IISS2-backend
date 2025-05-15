@@ -76,8 +76,10 @@ export class PdfService {
 				}
 			}
 
+			const isntPie = chart.type !== 'pie';
 			const chartBuffer = this.chartService.generateChartBuffer({
 				components: chart.components,
+				type: chart.type,
 			});
 
 			doc.font('Helvetica-Bold').fontSize(7).text(chart.title, x, y, {
@@ -94,19 +96,21 @@ export class PdfService {
 			let legendY = imageY;
 			const legendX = x + imageSize + 8;
 
-			chart.components.forEach((component) => {
-				doc.rect(legendX, legendY, 8, 8).fill(component.color).stroke();
-				doc
-					.font('Helvetica')
-					.fontSize(6)
-					.fillColor('black')
-					.text(
-						`${component.label} (${component.value})`,
-						legendX + 10,
-						legendY + 2,
-					);
-				legendY += 10;
-			});
+			if (!isntPie) {
+				chart.components.forEach((component) => {
+					doc.rect(legendX, legendY, 8, 8).fill(component.color).stroke();
+					doc
+						.font('Helvetica')
+						.fontSize(6)
+						.fillColor('black')
+						.text(
+							`${component.label} (${component.value})`,
+							legendX + 10,
+							legendY + 2,
+						);
+					legendY += 10;
+				});
+			}
 
 			x += 156 + paddingX;
 			column++;

@@ -6,4 +6,7 @@ export type ChartComponent = {
 
 export type GenerateChartConfig = {
 	components: ChartComponent[];
+	type: SupportedCharts;
 };
+
+export type SupportedCharts = 'pie' | 'line' | 'bar';

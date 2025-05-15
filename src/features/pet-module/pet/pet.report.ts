@@ -106,6 +106,7 @@ export class PetReport implements IReport<PetReportQueryDto> {
 		const chartConfig: ReportChartConfig[] = [
 			{
 				title: 'Mascotas por sexo',
+				type: 'pie',
 				components: [
 					{
 						label: 'Macho',
@@ -121,6 +122,7 @@ export class PetReport implements IReport<PetReportQueryDto> {
 			},
 			{
 				title: 'Mascotas con al menos 1 vacunación',
+				type: 'pie',
 				components: [
 					{
 						label: '1 >= vacunación',
@@ -136,6 +138,7 @@ export class PetReport implements IReport<PetReportQueryDto> {
 			},
 			{
 				title: 'Mascotas por especies',
+				type: 'pie',
 				components: result.map(({ speciesName, count }, i) => ({
 					color: colors[i],
 					value: Number(count),
