@@ -1,5 +1,15 @@
 export const toDate = (date: Date) => date.toISOString().split('T')[0];
 
+export const toDateFormat = (value: Date | string): string => {
+	if (typeof value === 'string') {
+		const [year, month, day] = value.split('-');
+		return `${day.padStart(2, '0')}-${month.padStart(2, '0')}-${year}`;
+	}
+	const date = new Date(value);
+	const [day, month, year] = date.toLocaleDateString('es-PY').split('/');
+	return `${day.padStart(2, '0')}-${month.padStart(2, '0')}-${year}`;
+};
+
 export const isGreaterThan = (date1: string | Date, date2: string | Date) => {
 	const firstDate =
 		typeof date1 === 'string' ? new Date(date1).getTime() : date1.getTime();
