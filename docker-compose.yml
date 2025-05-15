@@ -8,6 +8,19 @@ services:
     env_file: .env
     networks:
       - app-network
+    depends_on:
+      - postgres 
+
+  postgres:
+    image: postgres:16
+    container_name: postgres-db
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
 
   nginx:
     image: nginx:alpine
