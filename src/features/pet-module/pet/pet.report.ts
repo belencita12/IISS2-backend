@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { toDate, toDateFormat } from '@lib/utils/date';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { IReport } from '@lib/interfaces/report.interface';
 import { PetReportQueryDto } from './dto/pet-report-query.dto';
 import { PrismaService } from '@features/prisma/prisma.service';
@@ -26,7 +26,7 @@ export class PetReport implements IReport<PetReportQueryDto> {
 	) {
 		const pets = await this.db.pet.findMany({
 			...this.getSelect(),
-			where: { ...this.getRanges(query), deletedAt: null },
+			where: { ...this.getRanges(query) },
 		});
 		const [summaryItems, chartConfigs] = await this.generateSummaryData(query);
 		return this.pdfService.generateCompactTablePDF(
@@ -38,7 +38,15 @@ export class PetReport implements IReport<PetReportQueryDto> {
 				rowConfig: {
 					parentRowSpacing: 12,
 					alwaysShowHeader: true,
-					header: ['Nombre', 'Especie', 'Raza', 'Peso(Kg)', 'Sexo', 'Dueño'],
+					header: [
+						'Nombre',
+						'Especie',
+						'Raza',
+						'Peso(Kg)',
+						'Sexo',
+						'Dueño',
+						'Estado',
+					],
 					data: pets.map((p) => ({
 						values: [
 							p.name,
@@ -47,6 +55,7 @@ export class PetReport implements IReport<PetReportQueryDto> {
 							p.weight.toString(),
 							p.sex === 'M' ? 'Macho' : 'Hembra',
 							`${p.client.user.fullName} RUC:${p.client.user.ruc}`,
+							p.deletedAt ? 'Inactivo' : 'Activo',
 						],
 						details: {
 							header: [
@@ -63,10 +72,10 @@ export class PetReport implements IReport<PetReportQueryDto> {
 									v.applicationDate ? toDate(v.applicationDate) : '-',
 								],
 							})),
-							widths: [36, 20, 8, 36],
+							widths: [26, 20, 8, 46],
 						},
 					})),
-					widths: [36, 10, 10, 8, 10, 26],
+					widths: [26, 10, 10, 8, 10, 31, 5],
 				},
 			},
 			response,
@@ -76,76 +85,30 @@ export class PetReport implements IReport<PetReportQueryDto> {
 	private async generateSummaryData(
 		query: PetReportQueryDto,
 	): Promise<[SummaryItem[], ReportChartConfig[]]> {
-		const result = await this.db.$queryRaw<
-			{ speciesId: number; speciesName: string; count: number }[]
-		>`
-  SELECT 
-    s.id AS "speciesId",
-    s.name AS "speciesName",
-    COUNT(p.id) AS "count"
-  FROM "Pet" p
-  JOIN "Species" s ON p."speciesId" = s.id
-  WHERE p."deletedAt" IS NULL
-  GROUP BY s.id, s.name
-  ORDER BY s.name ASC;
-`;
-		const femalePets = await this.db.pet.count({
-			where: { ...this.getRanges(query), sex: 'F' },
-		});
+		const species = query.speciesId
+			? await this.db.species.findUnique({ where: { id: query.speciesId } })
+			: null;
+
+		if (!species && query.speciesId)
+			throw new NotFoundException('No se ha encontrado la especie indicada');
+
+		const colors = ColorUtils.getManyRanHexColor(7);
 		const registeredPets = await this.db.pet.count({
-			where: { ...this.getRanges(query), deletedAt: null },
+			where: { ...this.getRanges(query) },
 		});
-		const vaccinatedPets = await this.db.pet.count({
-			where: {
-				...this.getRanges(query),
-				vaccines: { some: { applicationDate: { not: null } } },
-				deletedAt: null,
-			},
-		});
-		const colors = ColorUtils.getManyRanHexColor(2);
-		const chartConfig: ReportChartConfig[] = [
-			{
-				title: 'Mascotas por sexo',
-				type: 'pie',
-				components: [
-					{
-						label: 'Macho',
-						value: registeredPets - femalePets,
-						color: colors[0],
-					},
-					{
-						label: 'Hembra',
-						value: femalePets,
-						color: colors[1],
-					},
-				],
-			},
-			{
-				title: 'Mascotas con al menos 1 vacunación',
-				type: 'pie',
-				components: [
-					{
-						label: '1 >= vacunación',
-						value: vaccinatedPets,
-						color: colors[0],
-					},
-					{
-						label: 'Sin vacunacas',
-						value: registeredPets - vaccinatedPets,
-						color: colors[1],
-					},
-				],
-			},
-			{
-				title: 'Mascotas por especies',
-				type: 'pie',
-				components: result.map(({ speciesName, count }, i) => ({
-					color: colors[i],
-					value: Number(count),
-					label: speciesName,
-				})),
-			},
-		];
+
+		if (registeredPets === 0)
+			throw new NotFoundException(
+				'Los datos son insuficientes para generar un reporte',
+			);
+
+		const [speciesChartConfig, vaccinatedPetsChart, activeInactiveChart] =
+			await Promise.all([
+				this.genSpeciesChartConfig(colors, query.speciesId),
+				this.genVaccinatedPetsChart(registeredPets, query, colors),
+				this.genActiveInactivePetsChart(registeredPets, query, colors),
+			]);
+
 		const summaryItems: SummaryItem[] = [
 			{
 				key: 'Rango de fechas',
@@ -153,17 +116,139 @@ export class PetReport implements IReport<PetReportQueryDto> {
 				desc: 'Rango de fechas en las que se ha realizado este reporte',
 			},
 			{
-				key: 'Mascotas Registradas',
+				key: 'Total de Mascotas Registradas',
 				value: registeredPets.toString(),
-				desc: 'Cantidad de mascotas registradas dentro del sistema',
+				desc: 'Cantidad de mascotas activas/inactivas encontradas bajo los filtros aplicados',
 			},
 		];
-		return [summaryItems, chartConfig];
+
+		if (query.speciesId && species) {
+			summaryItems.push({
+				key: 'Especie',
+				value: species.name,
+				desc: 'Especie utilizada para la realización de este reporte',
+			});
+		}
+
+		const chartConfigs: ReportChartConfig[] = [
+			speciesChartConfig,
+			vaccinatedPetsChart,
+			activeInactiveChart,
+		];
+
+		return [summaryItems, chartConfigs];
+	}
+
+	private async genVaccinatedPetsChart(
+		totalPets: number,
+		query: PetReportQueryDto,
+		colors: string[],
+	): Promise<ReportChartConfig> {
+		const vaccinatedPets = await this.db.pet.count({
+			where: {
+				...this.getRanges(query),
+				vaccines: { some: { applicationDate: { not: null } } },
+				deletedAt: null,
+			},
+		});
+
+		return {
+			title: 'Mascotas activas con al menos 1 vacunación',
+			type: 'pie',
+			components: [
+				{
+					label: '1 >= vacunación',
+					value: vaccinatedPets,
+					color: colors[0],
+				},
+				{
+					label: 'Sin vacunas',
+					value: totalPets - vaccinatedPets,
+					color: colors[1],
+				},
+			],
+		};
+	}
+
+	private async genActiveInactivePetsChart(
+		totalPets: number,
+		query: PetReportQueryDto,
+		colors: string[],
+	): Promise<ReportChartConfig> {
+		const inactivePets = await this.db.pet.count({
+			where: { ...this.getRanges(query), deletedAt: { not: null } },
+		});
+		return {
+			title: 'Mascotas por estado',
+			type: 'pie',
+			components: [
+				{
+					label: 'Activas',
+					value: totalPets,
+					color: colors[0],
+				},
+				{
+					label: 'Inactivas',
+					value: inactivePets,
+					color: colors[1],
+				},
+			],
+		};
+	}
+
+	private async genSpeciesChartConfig(
+		colors: string[],
+		speciesId?: number,
+	): Promise<ReportChartConfig> {
+		const whereCondition =
+			speciesId !== undefined
+				? Prisma.sql`WHERE p."deletedAt" IS NULL AND p."speciesId" = ${speciesId}`
+				: Prisma.sql`WHERE p."deletedAt" IS NULL`;
+
+		const petRaces = await this.db.$queryRaw<
+			{ raceId: number; raceName: string; count: number }[]
+		>(Prisma.sql`
+			SELECT 
+			r.id AS "raceId",
+			r.name AS "raceName",
+			COUNT(p.id) AS "count"
+			FROM "Pet" p
+			JOIN "Race" r ON p."raceId" = r.id
+			${whereCondition}
+			GROUP BY r.id, r.name
+			ORDER BY count DESC;
+  		`);
+		const topRaces = petRaces.slice(0, 6);
+		const otherCount = petRaces
+			.slice(6)
+			.reduce((acc, r) => acc + Number(r.count), 0);
+		const raceChartComponents = [
+			...topRaces.map((r, i) => ({
+				label: r.raceName,
+				value: Number(r.count),
+				color: colors[i % colors.length],
+			})),
+			...(otherCount > 0
+				? [
+						{
+							label: 'Otros',
+							value: otherCount,
+							color: colors[6],
+						},
+					]
+				: []),
+		];
+		return {
+			title: 'Mascotas activas por razas',
+			type: 'pie',
+			components: raceChartComponents,
+		};
 	}
 
 	private getRanges(query: PetReportQueryDto): Prisma.PetWhereInput {
 		return {
 			createdAt: { gte: new Date(query.from), lte: new Date(query.to) },
+			speciesId: query.speciesId,
 		};
 	}
 
@@ -174,6 +259,7 @@ export class PetReport implements IReport<PetReportQueryDto> {
 				name: true,
 				weight: true,
 				sex: true,
+				deletedAt: true,
 				race: { select: { name: true } },
 				species: { select: { name: true } },
 				client: { select: { user: { select: { fullName: true, ruc: true } } } },
