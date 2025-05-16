@@ -3,7 +3,6 @@ model Stock {
   name      String @unique
   address   String
   stockNum  Int    @default(autoincrement())
-  stampedId Int    @unique
 
   details StockDetails[]
 
@@ -11,7 +10,7 @@ model Stock {
   movementsFrom Movement[] @relation("StockOrigin")
   movementsTo   Movement[] @relation("StockDestination")
   Purchase      Purchase[]
-  stamped       Stamped    @relation(fields: [stampedId], references: [id])
+  stamped       Stamped[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
