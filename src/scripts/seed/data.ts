@@ -541,6 +541,7 @@ export const seedVaccineRegistries = async (db: PrismaTransactionClient) => {
 };
 
 export const seedStampe = async (db: PrismaTransactionClient) => {
+	const [stock1, stock2, stock3] = await db.stock.findMany();
 	let baseStamped = Math.floor(10000000 + Math.random() * 90000000);
 	const fromDate = new Date();
 	const toDate = new Date(fromDate);
@@ -548,9 +549,17 @@ export const seedStampe = async (db: PrismaTransactionClient) => {
 	const fromNum = 1;
 	const toNum = 1000;
 	const stampedData: Prisma.StampedCreateInput[] = [
-		{ stampedNum: baseStamped.toString(), fromNum, toNum, fromDate, toDate },
+		{
+			stampedNum: baseStamped.toString(),
+			stock: { connect: { id: stock1.id } },
+			fromNum,
+			toNum,
+			fromDate,
+			toDate,
+		},
 		{
 			stampedNum: (++baseStamped).toString(),
+			stock: { connect: { id: stock2.id } },
 			fromNum,
 			toNum,
 			fromDate,
@@ -559,6 +568,7 @@ export const seedStampe = async (db: PrismaTransactionClient) => {
 		{
 			stampedNum: (++baseStamped).toString(),
 			fromNum,
+			stock: { connect: { id: stock3.id } },
 			toNum,
 			fromDate,
 			toDate,
@@ -567,18 +577,24 @@ export const seedStampe = async (db: PrismaTransactionClient) => {
 	for (const s of stampedData) await db.stamped.create({ data: s });
 };
 
+export const seedPaymentMethods = async (db: PrismaTransactionClient) => {
+	await db.paymentMethod.createMany({
+		data: [
+			{ name: 'EFECTIVO', description: 'Pagar por medio de efectivo' },
+			{ name: 'TARJETA', description: 'Pagar por medio de tarjeta' },
+			{ name: 'CHEQUE', description: 'Pagar por medio de cheque' },
+		],
+	});
+};
+
 export const seedStock = async (db: PrismaTransactionClient) => {
 	const [prod1, prod2, prod3, prod4, prod5, prod6] = await db.product.findMany({
-		select: { id: true },
-	});
-	const [smtp1, smtp2, smtp3] = await db.stamped.findMany({
 		select: { id: true },
 	});
 	const stockData: Prisma.StockCreateInput[] = [
 		{
 			address: 'Encarnacion, Av. Caballero 800',
 			name: 'Deposito Original',
-			stamped: { connect: { id: smtp1.id } },
 			details: {
 				create: [
 					{ productId: prod1.id, amount: 720 },
@@ -589,7 +605,6 @@ export const seedStock = async (db: PrismaTransactionClient) => {
 		{
 			address: 'Fram, e/ Jose Leandro Oviedo & Itapua',
 			name: 'Deposito Reserva',
-			stamped: { connect: { id: smtp2.id } },
 			details: {
 				create: [
 					{ productId: prod2.id, amount: 720 },
@@ -600,7 +615,6 @@ export const seedStock = async (db: PrismaTransactionClient) => {
 		{
 			address: 'Hohenau, Av. Osvaldo Tischler 600',
 			name: 'Deposito Extra',
-			stamped: { connect: { id: smtp3.id } },
 			details: {
 				create: [
 					{ productId: prod3.id, amount: 720 },

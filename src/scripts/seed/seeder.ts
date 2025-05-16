@@ -15,6 +15,7 @@ import {
 	seedProviders,
 	seedStampe,
 	seedTags,
+	seedPaymentMethods,
 } from './data';
 
 export const seeder = async () => {
@@ -31,9 +32,6 @@ export const seeder = async () => {
 
 			await seedClients(tx);
 			console.log('Clients were seeded successfully\n');
-
-			await seedStampe(tx);
-			console.log('Stampeds were seeded successfully\n');
 
 			await seedSpecies(tx);
 			console.log('Species were seeded successfully\n');
@@ -65,8 +63,14 @@ export const seeder = async () => {
 			await seedVaccineRegistries(tx);
 			console.log('Vaccine Registries were seeded successfully\n');
 
+			await seedPaymentMethods(tx);
+			console.log('Payment Methods were seeded successfully\n');
+
 			await seedStock(tx);
 			console.log('Stock were seeded successfully\n');
+
+			await seedStampe(tx);
+			console.log('Stampeds were seeded successfully\n');
 		},
 		{ timeout: TIME_OUT_TX, maxWait: TIME_OUT_TX },
 	);
