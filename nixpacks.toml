@@ -1,6 +1,13 @@
 [phases.setup]
 nixPkgs = [
+  "nodejs",
   "freetype",
   "fontconfig",
-  "dejavu_fonts"
+  "dejavu_fonts",
+  "pixman",
+  "cairo",
+  "libjpeg",
+  "giflib",
+  "glib",
+  "pango"
 ]
