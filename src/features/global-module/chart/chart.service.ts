@@ -50,6 +50,10 @@ export class ChartService implements OnModuleInit {
 			},
 			type: type,
 		});
+		const ctx = canvas.getContext('2d');
+		ctx.fillStyle = 'black';
+		ctx.font = '30px "DejaVu Sans"';
+		ctx.fillText('Texto con DejaVu Sans', 50, 100);
 		const pngBuff = canvas.toBuffer('image/png');
 		chart.destroy();
 		return pngBuff;
