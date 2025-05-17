@@ -1,4 +1,4 @@
-import { Canvas } from 'canvas';
+import { createCanvas } from 'canvas';
 import * as ChartDataLabels from 'chartjs-plugin-datalabels';
 import type { Context } from 'chartjs-plugin-datalabels';
 import {
@@ -37,12 +37,13 @@ export class ChartService implements OnModuleInit {
 
 	generateChartBuffer({ components, type }: GenerateChartConfig) {
 		const isPie = type === 'pie';
-		const canvas = new Canvas(216, 216);
+		const canvas = createCanvas(216, 216);
 		const { backgroundColor, labels, data } =
 			this.processChartComponent(components);
 		const chart = new Chart(canvas as any, {
 			data: { labels, datasets: [{ data, backgroundColor }] },
 			options: {
+				responsive: false,
 				plugins: {
 					datalabels: isPie ? this.datalabelConfig() : { display: isPie },
 				},
