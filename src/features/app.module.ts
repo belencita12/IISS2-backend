@@ -39,6 +39,8 @@ import { ServiceTypeModule } from './service-type/service-type.module';
 import { AppointmentModule } from './appointment-module/appointment/appointment.module';
 import { ScheduleService } from './appointment-module/schedule/schedule.service';
 import { AppointmentDetailModule } from './appointment-module/appointment-detail/appointment-detail.module';
+import { ChartModule } from './global-module/chart/chart.module';
+import { PdfModule } from './global-module/pdf/pdf.module';
 
 @Module({
 	imports: [
@@ -79,6 +81,8 @@ import { AppointmentDetailModule } from './appointment-module/appointment-detail
 		InvoicePaymentMethodModule,
 		ServiceTypeModule,
 		AppointmentModule,
+		ChartModule,
+		PdfModule,
 		AppointmentDetailModule,
 	],
 	providers: [ScheduleService],
