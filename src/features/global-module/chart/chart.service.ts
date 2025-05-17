@@ -62,7 +62,7 @@ export class ChartService implements OnModuleInit {
 				const data = context.chart.data.datasets[0].data as number[];
 				const total = data.reduce((a, b) => a + b, 0);
 				const percentage = ((value / total) * 100).toFixed(0);
-				return percentage + ' %';
+				return `${percentage}%`;
 			},
 		};
 	}
