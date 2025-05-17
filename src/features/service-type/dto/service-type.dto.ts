@@ -47,25 +47,4 @@ export class ServiceTypeDto {
 	@Type(() => ImageDto)
 	@ApiPropertyOptional({ type: ImageDto })
 	img?: ImageDto;
-
-	constructor(data: ServiceTypeEntity) {
-		this.id = data.id;
-		this.name = data.name;
-		this.slug = data.slug;
-		this.description = data.description;
-		this.durationMin = data.durationMin;
-		this.maxColabs = data.maxColabs || undefined;
-		this.isPublic = data.isPublic;
-		this.iva = data.product.iva;
-		this.price = data.product.prices[0].amount.toNumber();
-		this.cost = data.product.costs[0].cost.toNumber();
-		this.tags = data.product.tags?.map((t) => t.tag.name);
-		this.img = data.product.image
-			? {
-					id: data.product.image.id,
-					originalUrl: data.product.image.originalUrl,
-					previewUrl: data.product.image.previewUrl,
-				}
-			: undefined;
-	}
 }

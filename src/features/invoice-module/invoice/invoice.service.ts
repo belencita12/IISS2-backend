@@ -16,7 +16,6 @@ import { InvoiceDto } from '../dto/invoice.dto';
 import { InvoiceQueryDto } from '../dto/invoice-query.dto';
 import { InvoicePaymentMethodDetailDto } from '../dto/invoice-payment-method-detail.dto';
 import { PayCreditInvoiceDto } from '../dto/pay-credit-invoice.dto';
-import { normalizeDate } from '@lib/utils/date';
 import { EnvService } from '@features/global-module/env/env.service';
 import { InvoiceFilter } from './invoice.filter';
 
@@ -202,31 +201,33 @@ export class InvoiceService {
 		stockId: number,
 		date: string,
 	) {
-		const stockData = await tx.stock.findUnique({
-			where: { id: stockId },
-			include: { stamped: true },
+		const stampedCandidates = await tx.stamped.findMany({
+			where: {
+				isActive: true,
+				stockId: stockId,
+				fromDate: { lte: new Date(date) },
+				toDate: { gte: new Date(date) },
+			},
+			orderBy: { createdAt: 'desc' },
+			take: 5,
 		});
-		if (!stockData) throw new NotFoundException('El deposito no existe');
-		if (
-			date > normalizeDate(stockData.stamped.toDate) ||
-			date < normalizeDate(stockData.stamped.fromDate)
-		)
-			throw new BadRequestException(
-				'La fecha de la factura es invalida para este timbrado',
-			);
-		if (stockData.stamped.currentNum >= stockData.stamped.toNum)
-			throw new BadRequestException(
-				'El timbrado ya no tiene numeros disponibles',
-			);
-		const stamped = stockData.stamped.stampedNum;
-		const invoiceNumber = `${stockData.stockNum.toString().padStart(3, '0')}-001-${(stockData.stamped.currentNum + 1).toString().padStart(7, '0')}`;
+
+		console.log(stampedCandidates);
+
+		const stampedData = stampedCandidates.find((s) => s.currentNum < s.toNum);
+
+		if (!stampedData) {
+			throw new NotFoundException('No hay ningun timbrado disponible');
+		}
+
+		const invoiceNumber = `${stampedData.stampedNum.toString().padStart(3, '0')}-001-${(stampedData.currentNum + 1).toString().padStart(7, '0')}`;
 
 		await tx.stamped.update({
-			where: { id: stockData.stampedId },
-			data: { currentNum: stockData.stamped.currentNum + 1 },
+			where: { id: stampedData.id },
+			data: { currentNum: stampedData.currentNum + 1 },
 		});
 
-		return { stamped, invoiceNumber };
+		return { stamped: stampedData.stampedNum, invoiceNumber };
 	}
 
 	private async processDetails(

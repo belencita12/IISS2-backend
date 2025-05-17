@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Stamped, Stock } from '@prisma/client';
 
 export interface StockEntity extends Stock {
-	stamped: Stamped;
+	stamped: Stamped[];
 }
 
 export class StockDto {
@@ -35,7 +35,7 @@ export class StockDto {
 		this.name = data.name;
 		this.address = data.address;
 		this.stockNum = data.stockNum.toString().padStart(3, '0');
-		this.stamped = data.stamped.stampedNum;
+		this.stamped = data.stamped[0].stampedNum;
 		this.createdAt = data.createdAt;
 		this.updatedAt = data.updatedAt;
 		this.deletedAt = data.deletedAt || undefined;
