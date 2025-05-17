@@ -97,8 +97,9 @@ export class AppointmentService {
 			where: { id },
 		});
 
-		if (!appointment)
+		if (!appointment) {
 			throw new NotFoundException('No se ha encontrado la cita');
+		}
 
 		return AppointmentMapper.toDto(appointment);
 	}
