@@ -30,7 +30,7 @@ export class PdfService {
 		response.setHeader('Content-Type', 'application/pdf');
 		response.setHeader(
 			'Content-Disposition',
-			`attachment; filename="${Date.now()}.pdf`,
+			`attachment; filename="${Date.now()}.pdf"`,
 		);
 		doc.pipe(response);
 		let currentY = this.renderTitle(doc, title, madeBy);
