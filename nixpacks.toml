@@ -1,0 +1,6 @@
+[phases.setup]
+nixPkgs = [
+  "freetype",
+  "fontconfig",
+  "dejavu_fonts"
+]
