@@ -5,10 +5,10 @@ export class ServiceTypeFilter {
 	static getWhere(
 		baseWhere: Prisma.ServiceTypeWhereInput,
 		dto: ServiceTypeQueryDto,
-	) {
+	): Prisma.ServiceTypeWhereInput {
 		return {
 			...baseWhere,
-			name: dto.name,
+			name: { contains: dto.name, mode: 'insensitive' },
 			product: {
 				prices:
 					dto.minPrice || dto.maxPrice
