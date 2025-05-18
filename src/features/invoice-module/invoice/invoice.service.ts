@@ -8,6 +8,7 @@ import {
 	ExtendedTransaction,
 	PrismaService,
 } from '@features/prisma/prisma.service';
+import { Response } from 'express';
 import { CreateInvoiceDetailDto } from '../dto/create-invoice-detail.dto';
 import { Prisma, Product, ProductPrice } from '@prisma/client';
 import Decimal from 'decimal.js';
@@ -18,13 +19,55 @@ import { InvoicePaymentMethodDetailDto } from '../dto/invoice-payment-method-det
 import { PayCreditInvoiceDto } from '../dto/pay-credit-invoice.dto';
 import { EnvService } from '@features/global-module/env/env.service';
 import { InvoiceFilter } from './invoice.filter';
+import * as pdfMake from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import { PdfService } from '@features/global-module/pdf/pdf.service';
+
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 @Injectable()
 export class InvoiceService {
+	vfs: any;
 	constructor(
 		private readonly db: PrismaService,
 		private readonly env: EnvService,
-	) {}
+		private readonly pdfService: PdfService,
+	) {
+		this.vfs = pdfFonts.pdfMake.vfs;
+	}
+
+	async generatePDF(id: number, res: Response) {
+		const invoice = await this.db.invoice.findUnique({
+			where: { id },
+			include: {
+				client: { include: { user: true } },
+				details: { include: { product: true } },
+			},
+		});
+
+		if (!invoice) throw new Error('Factura no encontrada');
+		const formattedInvoice = {
+			invoiceNumber: invoice.invoiceNumber,
+			stamped: invoice.stamped,
+			issueDate: invoice.issueDate,
+			type: invoice.type,
+			client: {
+				fullName: invoice.client.user.fullName,
+				address: invoice.client.user.adress ? invoice.client.user.adress : '',
+				ruc: invoice.client.user.ruc,
+			},
+			products: invoice.details.map((item) => ({
+				code: item.product.code,
+				name: item.product.name,
+				unitCost: item.unitCost.toNumber(),
+				quantity: item.quantity,
+				subtotal: item.unitCost.toNumber() * item.quantity,
+			})),
+			totalIVA: invoice.totalVat.toNumber(),
+			totalToPay: invoice.totalPayed.toNumber(),
+		};
+		return this.pdfService.generateFormattedInvoicePDF(formattedInvoice, res);
+	}
 
 	async create(dto: CreateInvoiceDto) {
 		const {
@@ -465,5 +508,12 @@ export class InvoiceService {
 			genericClient = createdClient;
 		}
 		return genericClient.id;
+	}
+
+	private formatCurrency(value: number): string {
+		return new Intl.NumberFormat('es-PY', {
+			style: 'currency',
+			currency: 'PYG',
+		}).format(value);
 	}
 }
