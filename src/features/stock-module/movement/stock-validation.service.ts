@@ -153,6 +153,11 @@ export class StockValidationService {
 		const isProdExists = await tx.product.isExists({ id: productId });
 		if (!isProdExists) throw new BadRequestException('Producto no encontrado');
 
+		await tx.product.update({
+			where: { id: productId },
+			data: { quantity: { increment: quantity } },
+		});
+
 		await tx.stockDetails.upsert({
 			where: {
 				stockId_productId: {
@@ -174,18 +179,20 @@ export class StockValidationService {
 	}
 
 	private async handleOutbound(
-		prisma: any,
+		tx: ExtendedTransaction,
 		productId: number,
 		originStockId: number,
 		quantity: number,
 	) {
-		const result = await prisma.stockDetails.updateMany({
-			where: { stockId: originStockId, productId },
+		const isProdExists = await tx.product.isExists({ id: productId });
+		if (!isProdExists) throw new BadRequestException('Producto no encontrado');
+		await tx.product.update({
+			where: { id: productId },
+			data: { quantity: { decrement: quantity } },
+		});
+		await tx.stockDetails.update({
+			where: { stockId_productId: { productId, stockId: originStockId } },
 			data: { amount: { decrement: quantity } },
 		});
-		if (!result.count)
-			throw new BadRequestException(
-				`Producto ${productId} no existe en stock ${originStockId}`,
-			);
 	}
 }
