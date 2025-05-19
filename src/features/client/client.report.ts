@@ -24,35 +24,55 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 		user: TokenPayload,
 		res: Response,
 	) {
+		const fromDate = new Date(query.from);
+		const toDate = new Date(query.to);
+
+		// Total de clientes en el sistema
 		const totalClients = await this.db.client.count();
-		const clientsInRange = await this.db.client.findMany({
-			take: 500,
-			where: this.getRanges(query),
-			include: {
-				user: true,
-				invoices: true,
+
+		// Clientes nuevos dentro del rango
+		const newClients = await this.db.client.count({
+			where: {
+				createdAt: {
+					gte: fromDate,
+					lte: toDate,
+				},
 			},
 		});
 
-		if (clientsInRange.length === 0) {
+		// Clientes con sus facturas dentro del rango para mostrar en el reporte
+		const allClients = await this.db.client.findMany({
+			take: 500,
+			include: {
+				user: true,
+				invoices: {
+					where: {
+						createdAt: {
+							gte: fromDate,
+							lte: toDate,
+						},
+					},
+				},
+			},
+		});
+
+		// Top 10 clientes por ingresos
+		const clientsWithInvoices = allClients.filter((c) => c.invoices.length > 0);
+
+		if (clientsWithInvoices.length === 0) {
 			throw new NotFoundException(
-				'No se encontraron clientes para ese rango de fechas',
+				'No se encontraron clientes con ingresos en este rango de fechas',
 			);
 		}
 
-		const newClients = clientsInRange.length;
-
-		const topClients = [...clientsInRange]
+		const topClients = [...clientsWithInvoices]
 			.map((client) => {
 				const total = client.invoices.reduce((sum, i) => {
 					return sum + Number(i.total ?? 0);
 				}, 0);
-
-				const validTotal = isNaN(total) ? 0 : total;
-
 				return {
 					...client,
-					total: validTotal,
+					total: isNaN(total) ? 0 : total,
 				};
 			})
 			.sort((a, b) => b.total - a.total)
@@ -106,7 +126,7 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 				charts: chartConfigs,
 				rowConfig: {
 					parentRowSpacing: 10,
-					alwaysShowHeader: true,
+					alwaysShowHeader: false,
 					header: [
 						'Nombre',
 						'Email',
@@ -115,11 +135,10 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 						'Ingresos (Gs)',
 						'Fecha Registro',
 					],
-					data: clientsInRange.map((c) => {
+					data: allClients.map((c) => {
 						const total = c.invoices.reduce((sum, i) => {
 							return sum + Number(i.total ?? 0);
 						}, 0);
-
 						const validTotal = isNaN(total) ? 0 : total;
 
 						return {
@@ -133,19 +152,10 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 							],
 						};
 					}),
-					widths: [25, 25, 15, 15, 15, 15],
+					widths: [25, 25, 10, 10, 10, 10],
 				},
 			},
 			res,
 		);
-	}
-
-	private getRanges(query: ClientReportQueryDto) {
-		return {
-			createdAt: {
-				gte: new Date(query.from),
-				lte: new Date(query.to),
-			},
-		};
 	}
 }
