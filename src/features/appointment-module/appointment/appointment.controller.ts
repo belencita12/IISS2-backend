@@ -7,7 +7,9 @@ import {
 	Query,
 	Patch,
 	UseGuards,
+	Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AppointmentService } from './appointment.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { AppController } from '@lib/decorators/router/app-controller.decorator';
@@ -23,11 +25,17 @@ import { RolesGuard } from '@lib/guard/role.guard';
 import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { Role } from '@lib/constants/role.enum';
 import { AppointmentCancelDto } from './dto/appointment-cancel.dto';
+import { AppointmentReport } from './appointment.report';
+import { ApiPdfResponse } from '@lib/decorators/documentation/api-pdf-response.decorator';
+import { AppointmentReportQueryDto } from './dto/appointment-report-query.dto';
 
 @AppController({ name: 'appointment', tag: 'Appointment' })
 @UseGuards(RolesGuard)
 export class AppointmentController {
-	constructor(private readonly appointmentService: AppointmentService) {}
+	constructor(
+		private readonly appointmentService: AppointmentService,
+		private readonly appointmentReport: AppointmentReport,
+	) {}
 
 	@Post()
 	@ApiBody({ type: CreateAppointmentDto })
@@ -43,12 +51,6 @@ export class AppointmentController {
 		@CurrentUser() user: TokenPayload,
 	) {
 		return this.appointmentService.findAll(query, user);
-	}
-
-	@Get(':id')
-	@ApiResponse({ type: AppointmentDto })
-	findOne(@Param('id') id: string) {
-		return this.appointmentService.findOne(+id);
 	}
 
 	@Get('/availability/:id')
@@ -80,5 +82,22 @@ export class AppointmentController {
 	@Roles(Role.Admin, Role.Employee)
 	remove(@Param('id') id: string) {
 		return this.appointmentService.remove(+id);
+	}
+
+	@Get('/report')
+	@ApiPdfResponse()
+	@Roles(Role.Admin, Role.Employee)
+	getReport(
+		@Res() response: Response,
+		@CurrentUser() user: TokenPayload,
+		@Query() query: AppointmentReportQueryDto,
+	) {
+		return this.appointmentReport.getReport(query, user, response);
+	}
+
+	@Get(':id')
+	@ApiResponse({ type: AppointmentDto })
+	findOne(@Param('id') id: string) {
+		return this.appointmentService.findOne(+id);
 	}
 }
