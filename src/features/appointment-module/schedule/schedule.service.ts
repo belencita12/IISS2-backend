@@ -65,12 +65,12 @@ export class ScheduleService {
 		duration: number,
 	): [Date, Date, number] {
 		const startAtDate = this.parseZonedDate(startDate, startTime);
-
 		this.validateDesignatedDay(startAtDate);
-		const appStart =
-			startAtDate.getUTCHours() * 60 + startAtDate.getUTCMinutes();
+		const zonedDate = DateTime.fromJSDate(startAtDate, {
+			zone: this.timeZone,
+		});
+		const appStart = zonedDate.hour * 60 + zonedDate.minute;
 		const appEnd = appStart + duration;
-
 		const endAtDate = this.toDateFromMinutes(startDate, appEnd);
 		return [startAtDate, endAtDate, appEnd];
 	}
