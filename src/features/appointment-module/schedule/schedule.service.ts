@@ -106,8 +106,11 @@ export class ScheduleService {
 			);
 		}
 
-		const isEmplExists = await this.db.employee.isExists({ id: emplId });
-		if (!isEmplExists) throw new NotFoundException('Empleado no encontrado');
+		const employee = await this.db.employee.findUnique({
+			select: { ...this.getEmplSelectHelper() },
+			where: { id: emplId },
+		});
+		if (!employee) throw new NotFoundException('Empleado no encontrado');
 
 		const [startAtDate, endAtDate, nextTime] = this.getDateRangeFromAppointment(
 			designatedDate,
@@ -115,11 +118,23 @@ export class ScheduleService {
 			duration,
 		);
 
+		const isInShift = this.isInShift(
+			employee.position.shifts,
+			startAtDate.getUTCDay(),
+		);
+
+		if (!isInShift) {
+			throw new BadRequestException(
+				'El empleado no trabaja en la fecha designada',
+			);
+		}
+
 		const isEmplScheduleOverlaped = await this.isEmplScheduleOverlaped(
 			emplId,
 			startAtDate,
 			endAtDate,
 		);
+
 		if (isEmplScheduleOverlaped) {
 			throw new BadRequestException(
 				'El empleado no se encuentra disponible en la fecha dada',
@@ -171,16 +186,18 @@ export class ScheduleService {
 		start?: number,
 		end?: number,
 	) {
+		if (weekDay === 0 || weekDay === 6) return null;
+
 		const shiftByDay = shifts.filter((s) => s.weekDay === weekDay);
-		let isOutOfShift = false;
-		if (start && end) {
-			isOutOfShift = shiftByDay.some(
-				(s) =>
-					this.toNumTime(s.startTime) <= start &&
-					this.toNumTime(s.endTime) >= end,
-			);
-		}
-		return shiftByDay.length > 0 && !isOutOfShift ? shiftByDay : null;
+		if (!start || !end) return shiftByDay.length > 0 ? shiftByDay : null;
+
+		const isWithinShift = shiftByDay.some((s) => {
+			const shiftStart = this.toNumTime(s.startTime);
+			const shiftEnd = this.toNumTime(s.endTime);
+			return shiftStart <= start && shiftEnd >= end;
+		});
+
+		return isWithinShift ? shiftByDay : null;
 	}
 
 	private calculateScheduleByDate(shifts: ShiftInfo, busyRanges: TimeRange[]) {
