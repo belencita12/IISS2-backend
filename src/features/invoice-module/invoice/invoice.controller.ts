@@ -6,11 +6,18 @@ import {
 	Delete,
 	Query,
 	UseGuards,
+	Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { CreateInvoiceDto } from '../dto/create-invoice.dto';
 import { InvoiceQueryDto } from '../dto/invoice-query.dto';
 import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
-import { ApiBody, ApiResponse } from '@nestjs/swagger';
+import {
+	ApiBody,
+	ApiOperation,
+	ApiProduces,
+	ApiResponse,
+} from '@nestjs/swagger';
 import { InvoiceDto } from '../dto/invoice.dto';
 import { RolesGuard } from '@lib/guard/role.guard';
 import { Roles } from '@lib/decorators/auth/roles.decorators';
@@ -44,6 +51,14 @@ export class InvoiceController {
 	@Roles(Role.Employee, Role.Admin)
 	findOne(@Param('id') id: string) {
 		return this.invoiceService.findOne(+id);
+	}
+
+	@Get(':id/pdf')
+	@ApiProduces('application/pdf')
+	@Roles(Role.Employee, Role.Admin)
+	@ApiOperation({ summary: 'Genera y devuelve el PDF de la factura' })
+	generatePDF(@Param('id') id: number, @Res() res: Response) {
+		return this.invoiceService.generatePDF(id, res);
 	}
 
 	@Post('/pay/:id')

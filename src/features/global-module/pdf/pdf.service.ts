@@ -10,6 +10,7 @@ import {
 } from './pdf.types';
 import { getToday, toDateFormat } from '@lib/utils/date';
 import { ChartService } from '../chart/chart.service';
+import { InvoiceData } from '@lib/types/invoice-pdf';
 
 @Injectable()
 export class PdfService {
@@ -19,6 +20,99 @@ export class PdfService {
 	private readonly topHeight = 64;
 
 	constructor(private readonly chartService: ChartService) {}
+
+	meses = [
+		'enero',
+		'febrero',
+		'marzo',
+		'abril',
+		'mayo',
+		'junio',
+		'julio',
+		'agosto',
+		'septiembre',
+		'octubre',
+		'noviembre',
+		'diciembre',
+	];
+	generateFormattedInvoicePDF = (invoice: InvoiceData, res: Response) => {
+		const doc = new PDFDocument({ margin: 20, size: 'A4' });
+
+		res.setHeader('Content-Type', 'application/pdf');
+		res.setHeader(
+			'Content-Disposition',
+			`attachment; filename="invoice_${invoice.invoiceNumber}.pdf"`,
+		);
+
+		doc.pipe(res);
+
+		const fecha = `${invoice.issueDate.getDate()} de ${this.meses[invoice.issueDate.getMonth()]} de ${invoice.issueDate.getFullYear()}`;
+		doc
+			.fontSize(12)
+			.text('NICOPETS - Clinica Veterinaria', 30, 30, { align: 'left' })
+			.fontSize(9)
+			.text('Dirección: Calle Ficticia N° 123 - Ciudad Mascota', 30, 45)
+			.text('Teléfono: (0981) 123-456 / Email: contacto@nicopet.com', 30, 57)
+			.text('Timbrado: 98589132 - Vigencia: 01/01/2025 al 31/12/2025', 30, 69)
+			.fontSize(11)
+			.text(
+				`Factura ${invoice.type === 'CASH' ? 'Contado' : 'Crédito'}`,
+				450,
+				30,
+			)
+			.text(`N°: ${invoice.invoiceNumber}`, 450, 45)
+			.text(`Fecha: ${fecha}`, 450, 60);
+
+		doc
+			.moveDown()
+			.rect(20, 90, 570, 50)
+			.stroke()
+			.fontSize(9)
+			.text(`Razón Social: ${invoice.client.fullName}`, 30, 100)
+			.text(`Dirección: ${invoice.client.address}`, 30, 115)
+			.text(`RUC/CI: ${invoice.client.ruc}`, 400, 100);
+
+		let currentY = 150;
+		doc
+			.rect(20, currentY, 570, 20)
+			.stroke()
+			.fontSize(9)
+			.text('Código', 30, currentY + 5)
+			.text('Descripción', 130, currentY + 5)
+			.text('Precio Vta.', 320, currentY + 5)
+			.text('Cant.', 420, currentY + 5)
+			.text('Subtotal', 500, currentY + 5);
+
+		currentY += 20;
+		invoice.products.forEach((product) => {
+			doc
+				.rect(20, currentY, 570, 20)
+				.stroke()
+				.fontSize(9)
+				.text(product.code, 30, currentY + 5)
+				.text(product.name, 130, currentY + 5)
+				.text(product.unitCost.toLocaleString('de-DE'), 320, currentY + 5)
+				.text(product.quantity.toString(), 420, currentY + 5)
+				.text(product.subtotal.toLocaleString('de-DE'), 500, currentY + 5);
+			currentY += 20;
+		});
+
+		currentY += 10;
+		doc
+			.fontSize(10)
+			.text(
+				`Total IVA: ${invoice.totalIVA.toLocaleString('de-DE')}`,
+				450,
+				currentY,
+			)
+			.text(
+				`Total a Pagar: ${invoice.totalToPay.toLocaleString('de-DE')}`,
+				450,
+				currentY + 12,
+			)
+			.font('Helvetica');
+		doc.end();
+	};
 
 	generateCompactTablePDF(reportConfig: ReportPdfConfig, response: Response) {
 		const { title, rowConfig, madeBy, summary, charts } = reportConfig;
