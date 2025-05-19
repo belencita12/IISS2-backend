@@ -8,6 +8,7 @@ import { ReceiptController } from './receipt/receipt.controller';
 import { ReceiptService } from './receipt/receipt.service';
 import { StampedController } from './stamped/stamped.controller';
 import { StampedService } from './stamped/stamped.service';
+import { InvoiceReport } from './invoice/invoice.report';
 
 @Module({
 	imports: [PrismaModule],
@@ -22,6 +23,7 @@ import { StampedService } from './stamped/stamped.service';
 		InvoiceDetailService,
 		ReceiptService,
 		StampedService,
+		InvoiceReport,
 	],
 })
 export class InvoiceModule {}
