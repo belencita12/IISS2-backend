@@ -1,14 +1,14 @@
 import { PrismaService } from '@features/prisma/prisma.service';
 import { ScheduleService } from '../schedule/schedule.service';
+import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
+import { AppointmentMapper } from './appointment.mapper';
+import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { Prisma } from '@prisma/client';
 import {
 	BadRequestException,
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
-import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
-import { AppointmentMapper } from './appointment.mapper';
-import { CreateAppointmentDto } from './dto/create-appointment.dto';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AppointmentCreatorService {
