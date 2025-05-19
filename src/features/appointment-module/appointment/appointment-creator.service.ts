@@ -68,7 +68,7 @@ export class AppointmentCreatorService {
 		>[] = [];
 		let totalDuration = 0;
 		let designatedTime = initTime;
-		const appStart = new Date(`${initDate}T${initTime}`);
+		const appStart = this.scheduleService.parseZonedDate(initDate, initTime);
 		for (const serviceId of servicesIds) {
 			const service = await this.validateService(serviceId);
 			const [startAt, endAt, nextTime] =

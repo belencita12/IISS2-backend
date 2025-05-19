@@ -21,7 +21,7 @@ export class ScheduleService {
 		this.timeZone = this.envService.get('SYS_TIME_ZONE');
 	}
 
-	private parseZonedDate(date: string, time: string): Date {
+	parseZonedDate(date: string, time: string): Date {
 		return DateTime.fromISO(`${date}T${time}`, {
 			zone: this.timeZone,
 		})
