@@ -31,7 +31,7 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 		const totalClients = await this.db.client.count();
 
 		// Clientes nuevos dentro del rango
-		const newClients = await this.db.client.count({
+		const newClientsRaw = await this.db.client.findMany({
 			where: {
 				createdAt: {
 					gte: fromDate,
@@ -39,8 +39,9 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 				},
 			},
 		});
+		const newClients = newClientsRaw.length;
 
-		// Clientes con sus facturas dentro del rango para mostrar en el reporte
+		// Clientes con facturas dentro del rango
 		const allClients = await this.db.client.findMany({
 			take: 500,
 			include: {
@@ -56,27 +57,26 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 			},
 		});
 
-		// Top 10 clientes por ingresos
-		const clientsWithInvoices = allClients.filter((c) => c.invoices.length > 0);
+		const clientsWithInvoices = allClients
+			.map((client) => {
+				const total = client.invoices.reduce(
+					(sum, i) => sum + Number(i.total ?? 0),
+					0,
+				);
+				return {
+					...client,
+					total: isNaN(total) ? 0 : total,
+				};
+			})
+			.filter((c) => c.total > 0)
+			.sort((a, b) => b.total - a.total)
+			.slice(0, 10); // Solo top 10
 
 		if (clientsWithInvoices.length === 0) {
 			throw new NotFoundException(
 				'No se encontraron clientes con ingresos en este rango de fechas',
 			);
 		}
-
-		const topClients = [...clientsWithInvoices]
-			.map((client) => {
-				const total = client.invoices.reduce((sum, i) => {
-					return sum + Number(i.total ?? 0);
-				}, 0);
-				return {
-					...client,
-					total: isNaN(total) ? 0 : total,
-				};
-			})
-			.sort((a, b) => b.total - a.total)
-			.slice(0, 10);
 
 		const summaryItems: SummaryItem[] = [
 			{
@@ -96,23 +96,25 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 			},
 		];
 
-		if (topClients.every((c) => c.total === 0)) {
-			summaryItems.push({
-				key: 'Ingresos',
-				value: 'Sin ingresos en este periodo',
-				desc: 'No se generaron ingresos registrados',
-			});
+		// Gráfico de evolución de nuevos clientes por mes
+		const groupedByMonth: Record<string, number> = {};
+		for (const client of newClientsRaw) {
+			const date = new Date(client.createdAt);
+			const key = `${date.getFullYear()}-${(date.getMonth() + 1)
+				.toString()
+				.padStart(2, '0')}`;
+			groupedByMonth[key] = (groupedByMonth[key] || 0) + 1;
 		}
 
-		const chartColors = ColorUtils.getManyRanHexColor(topClients.length);
-
-		const chartConfigs: ReportChartConfig[] = [
+		const sortedMonths = Object.keys(groupedByMonth).sort();
+		const chartColors = ColorUtils.getManyRanHexColor(sortedMonths.length);
+		const charts: ReportChartConfig[] = [
 			{
-				title: 'Top 10 clientes por ingresos',
-				type: 'bar',
-				components: topClients.map((c, i) => ({
-					label: `${c.user.fullName} (${c.user.ruc})`,
-					value: c.total,
+				title: 'Clientes nuevos por mes',
+				type: 'line',
+				components: sortedMonths.map((month, i) => ({
+					label: month,
+					value: groupedByMonth[month],
 					color: chartColors[i],
 				})),
 			},
@@ -123,7 +125,7 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 				title: 'Reporte de Clientes',
 				madeBy: `${user.fullName} con RUC: ${user.ruc}`,
 				summary: summaryItems,
-				charts: chartConfigs,
+				charts,
 				rowConfig: {
 					parentRowSpacing: 10,
 					alwaysShowHeader: false,
@@ -135,24 +137,17 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 						'Ingresos (Gs)',
 						'Fecha Registro',
 					],
-					data: allClients.map((c) => {
-						const total = c.invoices.reduce((sum, i) => {
-							return sum + Number(i.total ?? 0);
-						}, 0);
-						const validTotal = isNaN(total) ? 0 : total;
-
-						return {
-							values: [
-								c.user.fullName,
-								c.user.email,
-								c.user.phoneNumber,
-								c.user.ruc,
-								validTotal.toLocaleString(),
-								toDateFormat(c.createdAt),
-							],
-						};
-					}),
-					widths: [25, 25, 10, 10, 10, 10],
+					data: clientsWithInvoices.map((c) => ({
+						values: [
+							c.user.fullName,
+							c.user.email,
+							c.user.phoneNumber,
+							c.user.ruc,
+							c.total.toLocaleString(),
+							toDateFormat(c.createdAt),
+						],
+					})),
+					widths: [25, 25, 10, 15, 15, 15],
 				},
 			},
 			res,
