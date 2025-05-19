@@ -5,10 +5,11 @@ import { PrismaModule } from '@features/prisma/prisma.module';
 import { AuthModule } from '@features/auth-module/auth/auth.module';
 import { StockValidationService } from '@features/stock-module/movement/stock-validation.service';
 import { PurchaseDetailModule } from '../purchase-detail/purchase-detail.module';
+import { PurchaseReport } from './purchase.report';
 
 @Module({
 	imports: [PrismaModule, AuthModule, PurchaseDetailModule],
 	controllers: [PurchaseController],
-	providers: [PurchaseService, StockValidationService],
+	providers: [PurchaseService, StockValidationService, PurchaseReport],
 })
 export class PurchaseModule {}
