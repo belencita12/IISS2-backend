@@ -10,31 +10,7 @@ import {
 } from './pdf.types';
 import { getToday, toDateFormat } from '@lib/utils/date';
 import { ChartService } from '../chart/chart.service';
-
-interface ProductDetail {
-	code: string;
-	name: string;
-	unitCost: number;
-	quantity: number;
-	subtotal: number;
-}
-
-interface ClientInfo {
-	fullName: string;
-	address: string;
-	ruc: string;
-}
-
-interface InvoiceData {
-	invoiceNumber: string;
-	issueDate: Date;
-	stamped: string;
-	type: string;
-	client: ClientInfo;
-	products: ProductDetail[];
-	totalIVA: number;
-	totalToPay: number;
-}
+import { InvoiceData } from '@lib/types/invoice-pdf';
 
 @Injectable()
 export class PdfService {
