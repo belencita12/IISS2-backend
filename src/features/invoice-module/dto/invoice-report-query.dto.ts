@@ -12,16 +12,4 @@ export class InvoiceReportQueryDto {
 	@IsDbDate()
 	@ApiProperty({ example: '2025-12-31' })
 	to: string;
-
-	@Type(() => Number)
-	@QueryParam()
-	fromTotal?: number;
-
-	@Type(() => Number)
-	@QueryParam()
-	toTotal?: number;
-
-	@QueryParam()
-	@IsString()
-	search?: string;
 }
