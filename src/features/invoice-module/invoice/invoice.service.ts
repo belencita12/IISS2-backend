@@ -8,6 +8,7 @@ import {
 	ExtendedTransaction,
 	PrismaService,
 } from '@features/prisma/prisma.service';
+import { Response } from 'express';
 import { CreateInvoiceDetailDto } from '../dto/create-invoice-detail.dto';
 import { Prisma, Product, ProductPrice } from '@prisma/client';
 import Decimal from 'decimal.js';
@@ -16,16 +17,57 @@ import { InvoiceDto } from '../dto/invoice.dto';
 import { InvoiceQueryDto } from '../dto/invoice-query.dto';
 import { InvoicePaymentMethodDetailDto } from '../dto/invoice-payment-method-detail.dto';
 import { PayCreditInvoiceDto } from '../dto/pay-credit-invoice.dto';
-import { normalizeDate } from '@lib/utils/date';
 import { EnvService } from '@features/global-module/env/env.service';
 import { InvoiceFilter } from './invoice.filter';
+import * as pdfMake from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import { PdfService } from '@features/global-module/pdf/pdf.service';
+
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 @Injectable()
 export class InvoiceService {
+	vfs: any;
 	constructor(
 		private readonly db: PrismaService,
 		private readonly env: EnvService,
-	) {}
+		private readonly pdfService: PdfService,
+	) {
+		this.vfs = pdfFonts.pdfMake.vfs;
+	}
+
+	async generatePDF(id: number, res: Response) {
+		const invoice = await this.db.invoice.findUnique({
+			where: { id },
+			include: {
+				client: { include: { user: true } },
+				details: { include: { product: true } },
+			},
+		});
+
+		if (!invoice) throw new Error('Factura no encontrada');
+		const formattedInvoice = {
+			invoiceNumber: invoice.invoiceNumber,
+			stamped: invoice.stamped,
+			issueDate: invoice.issueDate,
+			type: invoice.type,
+			client: {
+				fullName: invoice.client.user.fullName,
+				address: invoice.client.user.adress ? invoice.client.user.adress : '',
+				ruc: invoice.client.user.ruc,
+			},
+			products: invoice.details.map((item) => ({
+				code: item.product.code,
+				name: item.product.name,
+				unitCost: item.unitCost.toNumber(),
+				quantity: item.quantity,
+				subtotal: item.unitCost.toNumber() * item.quantity,
+			})),
+			totalIVA: invoice.totalVat.toNumber(),
+			totalToPay: invoice.totalPayed.toNumber(),
+		};
+		return this.pdfService.generateFormattedInvoicePDF(formattedInvoice, res);
+	}
 
 	async create(dto: CreateInvoiceDto) {
 		const {
@@ -202,31 +244,33 @@ export class InvoiceService {
 		stockId: number,
 		date: string,
 	) {
-		const stockData = await tx.stock.findUnique({
-			where: { id: stockId },
-			include: { stamped: true },
+		const stampedCandidates = await tx.stamped.findMany({
+			where: {
+				isActive: true,
+				stockId: stockId,
+				fromDate: { lte: new Date(date) },
+				toDate: { gte: new Date(date) },
+			},
+			orderBy: { createdAt: 'desc' },
+			take: 5,
 		});
-		if (!stockData) throw new NotFoundException('El deposito no existe');
-		if (
-			date > normalizeDate(stockData.stamped.toDate) ||
-			date < normalizeDate(stockData.stamped.fromDate)
-		)
-			throw new BadRequestException(
-				'La fecha de la factura es invalida para este timbrado',
-			);
-		if (stockData.stamped.currentNum >= stockData.stamped.toNum)
-			throw new BadRequestException(
-				'El timbrado ya no tiene numeros disponibles',
-			);
-		const stamped = stockData.stamped.stampedNum;
-		const invoiceNumber = `${stockData.stockNum.toString().padStart(3, '0')}-001-${(stockData.stamped.currentNum + 1).toString().padStart(7, '0')}`;
+
+		console.log(stampedCandidates);
+
+		const stampedData = stampedCandidates.find((s) => s.currentNum < s.toNum);
+
+		if (!stampedData) {
+			throw new NotFoundException('No hay ningun timbrado disponible');
+		}
+
+		const invoiceNumber = `${stampedData.stampedNum.toString().padStart(3, '0')}-001-${(stampedData.currentNum + 1).toString().padStart(7, '0')}`;
 
 		await tx.stamped.update({
-			where: { id: stockData.stampedId },
-			data: { currentNum: stockData.stamped.currentNum + 1 },
+			where: { id: stampedData.id },
+			data: { currentNum: stampedData.currentNum + 1 },
 		});
 
-		return { stamped, invoiceNumber };
+		return { stamped: stampedData.stampedNum, invoiceNumber };
 	}
 
 	private async processDetails(
@@ -464,5 +508,12 @@ export class InvoiceService {
 			genericClient = createdClient;
 		}
 		return genericClient.id;
+	}
+
+	private formatCurrency(value: number): string {
+		return new Intl.NumberFormat('es-PY', {
+			style: 'currency',
+			currency: 'PYG',
+		}).format(value);
 	}
 }

@@ -4,6 +4,7 @@ import {
 	IsNumber,
 	IsOptional,
 	IsString,
+	IsTimeZone,
 	Max,
 	Min,
 	validateSync,
@@ -97,6 +98,12 @@ class EnvironmentVariables {
 	@IsOptional()
 	@IsString()
 	CLIENT_EXPRESS_RUC: string = 'XXX';
+
+	@IsOptional()
+	@IsOptional()
+	@IsString()
+	@IsTimeZone()
+	SYS_TIME_ZONE: string = 'America/Asuncion';
 }
 
 export type EnvType = InstanceType<typeof EnvironmentVariables>;

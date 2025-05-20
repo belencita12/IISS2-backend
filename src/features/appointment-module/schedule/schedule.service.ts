@@ -1,114 +1,174 @@
+import { DateTime } from 'luxon';
 import { SlotDto } from '@features/appointment-module/appointment/dto/slot.dto';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { AppointmentInfo, ShiftInfo, TimeRange } from '@lib/types/schedule';
+import { getUTCStartAndEndOfDay } from '@lib/utils/date';
 import {
 	BadRequestException,
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
-import { AppointmentStatus } from '@prisma/client';
+import { EnvService } from '@features/global-module/env/env.service';
 
 @Injectable()
 export class ScheduleService {
-	constructor(private readonly db: PrismaService) {}
+	private readonly timeZone: string;
+
+	constructor(
+		private readonly db: PrismaService,
+		private readonly envService: EnvService,
+	) {
+		this.timeZone = this.envService.get('SYS_TIME_ZONE');
+	}
+
+	parseZonedDate(date: string, time: string): Date {
+		return DateTime.fromISO(`${date}T${time}`, {
+			zone: this.timeZone,
+		})
+			.toUTC()
+			.toJSDate();
+	}
+
+	private toDateFromMinutes(date: string, minutes: number): Date {
+		const hours = Math.floor(minutes / 60);
+		const mins = minutes % 60;
+		return DateTime.fromObject(
+			{
+				year: parseInt(date.split('-')[0]),
+				month: parseInt(date.split('-')[1]),
+				day: parseInt(date.split('-')[2]),
+				hour: hours,
+				minute: mins,
+			},
+			{ zone: this.timeZone },
+		)
+			.toUTC()
+			.toJSDate();
+	}
+
+	toNumTime(timeStr: string) {
+		const [hours, min] = timeStr.split(':');
+		return parseInt(hours) * 60 + parseInt(min);
+	}
+
+	toStrTime(timeMin: number) {
+		const hours = Math.floor(timeMin / 60)
+			.toString()
+			.padStart(2, '0');
+		const min = (timeMin % 60).toString().padStart(2, '0');
+		return `${hours}:${min}`;
+	}
+
+	private getDateRangeFromAppointment(
+		startDate: string,
+		startTime: string,
+		duration: number,
+	): [Date, Date, number] {
+		const startAtDate = this.parseZonedDate(startDate, startTime);
+		this.validateDesignatedDay(startAtDate);
+		const zonedDate = DateTime.fromJSDate(startAtDate, {
+			zone: this.timeZone,
+		});
+		const appStart = zonedDate.hour * 60 + zonedDate.minute;
+		const appEnd = appStart + duration;
+		const endAtDate = this.toDateFromMinutes(startDate, appEnd);
+		return [startAtDate, endAtDate, appEnd];
+	}
+
+	async getScheduleByEmployeeId(emplId: number, date: Date) {
+		const weekDay = date.getUTCDay();
+		this.validateDesignatedDay(date);
+		const emplData = await this.db.employee.findUnique({
+			where: { id: emplId },
+			select: this.getEmplSelectHelper(),
+		});
+		if (!emplData) throw new NotFoundException('El empleado no existe');
+		const shiftByDay = this.isInShift(emplData.position.shifts, weekDay);
+		if (!shiftByDay) {
+			throw new BadRequestException(
+				`${emplData.user.fullName} no trabaja en la fecha designada`,
+			);
+		}
+		const appointments = await this.getAppointmentsFromEmplId(emplId, date);
+		const busyRanges = this.getBusyRanges(appointments);
+		return this.calculateScheduleByDate(shiftByDay, busyRanges);
+	}
 
 	async validateAppByEmployees(
-		emplIds: number[],
+		emplId: number,
 		designatedDate: string,
 		designatedTime: string,
 		duration: number,
-	) {
-		const isMulOfFive = this.toNumTime(designatedTime) % 5 === 0;
-
-		if (!isMulOfFive) {
+	): Promise<[Date, Date, number]> {
+		if (!(this.toNumTime(designatedTime) % 5 === 0)) {
 			throw new BadRequestException(
 				'La hora designada no es un minuto multiplo de 5',
 			);
 		}
 
-		const date = new Date(`${designatedDate}T${designatedTime}`);
-
-		this.validateDesignatedDay(date);
-
-		const emplData = await this.db.employee.findMany({
-			where: { id: { in: emplIds } },
-			select: this.getSelectHelper(date),
-		});
-
-		if (emplData.length !== emplIds.length) {
-			throw new BadRequestException(
-				'No todos los empleados están disponibles ese día',
-			);
-		}
-
-		const appStart = date.getHours() * 60 + date.getMinutes();
-		const appEnd = appStart + duration;
-		const weekDay = date.getUTCDay();
-
-		for (const e of emplData) {
-			const {
-				position: { shifts },
-				appointments,
-			} = e;
-
-			const shiftByDay = this.filterShiftsByWeekDay(shifts, weekDay);
-			if (shiftByDay.length === 0) {
-				throw new BadRequestException(
-					`${e.user.fullName} no trabaja en la fecha designada`,
-				);
-			}
-
-			if (!this.isInShift(shiftByDay, appStart, appEnd)) {
-				throw new BadRequestException(
-					`El horario de la cita esta fuera del turno de ${e.user.fullName}`,
-				);
-			}
-
-			if (this.isOverlapping(appointments, appStart, appEnd)) {
-				throw new BadRequestException(
-					`${e.user.fullName} tiene una cita dentro de ese horario`,
-				);
-			}
-		}
-
-		return date;
-	}
-
-	async getScheduleByEmployeeId(emplId: number, date: Date) {
-		const weekDay = date.getUTCDay();
-
-		this.validateDesignatedDay(date);
-
-		const emplData = await this.db.employee.findUnique({
+		const employee = await this.db.employee.findUnique({
+			select: { ...this.getEmplSelectHelper() },
 			where: { id: emplId },
-			select: this.getSelectHelper(date),
 		});
+		if (!employee) throw new NotFoundException('Empleado no encontrado');
 
-		if (!emplData) throw new NotFoundException('El empleado no existe');
+		const [startAtDate, endAtDate, nextTime] = this.getDateRangeFromAppointment(
+			designatedDate,
+			designatedTime,
+			duration,
+		);
 
-		const {
-			position: { shifts },
-			appointments,
-		} = emplData;
+		const isInShift = this.isInShift(
+			employee.position.shifts,
+			startAtDate.getUTCDay(),
+		);
 
-		const shiftByDay = this.filterShiftsByWeekDay(shifts, weekDay);
-		if (shiftByDay.length === 0) {
+		if (!isInShift) {
 			throw new BadRequestException(
-				`${emplData.user.fullName} no trabaja en la fecha designada`,
+				'El empleado no trabaja en la fecha designada',
 			);
 		}
 
-		const busyRanges = this.getBusyRanges(appointments);
-		return this.calculateScheduleByDate(shiftByDay, busyRanges);
+		const isEmplScheduleOverlaped = await this.isEmplScheduleOverlaped(
+			emplId,
+			startAtDate,
+			endAtDate,
+		);
+
+		if (isEmplScheduleOverlaped) {
+			throw new BadRequestException(
+				'El empleado no se encuentra disponible en la fecha dada',
+			);
+		}
+		return [startAtDate, endAtDate, nextTime];
 	}
 
-	private isOverlapping(
-		appointments: AppointmentInfo[],
-		start: number,
-		end: number,
+	private async isEmplScheduleOverlaped(
+		emplId: number,
+		startAt: Date,
+		endAt: Date,
 	) {
-		const busyRanges = this.getBusyRanges(appointments);
-		return busyRanges.some((r) => !(end <= r.start || start >= r.end));
+		const emplData = await this.db.employee.findMany({
+			where: {
+				id: emplId,
+				position: { shifts: { some: { weekDay: startAt.getUTCDay() } } },
+				appointments: {
+					some: {
+						appointmentDetails: {
+							some: {
+								AND: [
+									{ appointment: { status: 'PENDING' } },
+									{ startAt: { lt: endAt } },
+									{ endAt: { gt: startAt } },
+								],
+							},
+						},
+					},
+				},
+			},
+			select: { id: true },
+		});
+		return emplData.length !== 0;
 	}
 
 	private validateDesignatedDay(date: Date) {
@@ -120,17 +180,24 @@ export class ScheduleService {
 		}
 	}
 
-	private filterShiftsByWeekDay(shifts: ShiftInfo, weekDay: number) {
-		const shiftByDay = shifts.filter((s) => s.weekDay === weekDay);
-		return shiftByDay;
-	}
+	private isInShift(
+		shifts: ShiftInfo,
+		weekDay: number,
+		start?: number,
+		end?: number,
+	) {
+		if (weekDay === 0 || weekDay === 6) return null;
 
-	private isInShift(shifts: ShiftInfo, start: number, end: number) {
-		return shifts.some(
-			(s) =>
-				this.toNumTime(s.startTime) <= start &&
-				this.toNumTime(s.endTime) >= end,
-		);
+		const shiftByDay = shifts.filter((s) => s.weekDay === weekDay);
+		if (!start || !end) return shiftByDay.length > 0 ? shiftByDay : null;
+
+		const isWithinShift = shiftByDay.some((s) => {
+			const shiftStart = this.toNumTime(s.startTime);
+			const shiftEnd = this.toNumTime(s.endTime);
+			return shiftStart <= start && shiftEnd >= end;
+		});
+
+		return isWithinShift ? shiftByDay : null;
 	}
 
 	private calculateScheduleByDate(shifts: ShiftInfo, busyRanges: TimeRange[]) {
@@ -149,64 +216,31 @@ export class ScheduleService {
 	}
 
 	private getBusyRanges(appointments: AppointmentInfo[]): TimeRange[] {
-		return appointments.map((a) => {
-			const hours = a.designatedDate.getHours();
-			const minutes = a.designatedDate.getMinutes();
+		return appointments.map((app) => {
+			const hours = app.startAt.getHours();
+			const minutes = app.startAt.getMinutes();
 			const start = hours * 60 + minutes;
-			const end = start + a.service.durationMin;
+			const end = start + app.partialDuration;
 			return { start, end };
 		});
 	}
 
-	toNumTime(timeStr: string) {
-		const [hours, min] = timeStr.split(':');
-		return parseInt(hours) * 60 + parseInt(min);
-	}
-
-	toStrTime(timeMin: number) {
-		const hours = Math.floor(timeMin / 60)
-			.toString()
-			.padStart(2, '0');
-		const min = (timeMin % 60).toString().padStart(2, '0');
-		return `${hours}:${min}`;
-	}
-
-	private getSelectHelper(date: Date) {
-		const startOfDay = new Date(
-			Date.UTC(
-				date.getUTCFullYear(),
-				date.getUTCMonth(),
-				date.getUTCDate(),
-				0,
-				0,
-				0,
-				0,
-			),
-		);
-
-		const endOfDay = new Date(
-			Date.UTC(
-				date.getUTCFullYear(),
-				date.getUTCMonth(),
-				date.getUTCDate(),
-				23,
-				59,
-				59,
-			),
-		);
-
-		return {
-			user: { select: { fullName: true } },
-			appointments: {
-				where: {
-					designatedDate: { gte: startOfDay, lte: endOfDay },
-					status: AppointmentStatus.PENDING,
-				},
-				select: {
-					designatedDate: true,
-					service: { select: { durationMin: true } },
-				},
+	private async getAppointmentsFromEmplId(id: number, date: Date) {
+		const [startOfDay, endOfDay] = getUTCStartAndEndOfDay(date);
+		return await this.db.appointmentDetail.findMany({
+			where: {
+				appointment: { status: 'PENDING', employeeId: id },
+				startAt: { gte: startOfDay },
+				endAt: { lte: endOfDay },
 			},
+			select: { startAt: true, partialDuration: true },
+		});
+	}
+
+	private getEmplSelectHelper() {
+		return {
+			id: true,
+			user: { select: { fullName: true } },
 			position: {
 				select: {
 					shifts: {

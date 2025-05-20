@@ -15,9 +15,8 @@ export class StockService {
 	) {}
 
 	async create(dto: CreateStockDto) {
-		await this.stampedService.isStampedUsable(dto.stampedId);
 		const stock = await this.db.stock.create({
-			include: { stamped: true },
+			include: { stamped: { where: { isActive: true } } },
 			data: dto,
 		});
 		return new StockDto(stock);
@@ -28,7 +27,7 @@ export class StockService {
 		const [data, total] = await Promise.all([
 			this.db.stock.findMany({
 				...this.db.paginate(query),
-				include: { stamped: true },
+				include: { stamped: { where: { isActive: true } } },
 				where,
 			}),
 			this.db.stock.count({ where }),
@@ -43,7 +42,7 @@ export class StockService {
 
 	async findOne(id: number) {
 		const stock = await this.db.stock.findUnique({
-			include: { stamped: true },
+			include: { stamped: { where: { isActive: true } } },
 			where: { id },
 		});
 		if (!stock) throw new NotFoundException('Deposito no encontrado');
@@ -53,9 +52,9 @@ export class StockService {
 	async update(id: number, dto: UpdateStockDto) {
 		const exists = await this.db.stock.isExists({ id });
 		if (!exists) throw new NotFoundException('Deposito no encontrado');
-		if (dto.stampedId) await this.stampedService.isStampedUsable(dto.stampedId);
 		const stock = await this.db.stock.update({
 			where: { id, deletedAt: null },
+			include: { stamped: { where: { isActive: true } } },
 			data: dto,
 		});
 		return stock;
@@ -87,7 +86,9 @@ export class StockService {
 				address: { contains: query.address, mode: 'insensitive' },
 			}),
 			...(query.stamped !== undefined && {
-				stamped: { stampedNum: { contains: query.name, mode: 'insensitive' } },
+				stamped: {
+					some: { stampedNum: { contains: query.name, mode: 'insensitive' } },
+				},
 			}),
 		};
 		return where;

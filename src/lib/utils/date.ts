@@ -1,5 +1,15 @@
 export const toDate = (date: Date) => date.toISOString().split('T')[0];
 
+export const toDateFormat = (value: Date | string): string => {
+	if (typeof value === 'string') {
+		const [year, month, day] = value.split('-');
+		return `${day.padStart(2, '0')}-${month.padStart(2, '0')}-${year}`;
+	}
+	const date = new Date(value);
+	const [day, month, year] = date.toLocaleDateString('es-PY').split('/');
+	return `${day.padStart(2, '0')}-${month.padStart(2, '0')}-${year}`;
+};
+
 export const isGreaterThan = (date1: string | Date, date2: string | Date) => {
 	const firstDate =
 		typeof date1 === 'string' ? new Date(date1).getTime() : date1.getTime();
@@ -15,6 +25,34 @@ export const isInThisYear = (date: string | Date) => {
 	const thisYear = dateNow.getFullYear();
 	const thisMonth = dateNow.getMonth();
 	return thisYear === dateToCompare.getFullYear() || thisMonth !== 11;
+};
+
+export const getUTCStartAndEndOfDay = (date: Date): [Date, Date] => {
+	const startOfDay = new Date(
+		Date.UTC(
+			date.getUTCFullYear(),
+			date.getUTCMonth(),
+			date.getUTCDate(),
+			0,
+			0,
+			0,
+			0,
+		),
+	);
+
+	const endOfDay = new Date(
+		Date.UTC(
+			date.getUTCFullYear(),
+			date.getUTCMonth(),
+			date.getUTCDate(),
+			23,
+			59,
+			59,
+			999,
+		),
+	);
+
+	return [startOfDay, endOfDay];
 };
 
 export const toUtcDate = (dateStr: string): Date => {

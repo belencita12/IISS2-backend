@@ -9,7 +9,9 @@ import {
 	UseInterceptors,
 	UploadedFile,
 	UseGuards,
+	Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ClientService } from './client.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -24,11 +26,19 @@ import { Role } from '@lib/constants/role.enum';
 import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { RolesGuard } from '@lib/guard/role.guard';
 import { AppController } from '@lib/decorators/router/app-controller.decorator';
+import { ApiPdfResponse } from '@lib/decorators/documentation/api-pdf-response.decorator';
+import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
+import { ClientReportQueryDto } from './dto/client-report-query.dto';
+import { CurrentUser } from '@lib/decorators/auth/current-user.decoratot';
+import { ClientReport } from './client.report';
 
 @UseGuards(RolesGuard)
 @AppController({ name: 'client', tag: 'Client' })
 export class ClientController {
-	constructor(private readonly clientService: ClientService) {}
+	constructor(
+		private readonly clientService: ClientService,
+		private readonly clientReport: ClientReport,
+	) {}
 
 	@Post()
 	@Roles(Role.Admin)
@@ -43,6 +53,17 @@ export class ClientController {
 	@ApiPaginatedResponse(ClientDto)
 	findAll(@Query() query: ClientQueryDto) {
 		return this.clientService.findAll(query);
+	}
+
+	@Get('/report')
+	@ApiPdfResponse()
+	@Roles(Role.Admin, Role.Employee)
+	getReport(
+		@Res() response: Response,
+		@CurrentUser() user: TokenPayload,
+		@Query() query: ClientReportQueryDto,
+	) {
+		return this.clientReport.getReport(query, user, response);
 	}
 
 	@Get(':id')

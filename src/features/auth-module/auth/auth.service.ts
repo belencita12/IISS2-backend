@@ -37,7 +37,9 @@ export class AuthService {
 		const payload: TokenPayload = {
 			id: user.id,
 			username: user.username,
+			fullName: user.fullName,
 			email: user.email,
+			ruc: user.ruc,
 			roles: user.roles.map((role) => role.name),
 			employeeId: user.employee?.id,
 			clientId: user.client?.id,

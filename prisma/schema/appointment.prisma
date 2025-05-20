@@ -1,29 +1,39 @@
 model Appointment {
     id Int @id @default(autoincrement())
 
+    totalDuration  Int
     designatedDate DateTime
     completedDate  DateTime?
     details        String?
-
-    serviceId Int
-    petId     Int
-
-    cancelation AppointmentCancelation?
-    status      AppointmentStatus       @default(PENDING)
-    pet         Pet                     @relation(fields: [petId], references: [id])
-    service     ServiceType             @relation(fields: [serviceId], references: [id])
-    employee    Employee[]              @relation("EmplyeeAppointment")
+    petId          Int
+    employeeId     Int
 
     deletedAt DateTime?
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
+
+    appointmentDetails AppointmentDetail[]
+    cancelation        AppointmentCancelation?
+    status             AppointmentStatus       @default(PENDING)
+    pet                Pet                     @relation(fields: [petId], references: [id])
+    employee           Employee                @relation(fields: [employeeId], references: [id])
 }
 
-enum AppointmentStatus {
-    PENDING
-    IN_PROGRESS
-    COMPLETED
-    CANCELLED
+model AppointmentDetail {
+    id Int @id @default(autoincrement())
+
+    startAt         DateTime
+    endAt           DateTime
+    partialDuration Int
+    appointmentId   Int
+    serviceId       Int
+
+    deletedAt DateTime?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+
+    appointment Appointment @relation(fields: [appointmentId], references: [id])
+    service     ServiceType @relation(fields: [serviceId], references: [id])
 }
 
 model AppointmentCancelation {
@@ -35,4 +45,10 @@ model AppointmentCancelation {
 
     employee    Employee    @relation(fields: [managerId], references: [id])
     appointment Appointment @relation(fields: [appointmentId], references: [id])
+}
+
+enum AppointmentStatus {
+    PENDING
+    COMPLETED
+    CANCELLED
 }
