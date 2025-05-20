@@ -215,11 +215,10 @@ export class ScheduleService {
 		return schedule;
 	}
 
-	private getBusyRanges(appointments: AppointmentInfo[]): TimeRange[] {
-		return appointments.map((app) => {
-			const hours = app.startAt.getHours();
-			const minutes = app.startAt.getMinutes();
-			const start = hours * 60 + minutes;
+	private getBusyRanges(appDetails: AppointmentInfo[]): TimeRange[] {
+		return appDetails.map((app) => {
+			const dt = DateTime.fromJSDate(app.startAt, { zone: this.timeZone });
+			const start = dt.hour * 60 + dt.minute;
 			const end = start + app.partialDuration;
 			return { start, end };
 		});
