@@ -25,15 +25,33 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 		user: TokenPayload,
 		response: Response,
 	) {
-		const invoices = await this.db.invoice.findMany({
-			...this.getSelect(),
-			where: { ...this.getRanges(query) },
-		});
+		const topClients = await this.db.$queryRaw<
+			{
+				clientName: string;
+				ruc: string;
+				totalFacturado: number;
+				totalPagado: number;
+			}[]
+		>(Prisma.sql`
+  SELECT  
+    u."fullName"                        AS "clientName", 
+    u."ruc"                             AS "ruc", 
+    SUM(i.total)                         AS "totalFacturado", 
+    COALESCE(SUM(i."totalPayed"), 0::money)    AS "totalPagado" 
+  FROM "Invoice" i 
+    JOIN "Client"  c ON c.id = i."clientId" 
+    JOIN "User"    u ON u.id = c."userId" 
+  WHERE i."issueDate" BETWEEN ${query.from}::date AND ${query.to}::date 
+  GROUP BY u."fullName", u."ruc" 
+  ORDER BY "totalFacturado" DESC 
+  LIMIT 10;
+`);
+
 		const [summaryItems, chartConfigs] = await this.generateSummaryData(query);
 
 		return this.pdfService.generateCompactTablePDF(
 			{
-				title: 'Reporte de Facturas',
+				title: 'Reporte de Facturas - Top 10 Clientes',
 				madeBy: `${user.fullName} con RUC: ${user.ruc}`,
 				summary: summaryItems,
 				charts: chartConfigs,
@@ -43,26 +61,22 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 					header: [
 						'Cliente',
 						'RUC',
-						'N° Factura',
-						'Tipo',
-						'Fecha',
-						'Total',
-						'Pagado',
-						'Pendiente',
+						'Total Facturado',
+						'Total Pagado',
+						'Total Pendiente',
 					],
-					data: invoices.map((i) => ({
+					data: topClients.map((c) => ({
 						values: [
-							i.client.user.fullName,
-							i.client.user.ruc,
-							i.invoiceNumber,
-							i.type,
-							i.issueDate.toISOString().split('T')[0],
-							i.total.toNumber().toLocaleString(),
-							i.totalPayed.toNumber().toLocaleString(),
-							i.total.minus(i.totalPayed).toNumber().toLocaleString(),
+							c.clientName,
+							c.ruc,
+							Number(c.totalFacturado).toLocaleString(),
+							Number(c.totalPagado).toLocaleString(),
+							(
+								Number(c.totalFacturado) - Number(c.totalPagado)
+							).toLocaleString(),
 						],
 					})),
-					widths: [28, 14, 14, 8, 12, 10, 7, 7],
+					widths: [30, 15, 15, 15, 15],
 				},
 			},
 			response,
@@ -84,13 +98,11 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 			);
 		}
 
-		const [amountSummary, statusChart, typeChart, topClientsChart] =
-			await Promise.all([
-				this.genAmountSummary(query),
-				this.genPaidPendingChart(query, colors.slice(0, 2)),
-				this.genInvoiceTypeChart(query, colors.slice(2, 5)),
-				this.genTopClientsChart(query, colors.slice(5)),
-			]);
+		const [amountSummary, statusChart, typeChart] = await Promise.all([
+			this.genAmountSummary(query),
+			this.genPaidPendingChart(query, colors.slice(0, 2)),
+			this.genInvoiceTypeChart(query, colors.slice(2, 5)),
+		]);
 
 		const summaryItems: SummaryItem[] = [
 			{
@@ -101,12 +113,7 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 			...amountSummary,
 		];
 
-		const chartConfigs: ReportChartConfig[] = [
-			statusChart,
-			typeChart,
-			topClientsChart,
-		];
-
+		const chartConfigs: ReportChartConfig[] = [statusChart, typeChart];
 		return [summaryItems, chartConfigs];
 	}
 
@@ -198,38 +205,6 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 		};
 	}
 
-	private async genTopClientsChart(
-		query: InvoiceReportQueryDto,
-		colors: string[],
-	): Promise<ReportChartConfig> {
-		const results = await this.db.$queryRaw<
-			{
-				clientName: string;
-				total: number;
-			}[]
-		>(Prisma.sql`
-      SELECT 
-        u."fullName"  AS "clientName",
-        SUM(i.total)  AS "total"
-      FROM "Invoice" i
-      JOIN "Client"  c ON c.id = i."clientId"
-      JOIN "User"    u ON u.id = c."userId"
-       WHERE i."issueDate" BETWEEN ${query.from}::date AND ${query.to}::date
-      GROUP BY u."fullName"
-      ORDER BY total DESC
-      LIMIT 5;
-    `);
-		return {
-			title: 'Top clientes por monto total',
-			type: 'bar',
-			components: results.map((r, idx) => ({
-				label: r.clientName,
-				value: Number(r.total),
-				color: colors[idx % colors.length],
-			})),
-		};
-	}
-
 	private getRanges(query: InvoiceReportQueryDto): Prisma.InvoiceWhereInput {
 		const where: Prisma.InvoiceWhereInput = {
 			issueDate: {
@@ -237,46 +212,6 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 				lte: new Date(query.to),
 			},
 		};
-		if (query.fromTotal !== undefined || query.toTotal !== undefined) {
-			where.total = {};
-			if (query.fromTotal !== undefined) {
-				where.total.gte = query.fromTotal;
-			}
-			if (query.toTotal !== undefined) {
-				where.total.lte = query.toTotal;
-			}
-		}
-		if (query.search?.trim()) {
-			const texto = query.search.trim();
-			where.OR = [
-				{ invoiceNumber: { contains: texto, mode: 'insensitive' } },
-				{
-					client: {
-						user: { fullName: { contains: texto, mode: 'insensitive' } },
-					},
-				},
-				{ client: { user: { ruc: { contains: texto, mode: 'insensitive' } } } },
-			];
-		}
 		return where;
-	}
-
-	private getSelect() {
-		return {
-			take: 500,
-			select: {
-				client: {
-					select: {
-						user: { select: { fullName: true, ruc: true } },
-					},
-				},
-				invoiceNumber: true,
-				type: true,
-				issueDate: true,
-				total: true,
-				totalPayed: true,
-				totalVat: true,
-			},
-		};
 	}
 }
