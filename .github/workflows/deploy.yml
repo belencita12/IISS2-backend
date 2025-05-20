@@ -7,33 +7,36 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production-docker
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+    - name: Checkout repo
+      uses: actions/checkout@v4
 
-      - name: Debug secret (solo para test)
-        run: |
-          echo "Preview del secreto (primeras líneas):"
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | head -n 5
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{secrets.SSH_PRIVATE_KEY}}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan -H ${{secrets.SERVER_IP}} >> ~/.ssh/known_hosts
 
-      - name: Deploy via SSH
-        run: |
-          ssh -i ~/.ssh/id_ed25519 ${{secrets.SERVER_USER}}@${{secrets.SERVER_IP}} << 'EOF'
-            set -e
+    - name: Deploy via SSH
+      run: |
+        ssh -i ~/.ssh/id_ed25519 ${{secrets.SERVER_USER}}@${{secrets.SERVER_IP}} << 'EOF'
+          set -e
 
-            cd ${{secrets.APP_DIR}}
+          cd ${{secrets.APP_DIR}}
 
-            echo "=== Pulling latest code ==="
-            git pull origin dockerization
-            
-            echo "=== Shutting down old containers ==="
-            docker compose down
+          echo "=== Pulling latest code ==="
+          git pull origin dockerization
+          
+          echo "=== Shutting down old containers ==="
+          docker compose down
 
-            echo "=== Building and starting containers ==="
-            docker compose up -d --build
-            
-            echo "=== Docker Compose Logs ==="
-            docker compose logs
-            
-          EOF
+          echo "=== Building and starting containers ==="
+          docker compose up -d --build
+          
+          echo "=== Docker Compose Logs ==="
+          docker compose logs
+          
+        EOF
