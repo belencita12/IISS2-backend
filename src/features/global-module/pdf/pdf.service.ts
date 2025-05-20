@@ -151,7 +151,7 @@ export class PdfService {
 		startY: number,
 	): number {
 		const imageSize = 72;
-		const paddingX = 20;
+		const paddingX = 40;
 		const chartsPerRow = 3;
 
 		let y = startY;
@@ -198,7 +198,7 @@ export class PdfService {
 						.fontSize(6)
 						.fillColor('black')
 						.text(
-							`${component.label} (${component.value})`,
+							`${component.label}  (${Number(component.value).toLocaleString()})`,
 							legendX + 10,
 							legendY + 2,
 						);
