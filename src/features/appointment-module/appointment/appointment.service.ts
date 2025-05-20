@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
@@ -52,6 +56,11 @@ export class AppointmentService {
 		if (!appointment) {
 			throw new NotFoundException('La cita no existe o no esta pendiente');
 		}
+		if (appointment.designatedDate.toISOString() > new Date().toISOString()) {
+			throw new BadRequestException(
+				'No se puede finalizar una cita antes de la fecha designada',
+			);
+		}
 		await this.db.appointment.update({
 			where: { id: appId },
 			data: { status: AppointmentStatus.COMPLETED },
@@ -88,8 +97,9 @@ export class AppointmentService {
 			where: { id },
 		});
 
-		if (!appointment)
+		if (!appointment) {
 			throw new NotFoundException('No se ha encontrado la cita');
+		}
 
 		return AppointmentMapper.toDto(appointment);
 	}

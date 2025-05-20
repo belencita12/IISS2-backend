@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import { SlotDto } from '@features/appointment-module/appointment/dto/slot.dto';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { AppointmentInfo, ShiftInfo, TimeRange } from '@lib/types/schedule';
@@ -7,10 +8,43 @@ import {
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
+import { EnvService } from '@features/global-module/env/env.service';
 
 @Injectable()
 export class ScheduleService {
-	constructor(private readonly db: PrismaService) {}
+	private readonly timeZone: string;
+
+	constructor(
+		private readonly db: PrismaService,
+		private readonly envService: EnvService,
+	) {
+		this.timeZone = this.envService.get('SYS_TIME_ZONE');
+	}
+
+	parseZonedDate(date: string, time: string): Date {
+		return DateTime.fromISO(`${date}T${time}`, {
+			zone: this.timeZone,
+		})
+			.toUTC()
+			.toJSDate();
+	}
+
+	private toDateFromMinutes(date: string, minutes: number): Date {
+		const hours = Math.floor(minutes / 60);
+		const mins = minutes % 60;
+		return DateTime.fromObject(
+			{
+				year: parseInt(date.split('-')[0]),
+				month: parseInt(date.split('-')[1]),
+				day: parseInt(date.split('-')[2]),
+				hour: hours,
+				minute: mins,
+			},
+			{ zone: this.timeZone },
+		)
+			.toUTC()
+			.toJSDate();
+	}
 
 	toNumTime(timeStr: string) {
 		const [hours, min] = timeStr.split(':');
@@ -23,6 +57,22 @@ export class ScheduleService {
 			.padStart(2, '0');
 		const min = (timeMin % 60).toString().padStart(2, '0');
 		return `${hours}:${min}`;
+	}
+
+	private getDateRangeFromAppointment(
+		startDate: string,
+		startTime: string,
+		duration: number,
+	): [Date, Date, number] {
+		const startAtDate = this.parseZonedDate(startDate, startTime);
+		this.validateDesignatedDay(startAtDate);
+		const zonedDate = DateTime.fromJSDate(startAtDate, {
+			zone: this.timeZone,
+		});
+		const appStart = zonedDate.hour * 60 + zonedDate.minute;
+		const appEnd = appStart + duration;
+		const endAtDate = this.toDateFromMinutes(startDate, appEnd);
+		return [startAtDate, endAtDate, appEnd];
 	}
 
 	async getScheduleByEmployeeId(emplId: number, date: Date) {
@@ -56,8 +106,11 @@ export class ScheduleService {
 			);
 		}
 
-		const isEmplExists = await this.db.employee.isExists({ id: emplId });
-		if (!isEmplExists) throw new NotFoundException('Empleado no encontrado');
+		const employee = await this.db.employee.findUnique({
+			select: { ...this.getEmplSelectHelper() },
+			where: { id: emplId },
+		});
+		if (!employee) throw new NotFoundException('Empleado no encontrado');
 
 		const [startAtDate, endAtDate, nextTime] = this.getDateRangeFromAppointment(
 			designatedDate,
@@ -65,11 +118,23 @@ export class ScheduleService {
 			duration,
 		);
 
+		const isInShift = this.isInShift(
+			employee.position.shifts,
+			startAtDate.getUTCDay(),
+		);
+
+		if (!isInShift) {
+			throw new BadRequestException(
+				'El empleado no trabaja en la fecha designada',
+			);
+		}
+
 		const isEmplScheduleOverlaped = await this.isEmplScheduleOverlaped(
 			emplId,
 			startAtDate,
 			endAtDate,
 		);
+
 		if (isEmplScheduleOverlaped) {
 			throw new BadRequestException(
 				'El empleado no se encuentra disponible en la fecha dada',
@@ -106,19 +171,6 @@ export class ScheduleService {
 		return emplData.length !== 0;
 	}
 
-	private getDateRangeFromAppointment(
-		startDate: string,
-		startTime: string,
-		duration: number,
-	): [Date, Date, number] {
-		const startAtDate = new Date(`${startDate}T${startTime}`);
-		this.validateDesignatedDay(startAtDate);
-		const appStart = startAtDate.getHours() * 60 + startAtDate.getMinutes();
-		const appEnd = appStart + duration;
-		const endAtDate = new Date(`${startDate}T${this.toStrTime(appEnd)}`);
-		return [startAtDate, endAtDate, appEnd];
-	}
-
 	private validateDesignatedDay(date: Date) {
 		const today = new Date();
 		if (today.toISOString().split('T')[0] > date.toISOString().split('T')[0]) {
@@ -134,16 +186,18 @@ export class ScheduleService {
 		start?: number,
 		end?: number,
 	) {
+		if (weekDay === 0 || weekDay === 6) return null;
+
 		const shiftByDay = shifts.filter((s) => s.weekDay === weekDay);
-		let isOutOfShift = false;
-		if (start && end) {
-			isOutOfShift = shiftByDay.some(
-				(s) =>
-					this.toNumTime(s.startTime) <= start &&
-					this.toNumTime(s.endTime) >= end,
-			);
-		}
-		return shiftByDay.length > 0 && !isOutOfShift ? shiftByDay : null;
+		if (!start || !end) return shiftByDay.length > 0 ? shiftByDay : null;
+
+		const isWithinShift = shiftByDay.some((s) => {
+			const shiftStart = this.toNumTime(s.startTime);
+			const shiftEnd = this.toNumTime(s.endTime);
+			return shiftStart <= start && shiftEnd >= end;
+		});
+
+		return isWithinShift ? shiftByDay : null;
 	}
 
 	private calculateScheduleByDate(shifts: ShiftInfo, busyRanges: TimeRange[]) {
@@ -173,7 +227,6 @@ export class ScheduleService {
 
 	private async getAppointmentsFromEmplId(id: number, date: Date) {
 		const [startOfDay, endOfDay] = getUTCStartAndEndOfDay(date);
-		console.log(startOfDay, endOfDay);
 		return await this.db.appointmentDetail.findMany({
 			where: {
 				appointment: { status: 'PENDING', employeeId: id },

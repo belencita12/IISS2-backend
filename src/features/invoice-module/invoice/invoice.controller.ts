@@ -6,11 +6,18 @@ import {
 	Delete,
 	Query,
 	UseGuards,
+	Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { CreateInvoiceDto } from '../dto/create-invoice.dto';
 import { InvoiceQueryDto } from '../dto/invoice-query.dto';
 import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
-import { ApiBody, ApiResponse } from '@nestjs/swagger';
+import {
+	ApiBody,
+	ApiOperation,
+	ApiProduces,
+	ApiResponse,
+} from '@nestjs/swagger';
 import { InvoiceDto } from '../dto/invoice.dto';
 import { RolesGuard } from '@lib/guard/role.guard';
 import { Roles } from '@lib/decorators/auth/roles.decorators';
@@ -18,11 +25,19 @@ import { Role } from '@lib/constants/role.enum';
 import { AppController } from '@lib/decorators/router/app-controller.decorator';
 import { InvoiceService } from './invoice.service';
 import { PayCreditInvoiceDto } from '../dto/pay-credit-invoice.dto';
+import { ApiPdfResponse } from '@lib/decorators/documentation/api-pdf-response.decorator';
+import { CurrentUser } from '@lib/decorators/auth/current-user.decoratot';
+import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
+import { InvoiceReportQueryDto } from '../dto/invoice-report-query.dto';
+import { InvoiceReport } from './invoice.report';
 
 @AppController({ name: 'invoice', tag: 'Invoice' })
 @UseGuards(RolesGuard)
 export class InvoiceController {
-	constructor(private readonly invoiceService: InvoiceService) {}
+	constructor(
+		private readonly invoiceService: InvoiceService,
+		private readonly invoiceReport: InvoiceReport,
+	) {}
 
 	@Post()
 	@ApiResponse({ type: InvoiceDto })
@@ -30,6 +45,17 @@ export class InvoiceController {
 	@Roles(Role.Employee, Role.Admin)
 	create(@Body() createInvoiceDto: CreateInvoiceDto) {
 		return this.invoiceService.create(createInvoiceDto);
+	}
+
+	@Get('/report')
+	@ApiPdfResponse()
+	@Roles(Role.Admin, Role.Employee)
+	getReport(
+		@Res() response: Response,
+		@CurrentUser() user: TokenPayload,
+		@Query() query: InvoiceReportQueryDto,
+	) {
+		return this.invoiceReport.getReport(query, user, response);
 	}
 
 	@Get('/')
@@ -44,6 +70,14 @@ export class InvoiceController {
 	@Roles(Role.Employee, Role.Admin)
 	findOne(@Param('id') id: string) {
 		return this.invoiceService.findOne(+id);
+	}
+
+	@Get(':id/pdf')
+	@ApiProduces('application/pdf')
+	@Roles(Role.Employee, Role.Admin)
+	@ApiOperation({ summary: 'Genera y devuelve el PDF de la factura' })
+	generatePDF(@Param('id') id: number, @Res() res: Response) {
+		return this.invoiceService.generatePDF(id, res);
 	}
 
 	@Post('/pay/:id')
