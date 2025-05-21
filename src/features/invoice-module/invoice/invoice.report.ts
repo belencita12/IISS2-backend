@@ -69,11 +69,11 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 						values: [
 							c.clientName,
 							c.ruc,
-							Number(c.totalFacturado).toLocaleString(),
-							Number(c.totalPagado).toLocaleString(),
-							(
+							`${Number(c.totalFacturado).toLocaleString()} Gs.`,
+							`${Number(c.totalPagado).toLocaleString()} Gs.`,
+							`${(
 								Number(c.totalFacturado) - Number(c.totalPagado)
-							).toLocaleString(),
+							).toLocaleString()} Gs.`,
 						],
 					})),
 					widths: [30, 15, 15, 15, 15],
@@ -198,7 +198,7 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 			title: 'Facturas por tipo',
 			type: 'pie',
 			components: types.map((t, i) => ({
-				label: t.type,
+				label: t.type === 'CASH' ? 'Contado' : 'Crédito',
 				value: t._count._all,
 				color: colors[i % colors.length],
 			})),
