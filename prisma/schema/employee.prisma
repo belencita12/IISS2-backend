@@ -1,5 +1,5 @@
 model Employee {
-    id  Int    @id @default(autoincrement())
+    id Int @id @default(autoincrement())
 
     userId Int  @unique
     user   User @relation(fields: [userId], references: [id], onDelete: NoAction)
@@ -7,7 +7,9 @@ model Employee {
     positionId Int
     position   WorkPosition @relation(fields: [positionId], references: [id], onDelete: NoAction)
 
-    movements Movement[]
+    movements                Movement[]
+    appointments             Appointment[]
+    appointmentsCancelations AppointmentCancelation[]
 
     deletedAt DateTime?
     createdAt DateTime  @default(now())

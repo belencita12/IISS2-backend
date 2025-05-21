@@ -44,9 +44,13 @@ export class MovementDto {
 	@ApiProperty({ example: 2 })
 	destinationStock?: MinStockDto;
 
+	@ApiProperty()
+	isReversible: boolean;
+
 	constructor(data: MovementEntity) {
 		this.id = data.id;
 		this.description = data.description || undefined;
+		this.isReversible = data.isReversable;
 		this.manager = {
 			fullName: data.manager.user.fullName,
 			id: data.manager.user.id,

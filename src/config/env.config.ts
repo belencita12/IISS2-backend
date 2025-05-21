@@ -4,6 +4,7 @@ import {
 	IsNumber,
 	IsOptional,
 	IsString,
+	IsTimeZone,
 	Max,
 	Min,
 	validateSync,
@@ -89,6 +90,20 @@ class EnvironmentVariables {
 	@IsString()
 	@IsOptional()
 	SUPABASE_BUCKET: string = 'images';
+
+	@IsOptional()
+	@IsString()
+	CLIENT_EXPRESS_NAME: string = 'CLIENTE_EXPRESS';
+
+	@IsOptional()
+	@IsString()
+	CLIENT_EXPRESS_RUC: string = 'XXX';
+
+	@IsOptional()
+	@IsOptional()
+	@IsString()
+	@IsTimeZone()
+	SYS_TIME_ZONE: string = 'America/Asuncion';
 }
 
 export type EnvType = InstanceType<typeof EnvironmentVariables>;

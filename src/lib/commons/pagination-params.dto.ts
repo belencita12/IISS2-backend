@@ -1,12 +1,10 @@
-import {
-	IsBoolean,
-	IsDateString,
-	IsInt,
-	IsOptional,
-	Min,
-} from 'class-validator';
+import { IsBoolean, IsDate, IsInt, IsOptional, Min } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	ToEndOfDay,
+	ToStartOfDay,
+} from '@lib/decorators/validation/to-date.decorator';
 
 export class PaginationQueryDto {
 	@Type(() => Number)
@@ -23,12 +21,14 @@ export class PaginationQueryDto {
 	size?: number;
 
 	@IsOptional()
-	@IsDateString()
+	@ToStartOfDay()
+	@IsDate({ message: 'Fecha inicio debe ser una fecha valida' })
 	@ApiProperty({ required: false })
 	from?: string;
 
 	@IsOptional()
-	@IsDateString()
+	@ToEndOfDay()
+	@IsDate({ message: 'Fecha fin debe ser una fecha valida' })
 	@ApiProperty({ required: false })
 	to?: string;
 

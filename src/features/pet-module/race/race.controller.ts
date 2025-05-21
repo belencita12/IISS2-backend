@@ -1,5 +1,4 @@
 import {
-	Controller,
 	Get,
 	Post,
 	Body,
@@ -12,21 +11,20 @@ import {
 import { RaceService } from './race.service';
 import { CreateRaceDto } from './dto/create-race.dto';
 import { UpdateRaceDto } from './dto/update-race.dto';
-import { ApiTags, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiResponse, ApiBody } from '@nestjs/swagger';
 import { RaceQueryDto } from './dto/race-query.dto';
 import { RaceDto } from './dto/race.dto';
 import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { RolesGuard } from '@lib/guard/role.guard';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@ApiTags('Race')
-@Controller('race')
-@ApiBearerAuth('access-token')
+@AppController({ name: 'race', tag: 'Race' })
+@UseGuards(RolesGuard)
 export class RaceController {
 	constructor(private readonly raceService: RaceService) {}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Post()
 	@ApiResponse({ type: RaceDto })
@@ -35,7 +33,6 @@ export class RaceController {
 		return this.raceService.create(createRaceDto);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.User, Role.Admin)
 	@Get()
 	@ApiPaginatedResponse(RaceDto)
@@ -43,7 +40,6 @@ export class RaceController {
 		return this.raceService.findAll(query);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.User, Role.Admin)
 	@Get(':id')
 	@ApiResponse({ type: RaceDto })
@@ -51,7 +47,6 @@ export class RaceController {
 		return this.raceService.findOne(+id);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.User, Role.Admin)
 	@Patch(':id')
 	@ApiResponse({ type: RaceDto })
@@ -59,11 +54,17 @@ export class RaceController {
 		return this.raceService.update(+id, updateRaceDto);
 	}
 
-	@UseGuards(RolesGuard)
 	@Roles(Role.Admin)
 	@Delete(':id')
 	@ApiResponse({ type: RaceDto })
 	async remove(@Param('id') id: string) {
 		return this.raceService.remove(+id);
+	}
+
+	@Roles(Role.Admin)
+	@Patch('/restore/:id')
+	@ApiResponse({ type: RaceDto })
+	async restore(@Param('id') id: string) {
+		return this.raceService.restore(+id);
 	}
 }

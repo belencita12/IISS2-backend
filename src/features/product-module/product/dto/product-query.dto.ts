@@ -1,67 +1,60 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
-import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Category } from '@prisma/client';
 import { Type } from 'class-transformer';
-import {
-	IsEnum,
-	IsNumber,
-	IsOptional,
-	IsPositive,
-	IsString,
-	IsArray
-} from 'class-validator';
+import { IsEnum, IsString, IsArray } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { IsId } from '@lib/decorators/validation/is-id.decorator';
+import { QueryParam } from '@lib/decorators/validation/query-param.decorator';
+import { IsPositiveNumber } from '@lib/decorators/validation/is-money.decorator';
 
 export class ProductQueryDto extends PaginationQueryDto {
-	@ApiPropertyOptional()
-	@IsOptional()
+	@QueryParam()
 	@IsString()
 	name?: string;
 
-	@ApiPropertyOptional()
-	@IsOptional()
+	@QueryParam()
 	@IsString()
 	code?: string;
 
-	@ApiPropertyOptional({ enum: Category })
-	@IsOptional()
+	@Type(() => Number)
+	@QueryParam()
+	@IsId()
+	providerId?: number;
+
+	@QueryParam({ enum: Category })
 	@IsEnum(Category)
 	category?: Category;
 
-	@ApiPropertyOptional()
-	@IsOptional()
+	@QueryParam()
 	@Type(() => Number)
-	@IsNumber()
-	@IsPositive()
+	@IsPositiveNumber()
 	minCost?: number;
 
-	@ApiPropertyOptional()
-	@IsOptional()
+	@QueryParam()
 	@Type(() => Number)
-	@IsNumber()
-	@IsPositive()
+	@IsPositiveNumber()
 	maxCost?: number;
 
-	@ApiPropertyOptional()
-	@IsOptional()
+	@QueryParam()
 	@Type(() => Number)
-	@IsNumber()
-	@IsPositive()
+	@IsPositiveNumber()
 	minPrice?: number;
 
-	@ApiPropertyOptional()
-	@IsOptional()
+	@QueryParam()
 	@Type(() => Number)
-	@IsNumber()
-	@IsPositive()
+	@IsPositiveNumber()
 	maxPrice?: number;
 
-
-	@ApiPropertyOptional()
-	@IsOptional()
+	@QueryParam()
 	@IsArray()
 	@IsString({ each: true })
-	@Transform(({ value }) => Array.isArray(value) ? value : value.split(',').map(tag => tag.trim()))
+	@Transform(({ value }) =>
+		Array.isArray(value) ? value : value.split(',').map((tag) => tag.trim()),
+	)
 	tags?: string[];
-}
 
+	@Type(() => Number)
+	@QueryParam()
+	@IsId('El identificador del deposito')
+	stockId?: number;
+}

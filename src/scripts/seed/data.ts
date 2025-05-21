@@ -1,7 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { hash } from '../../lib/utils/encrypt';
 import { DefaultArgs } from '@prisma/client/runtime/library';
-import { dogImgs, productsImgs, uploadImg } from './images';
 
 type PrismaTransactionClient = Omit<
 	PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
@@ -23,7 +22,7 @@ export const seedEmployees = async (db: PrismaTransactionClient) => {
 					ruc: '1234567-1',
 					username: 'employee_2@example',
 					password,
-					phoneNumber: '595985764321',
+					phoneNumber: '+595985764321',
 					roles: { connect: [{ name: 'EMPLOYEE' }] },
 					fullName: 'Richard Valgaba',
 					email: 'employee2@gmail.com',
@@ -39,7 +38,7 @@ export const seedEmployees = async (db: PrismaTransactionClient) => {
 					ruc: '7654321-2',
 					username: 'employee_1@example',
 					password,
-					phoneNumber: '595985764321',
+					phoneNumber: '+595985764322',
 					roles: { connect: [{ name: 'EMPLOYEE' }] },
 					fullName: 'Fernando Valgaba',
 					email: 'employee1@gmail.com',
@@ -55,7 +54,7 @@ export const seedEmployees = async (db: PrismaTransactionClient) => {
 					username: 'admin@example',
 					password,
 					ruc: '7777789-1',
-					phoneNumber: '595985764321',
+					phoneNumber: '+595985764323',
 					fullName: 'Florentino Valgaba',
 					email: 'admin@gmail.com',
 					roles: { connect: [{ name: 'ADMIN' }, { name: 'EMPLOYEE' }] },
@@ -76,7 +75,7 @@ export const seedClients = async (db: PrismaTransactionClient) => {
 				create: {
 					username: 'richard@example',
 					password,
-					phoneNumber: '595985764333',
+					phoneNumber: '+595985764333',
 					ruc: '5622567-1',
 					adress: 'E/ Posadas y Lomas Valentinas',
 					roles: { connect: [{ name: 'USER' }] },
@@ -90,7 +89,7 @@ export const seedClients = async (db: PrismaTransactionClient) => {
 				create: {
 					username: 'adrian@example',
 					password,
-					phoneNumber: '595985764321',
+					phoneNumber: '+595985764324',
 					ruc: '8373829-1',
 					adress: 'Av Irrazabal - Esq. 25 de Mayo',
 					roles: { connect: [{ name: 'USER' }] },
@@ -104,7 +103,7 @@ export const seedClients = async (db: PrismaTransactionClient) => {
 				create: {
 					username: 'jose@example',
 					password,
-					phoneNumber: '595922764321',
+					phoneNumber: '+595922764325',
 					ruc: '3748492-1',
 					adress: 'Calle Independencia Esq. Villarica',
 					roles: { connect: [{ name: 'USER' }] },
@@ -161,9 +160,6 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 		orderBy: { name: 'asc' },
 	});
 	const clients = await db.client.findMany();
-	const goldenImg = await uploadImg(dogImgs[0], db);
-	const labradorImg = await uploadImg(dogImgs[1], db);
-	const mestizoImg = await uploadImg(dogImgs[2], db);
 
 	const [client1, client2, client3] = clients;
 	const [race1, race2, race3] = race;
@@ -213,7 +209,6 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 				weight: 5.5,
 				sex: 'M',
 				dateOfBirth,
-				imageId: labradorImg.id,
 			},
 			{
 				name: 'Chulo',
@@ -223,7 +218,6 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 				weight: 5.5,
 				sex: 'M',
 				dateOfBirth,
-				imageId: labradorImg.id,
 			},
 			{
 				name: 'Zoco',
@@ -233,7 +227,6 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 				weight: 7.5,
 				sex: 'M',
 				dateOfBirth,
-				imageId: goldenImg.id,
 			},
 			{
 				name: 'Frufru',
@@ -243,7 +236,6 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 				weight: 3.5,
 				sex: 'M',
 				dateOfBirth,
-				imageId: mestizoImg.id,
 			},
 		],
 	});
@@ -251,16 +243,16 @@ export const seedPets = async (db: PrismaTransactionClient) => {
 
 export const seedWorkPositions = async (db: PrismaTransactionClient) => {
 	const shiftsData = [
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 1 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 1 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 2 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 2 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 3 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 3 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 4 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 4 },
-		{ startTime: '08:00:00', endTime: '12:00:00', weekDay: 5 },
-		{ startTime: '14:00:00', endTime: '18:00:00', weekDay: 5 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 1 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 1 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 2 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 2 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 3 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 3 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 4 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 4 },
+		{ startTime: '08:00', endTime: '12:00', weekDay: 5 },
+		{ startTime: '14:00', endTime: '18:00', weekDay: 5 },
 	];
 
 	const workPositions: Prisma.WorkPositionCreateInput[] = [
@@ -277,79 +269,146 @@ export const seedWorkPositions = async (db: PrismaTransactionClient) => {
 	}
 };
 
+export const seedProviders = async (db: PrismaTransactionClient) => {
+	const providersData: Prisma.ProviderCreateInput[] = [
+		{
+			phoneNumber: '+595985103811',
+			businessName: 'Juguetitos Bonitos S.A.',
+			ruc: '1236429-1',
+		},
+		{
+			phoneNumber: '+595987103810',
+			businessName: 'Comidita Bonita S.A.',
+			ruc: '1246428-4',
+		},
+		{
+			phoneNumber: '+595984103719',
+			businessName: 'Medicamentos Bonitos S.A.',
+			ruc: '1116429-0',
+		},
+	];
+	for (const p of providersData) {
+		await db.provider.create({ data: p });
+	}
+};
+
+export const seedTags = async (db: PrismaTransactionClient) => {
+	const TAGS_NAMES = [
+		'perro',
+		'gato',
+		'juguete',
+		'comida',
+		'nutricion',
+		'medicamento',
+		'aseo',
+		'cachorro',
+		'correa',
+		'pelota',
+	];
+	await db.tag.createMany({ data: TAGS_NAMES.map((t) => ({ name: t })) });
+};
+
 export const seedProducts = async (db: PrismaTransactionClient) => {
-	const prod1Img = await uploadImg(productsImgs[0], db);
-	const prod2Img = await uploadImg(productsImgs[1], db);
-	const prod3Img = await uploadImg(productsImgs[2], db);
-	const prod4Img = await uploadImg(productsImgs[3], db);
+	const [{ id: prov1Id }, { id: _prov2Id }, { id: prov3Id }] =
+		await db.provider.findMany();
 
 	const productsData: Prisma.ProductCreateInput[] = [
 		{
 			name: 'Desparasitante Perro',
 			category: 'PRODUCT',
-			code: `PROD-${genRandomStr()}`,
-			cost: 20000,
-			iva: 0.1,
-			image: {
-				connect: {
-					id: prod1Img.id,
-				},
-			},
-			price: {
-				create: {
-					amount: 24000,
-				},
+			provider: { connect: { id: prov3Id } },
+			code: `${genRandomStr()}`,
+			prices: { create: { amount: 24000 } },
+			costs: { create: { cost: 20000 } },
+			iva: 10,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'perro' } } },
+					{ tag: { connect: { name: 'medicamento' } } },
+				],
 			},
 		},
 		{
 			name: 'Desparasitante Gato',
 			category: 'PRODUCT',
-			code: `PROD-${genRandomStr()}`,
-			cost: 24000,
-			iva: 0.1,
-			image: {
-				connect: {
-					id: prod2Img.id,
-				},
-			},
-			price: {
-				create: {
-					amount: 28000,
-				},
+			provider: { connect: { id: prov3Id } },
+			code: `${genRandomStr()}`,
+			prices: { create: { amount: 28000 } },
+			costs: { create: { cost: 2400 } },
+			iva: 10,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'gato' } } },
+					{ tag: { connect: { name: 'medicamento' } } },
+				],
 			},
 		},
 		{
 			name: 'Pelota Juguete Perro',
 			category: 'PRODUCT',
-			code: `PROD-${genRandomStr()}`,
-			cost: 18000,
-			iva: 0.1,
-			image: {
-				connect: {
-					id: prod3Img.id,
-				},
-			},
-			price: {
-				create: {
-					amount: 20000,
-				},
+			provider: { connect: { id: prov1Id } },
+			code: `${genRandomStr()}`,
+			prices: { create: { amount: 20000 } },
+			costs: { create: { cost: 18000 } },
+			iva: 10,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'juguete' } } },
+					{ tag: { connect: { name: 'pelota' } } },
+					{ tag: { connect: { name: 'perro' } } },
+				],
 			},
 		},
 		{
 			name: 'Shampoo Perro 1Lt',
+			provider: { connect: { id: prov1Id } },
 			category: 'PRODUCT',
-			code: `PROD-${genRandomStr()}`,
-			cost: 12000,
-			iva: 0.1,
-			image: {
-				connect: {
-					id: prod4Img.id,
-				},
+			code: `${genRandomStr()}`,
+			costs: { create: { cost: 12000 } },
+			prices: { create: { amount: 15000 } },
+			iva: 10,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'aseo' } } },
+					{ tag: { connect: { name: 'perro' } } },
+				],
 			},
-			price: {
-				create: {
-					amount: 15000,
-				},
+		},
+		{
+			name: 'Shampoo Gato 1Lt',
+			provider: { connect: { id: prov1Id } },
+			category: 'PRODUCT',
+			code: `${genRandomStr()}`,
+			costs: { create: { cost: 13000 } },
+			prices: { create: { amount: 16000 } },
+			iva: 10,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'aseo' } } },
+					{ tag: { connect: { name: 'gato' } } },
+				],
+			},
+		},
+		{
+			name: 'Pelota Juguete Gato',
+			provider: { connect: { id: prov1Id } },
+			category: 'PRODUCT',
+			code: `${genRandomStr()}`,
+			costs: { create: { cost: 21000 } },
+			prices: { create: { amount: 19000 } },
+			iva: 10,
+			quantity: 720,
+			tags: {
+				create: [
+					{ tag: { connect: { name: 'juguete' } } },
+					{ tag: { connect: { name: 'gato' } } },
+					{ tag: { connect: { name: 'pelota' } } },
+				],
 			},
 		},
 	];
@@ -371,6 +430,10 @@ export const seedVaccineManufacturers = async (db: PrismaTransactionClient) => {
 
 export const seedVaccines = async (db: PrismaTransactionClient) => {
 	const [man1, man2, man3] = await db.vaccineManufacturer.findMany();
+	const supplier = await db.provider.findUnique({
+		where: { ruc: '1116429-0' },
+	});
+	if (!supplier) throw new Error('Supplier with ruc 1116429-0');
 	const [species1, species2] = await db.species.findMany();
 	const vaccinesData: Prisma.VaccineCreateInput[] = [
 		{
@@ -387,10 +450,11 @@ export const seedVaccines = async (db: PrismaTransactionClient) => {
 				create: {
 					name: 'Panleucopenia',
 					category: 'VACCINE',
-					iva: 0.1,
-					code: `PROD-${genRandomStr()}`,
-					cost: 20000,
-					price: { create: { amount: 50000 } },
+					iva: 10,
+					providerId: supplier.id,
+					code: `${genRandomStr()}`,
+					costs: { create: { cost: 20000 } },
+					prices: { create: { amount: 50000 } },
 				},
 			},
 		},
@@ -408,10 +472,11 @@ export const seedVaccines = async (db: PrismaTransactionClient) => {
 				create: {
 					name: 'Leptospirosis',
 					category: 'VACCINE',
-					iva: 0.1,
-					code: `PROD-${genRandomStr()}`,
-					cost: 12000,
-					price: { create: { amount: 36000 } },
+					iva: 10,
+					providerId: supplier.id,
+					code: `${genRandomStr()}`,
+					costs: { create: { cost: 12000 } },
+					prices: { create: { amount: 36000 } },
 				},
 			},
 		},
@@ -429,10 +494,11 @@ export const seedVaccines = async (db: PrismaTransactionClient) => {
 				create: {
 					name: 'Parvovirus',
 					category: 'VACCINE',
-					iva: 0.1,
-					code: `PROD-${genRandomStr()}`,
-					cost: 11000,
-					price: { create: { amount: 60000 } },
+					providerId: supplier.id,
+					iva: 10,
+					code: `${genRandomStr()}`,
+					costs: { create: { cost: 11000 } },
+					prices: { create: { amount: 60000 } },
 				},
 			},
 		},
@@ -474,29 +540,86 @@ export const seedVaccineRegistries = async (db: PrismaTransactionClient) => {
 	}
 };
 
+export const seedStampe = async (db: PrismaTransactionClient) => {
+	const [stock1, stock2, stock3] = await db.stock.findMany();
+	let baseStamped = Math.floor(10000000 + Math.random() * 90000000);
+	const fromDate = new Date();
+	const toDate = new Date(fromDate);
+	toDate.setFullYear(toDate.getFullYear() + 1);
+	const fromNum = 1;
+	const toNum = 1000;
+	const stampedData: Prisma.StampedCreateInput[] = [
+		{
+			stampedNum: baseStamped.toString(),
+			stock: { connect: { id: stock1.id } },
+			fromNum,
+			toNum,
+			fromDate,
+			toDate,
+		},
+		{
+			stampedNum: (++baseStamped).toString(),
+			stock: { connect: { id: stock2.id } },
+			fromNum,
+			toNum,
+			fromDate,
+			toDate,
+		},
+		{
+			stampedNum: (++baseStamped).toString(),
+			fromNum,
+			stock: { connect: { id: stock3.id } },
+			toNum,
+			fromDate,
+			toDate,
+		},
+	];
+	for (const s of stampedData) await db.stamped.create({ data: s });
+};
+
+export const seedPaymentMethods = async (db: PrismaTransactionClient) => {
+	await db.paymentMethod.createMany({
+		data: [
+			{ name: 'EFECTIVO', description: 'Pagar por medio de efectivo' },
+			{ name: 'TARJETA', description: 'Pagar por medio de tarjeta' },
+			{ name: 'CHEQUE', description: 'Pagar por medio de cheque' },
+		],
+	});
+};
+
 export const seedStock = async (db: PrismaTransactionClient) => {
-	const [prod1, prod2, prod3] = await db.product.findMany({
+	const [prod1, prod2, prod3, prod4, prod5, prod6] = await db.product.findMany({
 		select: { id: true },
 	});
 	const stockData: Prisma.StockCreateInput[] = [
 		{
-			address: 'Av. Caballero 800',
+			address: 'Encarnacion, Av. Caballero 800',
 			name: 'Deposito Original',
-			details: { create: { productId: prod1.id, amount: 12 } },
+			details: {
+				create: [
+					{ productId: prod1.id, amount: 720 },
+					{ productId: prod4.id, amount: 720 },
+				],
+			},
 		},
 		{
-			address: 'Av. Irrazabal 976',
+			address: 'Fram, e/ Jose Leandro Oviedo & Itapua',
 			name: 'Deposito Reserva',
-			details: { create: { productId: prod2.id, amount: 10 } },
+			details: {
+				create: [
+					{ productId: prod2.id, amount: 720 },
+					{ productId: prod5.id, amount: 720 },
+				],
+			},
 		},
 		{
-			address: 'Av. Japon 111',
+			address: 'Hohenau, Av. Osvaldo Tischler 600',
 			name: 'Deposito Extra',
 			details: {
-				create: {
-					productId: prod3.id,
-					amount: 15,
-				},
+				create: [
+					{ productId: prod3.id, amount: 720 },
+					{ productId: prod6.id, amount: 720 },
+				],
 			},
 		},
 	];

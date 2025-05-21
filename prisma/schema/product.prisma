@@ -1,34 +1,59 @@
 model Product {
-    id              Int              @id @default(autoincrement())
-    code            String           @unique
-    name            String
-    cost            Decimal          @db.Money
-    iva             Float
-    imageId         Int?
-    image           Image?           @relation(fields: [imageId], references: [id])
-    category        Category
-    priceId         Int              @unique
-    price           ProductPrice     @relation(fields: [priceId], references: [id])
-    vaccine         Vaccine?
+    id          Int      @id @default(autoincrement())
+    code        String   @unique
+    name        String
+    description String?
+    iva         Float
+    imageId     Int?
+    image       Image?   @relation(fields: [imageId], references: [id])
+    category    Category @default(PRODUCT)
+
+    vaccine     Vaccine?
+    serviceType ServiceType?
+
     StockDetails    StockDetails[]
     movementDetails MovementDetail[]
     tags            ProductTag[]
+    invoiceDetails  InvoiceDetail[]
 
-    quantity    Int @default(0)
+    quantity Int @default(0)
 
     purchase  PurchaseDetail[]
     createdAt DateTime         @default(now())
     updatedAt DateTime         @updatedAt
     deletedAt DateTime?
+
+    provider   Provider? @relation(fields: [providerId], references: [id])
+    providerId Int?
+
+    costs  ProductCost[]
+    prices ProductPrice[]
 }
 
-model ProductPrice {
-    id        Int       @id @default(autoincrement())
-    amount    Decimal   @db.Money
+model ProductCost {
+    id        Int     @id @default(autoincrement())
+    productId Int
+    cost      Decimal @db.Money
+    isActive  Boolean @default(true)
+
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
     deletedAt DateTime?
-    Product   Product?
+
+    product Product @relation(fields: [productId], references: [id])
+}
+
+model ProductPrice {
+    id        Int     @id @default(autoincrement())
+    productId Int
+    amount    Decimal @db.Money
+    isActive  Boolean @default(true)
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+
+    Product Product @relation(fields: [productId], references: [id])
 }
 
 enum Category {

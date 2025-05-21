@@ -1,39 +1,42 @@
+import { QueryParam } from '@lib/decorators/validation/query-param.decorator';
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsId } from '@lib/decorators/validation/is-id.decorator';
+import { IsDateString, IsNumber, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class VaccineRegistryQueryDto extends PaginationQueryDto {
-	@ApiPropertyOptional()
-	@IsOptional()
-	@IsString()
-	name?: string;
-
-	@ApiPropertyOptional()
-	@IsOptional()
-	@IsNumber()
 	@Type(() => Number)
+	@QueryParam()
+	@IsId()
 	vaccineId?: number;
 
-	@ApiPropertyOptional()
-	@IsOptional()
-	@IsNumber()
 	@Type(() => Number)
+	@QueryParam()
+	@IsId()
 	petId?: number;
 
-	@ApiPropertyOptional()
-	@IsOptional()
-	@IsNumber()
+	@QueryParam()
+	@IsString()
+	clientName?: string;
+
 	@Type(() => Number)
+	@QueryParam()
+	@IsNumber()
 	dose?: number;
 
-	@ApiPropertyOptional()
-	@IsOptional()
+	@QueryParam()
 	@IsDateString()
-	applicationDate?: Date;
+	toExpectedDate?: string;
 
-	@ApiPropertyOptional()
-	@IsOptional()
+	@QueryParam()
 	@IsDateString()
-	expectedDate?: Date;
+	fromExpectedDate?: string;
+
+	@QueryParam()
+	@IsDateString()
+	toApplicationDate?: string;
+
+	@QueryParam()
+	@IsDateString()
+	fromApplicationDate?: string;
 }

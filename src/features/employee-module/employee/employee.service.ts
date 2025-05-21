@@ -88,8 +88,10 @@ export class EmployeeService {
 			},
 			user: {
 				update: {
+					phoneNumber: dto.phoneNumber,
 					ruc: dto.ruc,
 					email: dto.email,
+					adress: dto.adress,
 					fullName: dto.fullName,
 					image: img?.id ? { connect: { id: img.id } } : undefined,
 					username:

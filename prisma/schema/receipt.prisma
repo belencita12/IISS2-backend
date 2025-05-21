@@ -1,0 +1,13 @@
+model Receipt {
+    id             Int                    @id @default(autoincrement())
+    receiptNumber  Int                    @unique @default(autoincrement())
+    invoiceId      Int
+    issueDate      DateTime               @db.Date
+    paymentMethods InvoicePaymentMethod[]
+    total          Decimal                @db.Money
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+    Invoice   Invoice   @relation(fields: [invoiceId], references: [id])
+}

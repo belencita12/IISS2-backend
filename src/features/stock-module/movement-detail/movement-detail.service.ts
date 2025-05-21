@@ -15,15 +15,7 @@ export class MovementDetailService {
 	async findOne(id: number) {
 		const detail = await this.db.movementDetail.findUnique({
 			where: { id },
-			include: {
-				product: {
-					include: {
-						image: true,
-						price: true,
-						tags: { include: { tag: true } },
-					},
-				},
-			},
+			...this.getInclude(),
 		});
 		if (!detail)
 			throw new NotFoundException('Detalle del movimiento no encontrado');
@@ -44,15 +36,7 @@ export class MovementDetailService {
 		const [data, count] = await Promise.all([
 			this.db.movementDetail.findMany({
 				...this.db.paginate(dto),
-				include: {
-					product: {
-						include: {
-							image: true,
-							price: true,
-							tags: { include: { tag: true } },
-						},
-					},
-				},
+				...this.getInclude(),
 				where,
 			}),
 			this.db.movementDetail.count({ where }),
@@ -63,5 +47,21 @@ export class MovementDetailService {
 			total: count,
 			data: data.map((m) => new MovementDetailDto(m)),
 		});
+	}
+
+	private getInclude() {
+		return {
+			include: {
+				product: {
+					include: {
+						image: true,
+						provider: true,
+						prices: { where: { isActive: true } },
+						costs: { where: { isActive: true } },
+						tags: { include: { tag: true } },
+					},
+				},
+			},
+		};
 	}
 }

@@ -12,6 +12,10 @@ import {
 	seedVaccineRegistries,
 	seedVaccines,
 	seedWorkPositions,
+	seedProviders,
+	seedStampe,
+	seedTags,
+	seedPaymentMethods,
 } from './data';
 
 export const seeder = async () => {
@@ -20,6 +24,9 @@ export const seeder = async () => {
 
 	await prisma.$transaction(
 		async (tx) => {
+			await seedTags(tx);
+			console.log('Tags were seeded successfully\n');
+
 			await seedRoles(tx);
 			console.log('Roles were seeded successfully\n');
 
@@ -41,6 +48,9 @@ export const seeder = async () => {
 			await seedEmployees(tx);
 			console.log('Employees were seeded successfully\n');
 
+			await seedProviders(tx);
+			console.log('Providers were seeded successgully\n');
+
 			await seedProducts(tx);
 			console.log('Products were seeded successfully\n');
 
@@ -53,8 +63,14 @@ export const seeder = async () => {
 			await seedVaccineRegistries(tx);
 			console.log('Vaccine Registries were seeded successfully\n');
 
+			await seedPaymentMethods(tx);
+			console.log('Payment Methods were seeded successfully\n');
+
 			await seedStock(tx);
 			console.log('Stock were seeded successfully\n');
+
+			await seedStampe(tx);
+			console.log('Stampeds were seeded successfully\n');
 		},
 		{ timeout: TIME_OUT_TX, maxWait: TIME_OUT_TX },
 	);

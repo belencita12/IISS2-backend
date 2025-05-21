@@ -1,6 +1,6 @@
 import { ShortWorkPositionDto } from '@features/employee-module/work-position/dto/work-position/short-work-position.dto';
 import { ImageDto } from '@lib/commons/image.dto';
-import { IsId } from '@lib/decorators/is-id.decorator';
+import { IsId } from '@lib/decorators/validation/is-id.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Employee, User, WorkPosition, Image } from '@prisma/client';
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
@@ -12,6 +12,7 @@ interface EmployeeEntity extends Employee {
 
 export class EmployeeDto {
 	constructor(data: EmployeeEntity) {
+		this.phoneNumber = data.user.phoneNumber;
 		this.id = data.id;
 		this.fullName = data.user.fullName;
 		this.email = data.user.email;
@@ -41,6 +42,11 @@ export class EmployeeDto {
 	@IsNotEmpty()
 	@ApiProperty({ example: 'Roberto Gimenez' })
 	fullName: string;
+
+	@IsString()
+	@IsNotEmpty()
+	@ApiProperty({ example: '+595983123456' })
+	phoneNumber: string;
 
 	@IsOptional()
 	@IsString()

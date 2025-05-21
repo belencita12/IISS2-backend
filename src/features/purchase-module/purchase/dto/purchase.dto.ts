@@ -1,12 +1,15 @@
 import { ProviderDto } from '@features/provider/dto/provider.dto';
-import { StockDto } from '@features/stock-module/stock/dto/stock.dto';
+import {
+	StockDto,
+	StockEntity,
+} from '@features/stock-module/stock/dto/stock.dto';
 import { toDate } from '@lib/utils/date';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Provider, Purchase, Stock } from '@prisma/client';
+import { Provider, Purchase } from '@prisma/client';
 
 export interface PurchaseEntity extends Purchase {
 	provider: Provider;
-	stock: Stock;
+	stock: StockEntity;
 }
 
 export class PurchaseDto {

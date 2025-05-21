@@ -1,5 +1,4 @@
 import {
-	Controller,
 	Get,
 	Post,
 	Body,
@@ -11,37 +10,37 @@ import {
 	Request,
 	UploadedFile,
 	UseInterceptors,
+	Res,
 } from '@nestjs/common';
-import { Request as Req } from 'express';
+import { Request as Req, Response } from 'express';
 import { PetService } from './pet.service';
 import { CreatePetDto } from './dto/create-pet.dto';
-import {
-	ApiBearerAuth,
-	ApiBody,
-	ApiConsumes,
-	ApiResponse,
-	ApiTags,
-} from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiResponse } from '@nestjs/swagger';
 import { PetDto } from './dto/pet.dto';
 import { PetQueryDto } from './dto/pet-query.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdatePetDto } from './dto/update-pet.dto';
-import { AuthGuard } from '@features/auth-module/auth/guard/auth.guard';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
 import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { ImgValidator } from '@lib/pipes/file-validator.pipe';
 import { IsOwnerGuard } from '@lib/guard/is-owner.guard';
 import { Resource } from '@lib/decorators/resource.decorator';
-import { CurrentUser } from '@lib/decorators/current-user.decoratot';
+import { CurrentUser } from '@lib/decorators/auth/current-user.decoratot';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
+import { PetReport } from './pet.report';
+import { PetReportQueryDto } from './dto/pet-report-query.dto';
+import { ApiPdfResponse } from '@lib/decorators/documentation/api-pdf-response.decorator';
+import { RolesGuard } from '@lib/guard/role.guard';
 
-@UseGuards(AuthGuard)
-@ApiTags('Pet')
-@Controller('pet')
-@ApiBearerAuth('access-token')
+@UseGuards(RolesGuard)
+@AppController({ name: 'pet', tag: 'Pet' })
 export class PetController {
-	constructor(private readonly petService: PetService) {}
+	constructor(
+		private readonly petService: PetService,
+		private readonly petReport: PetReport,
+	) {}
 
 	@Post()
 	@Roles(Role.Admin, Role.User)
@@ -54,6 +53,17 @@ export class PetController {
 		@UploadedFile(ImgValidator) img?: Express.Multer.File,
 	) {
 		return this.petService.create({ ...createPetDto, profileImg: img });
+	}
+
+	@Get('/report')
+	@ApiPdfResponse()
+	@Roles(Role.Admin, Role.Employee)
+	getReport(
+		@Res() response: Response,
+		@CurrentUser() user: TokenPayload,
+		@Query() query: PetReportQueryDto,
+	) {
+		return this.petReport.getReport(query, user, response);
 	}
 
 	@Get()

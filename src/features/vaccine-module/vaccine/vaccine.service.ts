@@ -5,20 +5,20 @@ import { Prisma } from '@prisma/client';
 import { VaccineQueryDto } from './dto/vaccine-query.dto';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { ProductService } from '@features/product-module/product/product.service';
+import { VaccineDto } from './dto/vaccine.dto';
 
 @Injectable()
 export class VaccineService {
 	constructor(
-		private readonly prisma: PrismaService,
+		private readonly db: PrismaService,
 		private readonly productService: ProductService,
 	) {}
 	async create(createVaccineDto: CreateVaccineDto) {
-		const { speciesId, manufacturerId, productImg, cost, iva, price, ...dto } =
-			createVaccineDto;
+		const { speciesId, manufacturerId, ...dto } = createVaccineDto;
 
 		const [species, manufacturer] = await Promise.all([
-			this.prisma.species.findUnique({ where: { id: speciesId } }),
-			this.prisma.vaccineManufacturer.findUnique({
+			this.db.species.findUnique({ where: { id: speciesId } }),
+			this.db.vaccineManufacturer.findUnique({
 				where: { id: manufacturerId, deletedAt: null },
 			}),
 		]);
@@ -28,17 +28,14 @@ export class VaccineService {
 		}
 
 		const newProduct = await this.productService.create({
-			name: dto.name,
+			...dto,
+			description: dto.description,
 			category: 'VACCINE',
-			cost,
-			iva,
-			price,
-			productImg,
 		});
 
-		return this.prisma.vaccine.create({
+		return this.db.vaccine.create({
 			data: {
-				...dto,
+				name: dto.name,
 				species: { connect: { id: speciesId } },
 				manufacturer: { connect: { id: manufacturerId } },
 				product: { connect: { id: newProduct.id } },
@@ -47,7 +44,7 @@ export class VaccineService {
 	}
 
 	async findAll(dto: VaccineQueryDto) {
-		const { baseWhere } = this.prisma.getBaseWhere(dto);
+		const { baseWhere } = this.db.getBaseWhere(dto);
 		const where: Prisma.VaccineWhereInput = {
 			...baseWhere,
 			speciesId: dto.speciesId,
@@ -57,15 +54,19 @@ export class VaccineService {
 		};
 
 		const [data, total] = await Promise.all([
-			this.prisma.vaccine.findMany({
-				...this.prisma.paginate(dto),
+			this.db.vaccine.findMany({
+				...this.db.paginate(dto),
+				include: {
+					species: true,
+					manufacturer: true,
+					product: true,
+				},
 				where,
-				include: { species: true, manufacturer: true, product: true },
 			}),
-			this.prisma.vaccine.count({ where }),
+			this.db.vaccine.count({ where }),
 		]);
 
-		return this.prisma.getPagOutput({
+		return this.db.getPagOutput({
 			page: dto.page,
 			size: dto.size,
 			total,
@@ -74,22 +75,18 @@ export class VaccineService {
 	}
 
 	async findOne(id: number) {
-		const vaccine = await this.prisma.vaccine.findUnique({
+		const vaccine = await this.db.vaccine.findUnique({
+			...this.getInclude(),
 			where: { id },
-			include: {
-				species: true,
-				manufacturer: true,
-				product: true,
-			},
 		});
 		if (!vaccine) throw new NotFoundException(`Vacuna no encontrada`);
-		return vaccine;
+		return new VaccineDto(vaccine);
 	}
 
-	async update(id: number, updateVaccineDto: UpdateVaccineDto) {
-		const existingVaccine = await this.prisma.vaccine.findUnique({
+	async update(id: number, dto: UpdateVaccineDto) {
+		const existingVaccine = await this.db.vaccine.findUnique({
+			include: { product: { include: { costs: true, prices: true } } },
 			where: { id },
-			include: { product: true },
 		});
 
 		if (!existingVaccine) throw new NotFoundException('Vacuna no encontrada.');
@@ -102,23 +99,25 @@ export class VaccineService {
 			iva,
 			price,
 			...vaccineUpdateData
-		} = updateVaccineDto;
+		} = dto;
 
-		if (productImg || updateVaccineDto.name || cost || iva || price) {
+		if (productImg || dto.name || cost || iva || price) {
 			await this.productService.update(existingVaccine.product.id, {
-				productImg,
-				name: updateVaccineDto.name ?? existingVaccine.product.name,
-				cost: cost ?? existingVaccine.product.cost.toNumber(),
+				price: price ?? existingVaccine.product.prices[0].amount.toNumber(),
+				cost: cost ?? existingVaccine.product.costs[0].cost.toNumber(),
+				name: dto.name ?? existingVaccine.product.name,
+				iva: dto.iva ?? existingVaccine.product.iva,
+				description: dto.description,
+				providerId: dto.providerId,
 				category: 'VACCINE',
-				iva: iva ?? existingVaccine.product.iva,
-				price: price ?? existingVaccine.product.priceId,
+				productImg,
 			});
 		}
 
-		return this.prisma.vaccine.update({
+		return this.db.vaccine.update({
 			where: { id },
 			data: {
-				...vaccineUpdateData,
+				name: vaccineUpdateData.name,
 				species: speciesId ? { connect: { id: speciesId } } : undefined,
 				manufacturer: manufacturerId
 					? { connect: { id: manufacturerId } }
@@ -129,12 +128,30 @@ export class VaccineService {
 	}
 
 	async remove(id: number) {
-		const vaccine = await this.prisma.vaccine.findUnique({
+		const vaccine = await this.db.vaccine.findUnique({
 			where: { id },
 			select: { id: true, product: { select: { id: true } } },
 		});
 		if (!vaccine) throw new NotFoundException('Vacuna no encontrada.');
-		await this.prisma.product.softDelete({ id: vaccine.product.id });
-		await this.prisma.vaccine.softDelete({ id });
+		await this.db.product.softDelete({ id: vaccine.product.id });
+		await this.db.vaccine.softDelete({ id });
+	}
+
+	private getInclude() {
+		return {
+			include: {
+				species: true,
+				manufacturer: true,
+				product: {
+					include: {
+						image: true,
+						provider: true,
+						prices: { where: { isActive: true } },
+						costs: { where: { isActive: true } },
+						tags: { include: { tag: true } },
+					},
+				},
+			},
+		};
 	}
 }

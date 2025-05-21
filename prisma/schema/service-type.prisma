@@ -1,0 +1,18 @@
+model ServiceType {
+    id          Int     @id @default(autoincrement())
+    slug        String  @unique
+    name        String
+    description String
+    durationMin Int
+    productId   Int     @unique
+    maxColabs   Int?
+    isPublic    Boolean @default(false)
+
+    product Product @relation(fields: [productId], references: [id])
+
+    appointments AppointmentDetail[]
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+}

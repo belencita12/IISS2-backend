@@ -1,0 +1,53 @@
+model Invoice {
+    id Int @id @default(autoincrement())
+
+    clientId Int
+    client   Client @relation(fields: [clientId], references: [id])
+
+    stockId Int
+    stock   Stock @relation(fields: [stockId], references: [id])
+
+    type          InvoiceType
+    invoiceNumber String
+    stamped       String
+    total         Decimal     @db.Money
+    totalPayed    Decimal     @default(0) @db.Money
+    totalVat      Decimal     @db.Money
+    issueDate     DateTime    @db.Date
+
+    details InvoiceDetail[]
+    receipts Receipt[]
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+
+    InvoicePaymentMethod InvoicePaymentMethod[]
+
+    @@unique([invoiceNumber, stamped])
+}
+
+model InvoiceDetail {
+    id Int @id @default(autoincrement())
+
+    invoiceId Int
+    invoice   Invoice @relation(fields: [invoiceId], references: [id])
+
+    productId Int
+    product   Product @relation(fields: [productId], references: [id])
+
+    partialAmount    Decimal @db.Money
+    partialAmountVAT Decimal @db.Money
+
+    quantity Int
+    unitCost Decimal @db.Money
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+}
+
+enum InvoiceType {
+    CREDIT
+    CASH
+}

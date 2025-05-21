@@ -1,36 +1,29 @@
 import { PaginationQueryDto } from '@lib/commons/pagination-params.dto';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsId } from '@lib/decorators/validation/is-id.decorator';
+import { IsPositiveNumber } from '@lib/decorators/validation/is-money.decorator';
+import { QueryParam } from '@lib/decorators/validation/query-param.decorator';
+import { ToBoolean } from '@lib/decorators/validation/to-boolean.decorator';
 import { Type } from 'class-transformer';
-import {
-	IsBooleanString,
-	IsInt,
-	IsNumber,
-	IsOptional,
-	IsPositive,
-} from 'class-validator';
+import { IsBoolean } from 'class-validator';
 
 export class ProductPriceQueryDto extends PaginationQueryDto {
-	@IsBooleanString()
-	@IsOptional()
-	@ApiPropertyOptional()
+	@ToBoolean()
+	@IsBoolean()
+	@QueryParam()
 	active?: boolean;
 
-	@IsOptional()
 	@Type(() => Number)
-	@IsNumber()
-	@ApiPropertyOptional()
+	@IsPositiveNumber()
+	@QueryParam()
 	fromAmount?: number;
 
-	@IsOptional()
 	@Type(() => Number)
-	@IsNumber()
-	@ApiPropertyOptional()
+	@IsPositiveNumber()
+	@QueryParam()
 	toAmount?: number;
 
-	@IsOptional()
 	@Type(() => Number)
-	@IsInt()
-	@IsPositive()
-	@ApiPropertyOptional()
+	@IsId()
+	@QueryParam()
 	productId?: number;
 }

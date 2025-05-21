@@ -1,29 +1,26 @@
-import {
-	Controller,
-	Get,
-	Post,
-	Body,
-	Param,
-	UseGuards,
-	Query,
-} from '@nestjs/common';
+import { Get, Post, Body, Param, Query, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { PurchaseService } from './purchase.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { RolesGuard } from '@lib/guard/role.guard';
-import { Roles } from '@lib/decorators/roles.decorators';
-import { Role } from '@lib/constants/role.enum';
+import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { PurchaseDto } from './dto/purchase.dto';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
 import { PurchaseQueryDto } from './dto/purchase-query.dto';
+import { AdminOnly } from '@lib/decorators/auth/admin-only.decorator';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
+import { PurchaseReport } from './purchase.report';
+import { PurchaseReportQueryDto } from './dto/purchase-report-query.dto';
+import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
+import { CurrentUser } from '@lib/decorators/auth/current-user.decoratot';
+import { ApiPdfResponse } from '@lib/decorators/documentation/api-pdf-response.decorator';
 
-@Controller('purchase')
-@ApiTags('Purchase')
-@ApiBearerAuth('access-token')
-@UseGuards(RolesGuard)
-@Roles(Role.Admin)
+@AdminOnly()
+@AppController({ name: 'purchase', tag: 'Purchase' })
 export class PurchaseController {
-	constructor(private readonly purchaseService: PurchaseService) {}
+	constructor(
+		private readonly purchaseService: PurchaseService,
+		private readonly purchaseReport: PurchaseReport,
+	) {}
 
 	@Post()
 	@ApiBody({ type: CreatePurchaseDto })
@@ -36,6 +33,15 @@ export class PurchaseController {
 	@ApiPaginatedResponse(PurchaseDto)
 	findAll(@Query() query: PurchaseQueryDto) {
 		return this.purchaseService.findAll(query);
+	}
+	@Get('/report')
+	@ApiPdfResponse()
+	getReport(
+		@Res() res: Response,
+		@CurrentUser() user: TokenPayload,
+		@Query() query: PurchaseReportQueryDto,
+	) {
+		return this.purchaseReport.getReport(query, user, res);
 	}
 
 	@Get(':id')

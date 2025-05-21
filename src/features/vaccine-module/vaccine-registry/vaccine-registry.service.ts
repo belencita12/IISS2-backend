@@ -7,72 +7,75 @@ import { PrismaService } from '@features/prisma/prisma.service';
 
 @Injectable()
 export class VaccineRegistryService {
-	constructor(private prisma: PrismaService) {}
+	constructor(private readonly db: PrismaService) {}
 
-	async create(createVaccineRegistryDto: CreateVaccineRegistryDto) {
-		const { vaccineId, petId, applicationDate, ...dto } =
-			createVaccineRegistryDto;
+	async create(dto: CreateVaccineRegistryDto) {
+		const { vaccineId, petId, applicationDate, ...data } = dto;
 		const currentDate = applicationDate || new Date().toISOString();
-		const [vaccine, pet] = await Promise.all([
-			this.prisma.vaccine.findUnique({ where: { id: vaccineId } }),
-			this.prisma.pet.findUnique({ where: { id: petId } }),
-		]);
 
-		if (![vaccine, pet].every(Boolean)) {
-			throw new NotFoundException(
-				`No se encontraron los siguientes registros: ${!vaccine ? `Vacuna(${vaccineId}) ` : ''}${!pet ? `Mascota(${petId})` : ''}`.trim(),
-			);
-		}
+		const isVaccExists = await this.db.vaccine.isExists({ id: vaccineId });
+		if (!isVaccExists) throw new NotFoundException('La vacuna no existe');
+
+		const isPetExists = await this.db.pet.isExists({ id: petId });
+		if (!isPetExists) throw new NotFoundException('La mascota no existe');
+
 		const dataToCreate: Prisma.VaccineRegistryCreateInput = {
-			...dto,
+			...data,
 			vaccine: { connect: { id: vaccineId } },
 			pet: { connect: { id: petId } },
 			applicationDate: currentDate,
 		};
-		return this.prisma.vaccineRegistry.create({
+		return this.db.vaccineRegistry.create({
 			data: dataToCreate,
 		});
 	}
 
 	async findAll(dto: VaccineRegistryQueryDto) {
-		const { baseWhere } = this.prisma.getBaseWhere(dto);
+		const { baseWhere } = this.db.getBaseWhere(dto);
 		const where: Prisma.VaccineRegistryWhereInput = {
 			...baseWhere,
 			...(dto.vaccineId ? { vaccineId: dto.vaccineId } : {}),
 			...(dto.petId ? { petId: dto.petId } : {}),
+			...(dto.clientName
+				? {
+						pet: {
+							client: {
+								user: {
+									fullName: { contains: dto.clientName, mode: 'insensitive' },
+								},
+							},
+						},
+					}
+				: {}),
+			...(dto.toExpectedDate || dto.fromExpectedDate
+				? {
+						expectedDate: {
+							gte: dto.fromExpectedDate,
+							lte: dto.toExpectedDate,
+						},
+					}
+				: {}),
+			...(dto.toApplicationDate || dto.fromApplicationDate
+				? {
+						applicationDate: {
+							gte: dto.fromApplicationDate,
+							lte: dto.toApplicationDate,
+						},
+					}
+				: {}),
 		};
 
 		const [data, total] = await Promise.all([
-			this.prisma.vaccineRegistry.findMany({
-				...this.prisma.paginate(dto),
+			this.db.vaccineRegistry.findMany({
+				...this.db.paginate(dto),
+				...this.getSelect(),
+				orderBy: { expectedDate: 'desc' },
 				where,
-				select: {
-					id: true,
-					vaccineId: true,
-					petId: true,
-					dose: true,
-					applicationDate: true,
-					expectedDate: true,
-					deletedAt: true,
-					createdAt: true,
-					updatedAt: true,
-					vaccine: {
-						select: {
-							id: true,
-							speciesId: true,
-							name: true,
-							productId: true,
-							manufacturer: {
-								select: { name: true },
-							},
-						},
-					},
-				},
 			}),
-			this.prisma.vaccineRegistry.count({ where }),
+			this.db.vaccineRegistry.count({ where }),
 		]);
 
-		return this.prisma.getPagOutput({
+		return this.db.getPagOutput({
 			page: dto.page,
 			size: dto.size,
 			total,
@@ -81,62 +84,61 @@ export class VaccineRegistryService {
 	}
 
 	async findOne(id: number) {
-		const registry = await this.prisma.vaccineRegistry.findUnique({
+		const registry = await this.db.vaccineRegistry.findUnique({
 			where: { id },
+			...this.getSelect(),
+		});
+
+		if (!registry) {
+			throw new NotFoundException(
+				`Registro de vacuna con ID ${id} no encontrado.`,
+			);
+		}
+
+		return registry;
+	}
+	async update(id: number, dto: UpdateVaccineRegistryDto) {
+		const registry = await this.db.vaccineRegistry.update({
+			where: { id },
+			data: dto,
+		});
+		return registry;
+	}
+
+	async remove(id: number) {
+		const registry = await this.db.vaccineRegistry.isExists({ id });
+		if (!registry) throw new NotFoundException(`Registro de vacuna no existe`);
+		return await this.db.vaccineRegistry.softDelete({ id });
+	}
+
+	private getSelect() {
+		return {
 			select: {
 				id: true,
 				vaccineId: true,
-				petId: true,
 				dose: true,
+				petId: true,
 				applicationDate: true,
 				expectedDate: true,
 				deletedAt: true,
 				createdAt: true,
 				updatedAt: true,
+				pet: {
+					select: {
+						client: { select: { user: { select: { fullName: true } } } },
+						name: true,
+					},
+				},
 				vaccine: {
 					select: {
 						id: true,
 						speciesId: true,
 						name: true,
 						productId: true,
-						manufacturer: {
-							select: { name: true },
-						},
+						manufacturer: { select: { name: true } },
 					},
 				},
 			},
-		});
-
-		if (!registry) {
-			throw new NotFoundException(
-				`Registro de vacuna con ID ${id} no encontrado.`,
-			);
-		}
-
-		return registry;
-	}
-	async update(id: number, updateVaccineRegistryDto: UpdateVaccineRegistryDto) {
-		const registry = await this.prisma.vaccineRegistry.update({
-			where: { id },
-			data: updateVaccineRegistryDto,
-		});
-		return registry;
-	}
-
-	async remove(id: number) {
-		const registry = await this.prisma.vaccineRegistry.findUnique({
-			where: { id },
-		});
-
-		if (!registry) {
-			throw new NotFoundException(
-				`Registro de vacuna con ID ${id} no encontrado.`,
-			);
-		}
-
-		return this.prisma.vaccineRegistry.update({
-			where: { id },
-			data: { deletedAt: new Date() },
-		});
+		};
 	}
 }

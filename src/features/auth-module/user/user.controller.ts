@@ -1,30 +1,18 @@
-import {
-	Controller,
-	Get,
-	Post,
-	Body,
-	Patch,
-	Param,
-	Delete,
-	Query,
-	UseGuards,
-} from '@nestjs/common';
+import { Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { UserQueryDto } from './dto/user-query.dto';
 import { UserDto } from './dto/user.dto';
 import { Role } from '@lib/constants/role.enum';
-import { ApiPaginatedResponse } from '@lib/decorators/api-pagination-response.decorator';
-import { Roles } from '@lib/decorators/roles.decorators';
-import { RolesGuard } from '@lib/guard/role.guard';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { Roles } from '@lib/decorators/auth/roles.decorators';
+import { AdminOnly } from '@lib/decorators/auth/admin-only.decorator';
+import { AppController } from '@lib/decorators/router/app-controller.decorator';
 
-@UseGuards(RolesGuard)
-@Roles(Role.Admin)
-@Controller('user')
-@ApiTags('User')
-@ApiBearerAuth('access-token')
+@AdminOnly()
+@AppController({ name: 'user', tag: 'User' })
 export class UserController {
 	constructor(private readonly userService: UserService) {}
 

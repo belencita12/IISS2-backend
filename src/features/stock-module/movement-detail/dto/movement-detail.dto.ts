@@ -1,7 +1,8 @@
+import { ProductDto } from '@features/product-module/product/dto/product.dto';
 import {
-	ProductDto,
 	ProductEntity,
-} from '@features/product-module/product/dto/product.dto';
+	ProductMapper,
+} from '@features/product-module/product/product.mapper';
 import { ApiProperty } from '@nestjs/swagger';
 import { MovementDetail } from '@prisma/client';
 
@@ -10,13 +11,6 @@ export interface MovementDetailEntity extends MovementDetail {
 }
 
 export class MovementDetailDto {
-	constructor(entity: MovementDetailEntity) {
-		this.id = entity.id;
-		this.product = new ProductDto(entity.product);
-		this.movementId = entity.movementId;
-		this.quantity = entity.quantity;
-	}
-
 	@ApiProperty()
 	id: number;
 
@@ -28,4 +22,11 @@ export class MovementDetailDto {
 
 	@ApiProperty()
 	quantity: number;
+
+	constructor(entity: MovementDetailEntity) {
+		this.id = entity.id;
+		this.product = ProductMapper.toDto(entity.product);
+		this.movementId = entity.movementId;
+		this.quantity = entity.quantity;
+	}
 }

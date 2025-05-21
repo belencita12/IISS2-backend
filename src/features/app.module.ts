@@ -32,6 +32,15 @@ import { TagModule } from './product-module/tag/tag.module';
 import { PurchaseDetailModule } from './purchase-module/purchase-detail/purchase-detail.module';
 import { PurchaseModule } from './purchase-module/purchase/purchase.module';
 import { MovementDetailModule } from './stock-module/movement-detail/movement-detail.module';
+import { InvoiceModule } from './invoice-module/invoice.module';
+import { PaymentMethodModule } from './payment-method-module/payment-method/payment-method.module';
+import { InvoicePaymentMethodModule } from './payment-method-module/invoice-payment-method/invoice-payment-method.module';
+import { ServiceTypeModule } from './service-type/service-type.module';
+import { AppointmentModule } from './appointment-module/appointment/appointment.module';
+import { ScheduleService } from './appointment-module/schedule/schedule.service';
+import { AppointmentDetailModule } from './appointment-module/appointment-detail/appointment-detail.module';
+import { ChartModule } from './global-module/chart/chart.module';
+import { PdfModule } from './global-module/pdf/pdf.module';
 
 @Module({
 	imports: [
@@ -67,6 +76,15 @@ import { MovementDetailModule } from './stock-module/movement-detail/movement-de
 		PurchaseModule,
 		PurchaseDetailModule,
 		MovementDetailModule,
+		InvoiceModule,
+		PaymentMethodModule,
+		InvoicePaymentMethodModule,
+		ServiceTypeModule,
+		AppointmentModule,
+		ChartModule,
+		PdfModule,
+		AppointmentDetailModule,
 	],
+	providers: [ScheduleService],
 })
 export class AppModule {}

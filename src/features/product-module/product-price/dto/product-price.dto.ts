@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ProductPrice } from '@prisma/client';
 
 export class ProductPriceDto {
 	@ApiProperty()
@@ -8,17 +9,27 @@ export class ProductPriceDto {
 	amount: number;
 
 	@ApiProperty()
-	active: boolean;
+	isActive: boolean;
 
 	@ApiProperty()
 	createdAt: Date;
 
 	@ApiProperty()
+	productId: number;
+
+	@ApiProperty()
 	updatedAt: Date;
 
 	@ApiPropertyOptional()
-	deletedAt: Date | null;
+	deletedAt?: Date;
 
-	@ApiProperty()
-	productId: number;
+	constructor(data: ProductPrice) {
+		this.id = data.id;
+		this.amount = data.amount.toNumber();
+		this.isActive = data.isActive;
+		this.productId = data.productId;
+		this.createdAt = data.createdAt;
+		this.updatedAt = data.updatedAt;
+		this.deletedAt = data.deletedAt ?? undefined;
+	}
 }

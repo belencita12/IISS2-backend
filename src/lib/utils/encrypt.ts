@@ -15,6 +15,12 @@ export const compare = async (str: string, hash: string) => {
 	return await bcrypt.compare(str, hash);
 };
 
+export const genRandomCode = () => {
+	const randomNumber = Math.floor(Math.random() * 1000);
+	const nowString = Date.now().toString();
+	return `${nowString}${randomNumber}`;
+};
+
 export const genUsername = (fullName: string) => {
 	return fullName.split(' ').join('_').toLowerCase() + '@' + uuidv4();
 };

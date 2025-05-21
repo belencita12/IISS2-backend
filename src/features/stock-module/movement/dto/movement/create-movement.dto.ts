@@ -10,6 +10,7 @@ import {
 	ValidateNested,
 } from 'class-validator';
 import { CreateMovementDetailDto } from '../movement-detail/create-movement-detail.dto';
+import { ToBoolean } from '@lib/decorators/validation/to-boolean.decorator';
 
 export class CreateMovementDto {
 	@IsString()
@@ -63,4 +64,9 @@ export class CreateMovementDto {
 		description: 'Detalles del movimiento',
 	})
 	details: CreateMovementDetailDto[];
+
+	@ApiPropertyOptional()
+	@ToBoolean()
+	@IsOptional()
+	isReverse: boolean = false;
 }
