@@ -56,7 +56,7 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 				summary: summaryItems,
 				charts: chartConfigs,
 				rowConfig: {
-					parentRowSpacing: 12,
+					parentRowSpacing: 2,
 					alwaysShowHeader: false,
 					header: [
 						'Cliente',
