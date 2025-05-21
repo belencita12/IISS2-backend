@@ -30,11 +30,11 @@ jobs:
           ssh -o StrictHostKeyChecking=no -tt -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}" bash <<'EOF'
             set -eo pipefail
 
-            echo "📦 Pulling latest changes..."
-            git pull
-
             echo "📁 Moving to app folder..."
             cd ${{ secrets.APP_DIR }} || { echo "❌ Could not change directory"; exit 1; }
+
+            echo "📦 Pulling latest changes..."
+            git pull
 
             echo "🧹 Stopping and cleaning previous containers..."
             docker compose down || echo "⚠️ Docker compose down failed or nothing to stop"
