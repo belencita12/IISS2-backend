@@ -251,19 +251,17 @@ export class InvoiceService {
 				fromDate: { lte: new Date(date) },
 				toDate: { gte: new Date(date) },
 			},
+			include: { stock: true },
 			orderBy: { createdAt: 'desc' },
 			take: 5,
 		});
 
-		console.log(stampedCandidates);
-
 		const stampedData = stampedCandidates.find((s) => s.currentNum < s.toNum);
-
 		if (!stampedData) {
 			throw new NotFoundException('No hay ningun timbrado disponible');
 		}
 
-		const invoiceNumber = `${stampedData.stampedNum.toString().padStart(3, '0')}-001-${(stampedData.currentNum + 1).toString().padStart(7, '0')}`;
+		const invoiceNumber = `${stampedData.stock.stockNum.toString().padStart(3, '0')}-001-${(stampedData.currentNum + 1).toString().padStart(7, '0')}`;
 
 		await tx.stamped.update({
 			where: { id: stampedData.id },

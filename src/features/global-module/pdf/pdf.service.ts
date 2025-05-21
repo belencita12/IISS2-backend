@@ -60,8 +60,7 @@ export class PdfService {
 				450,
 				30,
 			)
-			.text(`N°: ${invoice.invoiceNumber}`, 450, 45)
-			.text(`Fecha: ${fecha}`, 450, 60);
+			.text(`N°: ${invoice.invoiceNumber}`, 450, 45);
 
 		doc
 			.moveDown()
@@ -70,7 +69,8 @@ export class PdfService {
 			.fontSize(9)
 			.text(`Razón Social: ${invoice.client.fullName}`, 30, 100)
 			.text(`Dirección: ${invoice.client.address}`, 30, 115)
-			.text(`RUC/CI: ${invoice.client.ruc}`, 400, 100);
+			.text(`Fecha: ${fecha}`, 450, 115)
+			.text(`RUC/CI: ${invoice.client.ruc}`, 450, 100);
 
 		let currentY = 150;
 		doc
