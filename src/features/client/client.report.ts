@@ -11,6 +11,7 @@ import {
 	SummaryItem,
 	ReportChartConfig,
 } from '@features/global-module/pdf/pdf.types';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ClientReport implements IReport<ClientReportQueryDto> {
@@ -27,7 +28,6 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 		const fromDate = new Date(query.from);
 		const toDate = new Date(query.to);
 
-		// Total de clientes en el sistema
 		const totalClients = await this.db.client.count();
 
 		// Clientes nuevos dentro del rango
@@ -41,38 +41,34 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 		});
 		const newClients = newClientsRaw.length;
 
-		// Clientes con facturas dentro del rango
-		const allClients = await this.db.client.findMany({
-			take: 500,
-			include: {
-				user: true,
-				invoices: {
-					where: {
-						createdAt: {
-							gte: fromDate,
-							lte: toDate,
-						},
-					},
-				},
-			},
-		});
+		const topClients = await this.db.$queryRaw<
+			{
+				fullName: string;
+				ruc: string;
+				email: string;
+				phoneNumber: string;
+				totalIngreso: number;
+				ultimaFacturacion: string;
+			}[]
+		>(Prisma.sql`
+SELECT  
+	u."fullName"                        AS "fullName", 
+	u."ruc"                             AS "ruc", 
+	u."email"                           AS "email",
+	u."phoneNumber"                     AS "phoneNumber",
+	COALESCE(SUM(i."totalPayed"), 0::money)    AS "totalIngreso", 
+	MAX(i."issueDate")                 AS "ultimaFacturacion"
+FROM "Invoice" i 
+	JOIN "Client"  c ON c.id = i."clientId" 
+	JOIN "User"    u ON u.id = c."userId" 
+WHERE i."issueDate" BETWEEN ${query.from}::date AND ${query.to}::date 
+GROUP BY u."fullName", u."ruc", u."email", u."phoneNumber"
+HAVING SUM(i."totalPayed")::numeric > 0
+ORDER BY "totalIngreso" DESC 
+LIMIT 10;
+`);
 
-		const clientsWithInvoices = allClients
-			.map((client) => {
-				const total = client.invoices.reduce(
-					(sum, i) => sum + Number(i.total ?? 0),
-					0,
-				);
-				return {
-					...client,
-					total: isNaN(total) ? 0 : total,
-				};
-			})
-			.filter((c) => c.total > 0)
-			.sort((a, b) => b.total - a.total)
-			.slice(0, 10); // Solo top 10
-
-		if (clientsWithInvoices.length === 0) {
+		if (topClients.length === 0) {
 			throw new NotFoundException(
 				'No se encontraron clientes con ingresos en este rango de fechas',
 			);
@@ -127,7 +123,7 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 				summary: summaryItems,
 				charts,
 				rowConfig: {
-					parentRowSpacing: 10,
+					parentRowSpacing: 5,
 					alwaysShowHeader: false,
 					header: [
 						'Nombre',
@@ -135,19 +131,19 @@ export class ClientReport implements IReport<ClientReportQueryDto> {
 						'Teléfono',
 						'RUC',
 						'Ingresos (Gs)',
-						'Fecha Registro',
+						'Ultima Facturación',
 					],
-					data: clientsWithInvoices.map((c) => ({
+					data: topClients.map((c) => ({
 						values: [
-							c.user.fullName,
-							c.user.email,
-							c.user.phoneNumber,
-							c.user.ruc,
-							c.total.toLocaleString(),
-							toDateFormat(c.createdAt),
+							c.fullName,
+							c.email,
+							c.phoneNumber,
+							c.ruc,
+							Number(c.totalIngreso).toLocaleString(),
+							toDateFormat(c.ultimaFacturacion),
 						],
 					})),
-					widths: [25, 25, 10, 15, 15, 15],
+					widths: [15, 20, 15, 10, 10, 12],
 				},
 			},
 			res,
