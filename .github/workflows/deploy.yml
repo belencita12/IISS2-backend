@@ -11,11 +11,15 @@ jobs:
     environment: production-docker
 
     steps:
-      - name: Setup SSH key
+      - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_SECRET_KEY }}" > ~/.ssh/id_ed25519
+          printf "%s\n" "${{ secrets.SSH_SECRET_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+
+      - name: Clean known_hosts
+        run: |
+          mkdir -p ~/.ssh
           touch ~/.ssh/known_hosts
           ssh-keygen -R "${{ secrets.SERVER_IP }}" || true
 
