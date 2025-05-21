@@ -1,4 +1,4 @@
-name: Deploy App
+name: Deploy
 
 on:
   push:
@@ -6,37 +6,42 @@ on:
 
 jobs:
   deploy:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     environment: production-docker
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_SECRET_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
 
-    - name: Setup SSH key
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{secrets.SSH_PRIVATE_KEY}}" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan -H ${{secrets.SERVER_IP}} >> ~/.ssh/known_hosts
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          version: latest
 
-    - name: Deploy via SSH
-      run: |
-        ssh -i ~/.ssh/id_ed25519 ${{secrets.SERVER_USER}}@${{secrets.SERVER_IP}} << 'EOF'
-          set -e
+      - name: Deploy via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no -tt -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}" bash <<'EOF'
+            set -eo pipefail
 
-          cd ${{secrets.APP_DIR}}
+            echo "📁 Moving to app folder..."
+            cd ${{ secrets.APP_DIR }} || { echo "❌ Could not change directory"; exit 1; }
 
-          echo "=== Pulling latest code ==="
-          git pull origin dockerization
-          
-          echo "=== Shutting down old containers ==="
-          docker compose down
+            echo "🧹 Stopping and cleaning previous containers..."
+            docker compose down || echo "⚠️ docker compose down failed or nothing to stop"
 
-          echo "=== Building and starting containers ==="
-          docker compose up -d --build
-          
-          echo "=== Docker Compose Logs ==="
-          docker compose logs
-          
-        EOF
+            echo "🐳 Building and starting new containers..."
+            docker compose up -d --build || { echo "❌ docker compose up failed"; exit 1; }
+
+            echo "🧼 Cleaning unused images..."
+            docker system prune -f || echo "⚠️ docker system prune failed"
+
+            echo "✅ Deployment completed successfully!"
+            exit 0
+          EOF
