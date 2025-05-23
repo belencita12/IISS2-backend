@@ -47,9 +47,11 @@ export class PdfService {
 		doc.pipe(res);
 
 		const fecha = `${invoice.issueDate.getDate()} de ${this.meses[invoice.issueDate.getMonth()]} de ${invoice.issueDate.getFullYear()}`;
+
+		// Encabezado
 		doc
 			.fontSize(12)
-			.text('NICOPETS - Clinica Veterinaria', 30, 30, { align: 'left' })
+			.text('NICOPETS - Clinica Veterinaria', 30, 30)
 			.fontSize(9)
 			.text('Dirección: Calle Ficticia N° 123 - Ciudad Mascota', 30, 45)
 			.text('Teléfono: (0981) 123-456 / Email: contacto@nicopet.com', 30, 57)
@@ -62,6 +64,7 @@ export class PdfService {
 			)
 			.text(`N°: ${invoice.invoiceNumber}`, 450, 45);
 
+		// Datos del cliente
 		doc
 			.moveDown()
 			.rect(20, 90, 570, 50)
@@ -69,35 +72,61 @@ export class PdfService {
 			.fontSize(9)
 			.text(`Razón Social: ${invoice.client.fullName}`, 30, 100)
 			.text(`Dirección: ${invoice.client.address}`, 30, 115)
-			.text(`Fecha: ${fecha}`, 450, 115)
-			.text(`RUC/CI: ${invoice.client.ruc}`, 450, 100);
+			.text(`RUC/CI: ${invoice.client.ruc}`, 450, 100)
+			.text(`Fecha: ${fecha}`, 450, 115);
 
 		let currentY = 150;
+
+		// Encabezado tabla
 		doc
 			.rect(20, currentY, 570, 20)
 			.stroke()
 			.fontSize(9)
 			.text('Código', 30, currentY + 5)
-			.text('Descripción', 130, currentY + 5)
-			.text('Precio Vta.', 320, currentY + 5)
-			.text('Cant.', 420, currentY + 5)
-			.text('Subtotal', 500, currentY + 5);
+			.text('Descripción', 120, currentY + 5)
+			.text('Precio Vta.', 260, currentY + 5)
+			.text('Cant.', 320, currentY + 5)
+			.text('Exentas', 370, currentY + 5)
+			.text('Grab. 5%', 440, currentY + 5)
+			.text('Grab. 10%', 510, currentY + 5);
 
 		currentY += 20;
+
+		// Cuerpo de la tabla
 		invoice.products.forEach((product) => {
+			const subtotal = product.unitCost * product.quantity;
+			const iva = product.iva;
+
+			let exentas = 0,
+				iva5 = 0,
+				iva10 = 0;
+
+			if (iva >= 0 && iva < 4) exentas = subtotal;
+			else if (iva >= 4 && iva < 7) iva5 = subtotal;
+			else iva10 = subtotal;
+
 			doc
 				.rect(20, currentY, 570, 20)
 				.stroke()
 				.fontSize(9)
 				.text(product.code, 30, currentY + 5)
-				.text(product.name, 130, currentY + 5)
-				.text(product.unitCost.toLocaleString('de-DE'), 320, currentY + 5)
-				.text(product.quantity.toString(), 420, currentY + 5)
-				.text(product.subtotal.toLocaleString('de-DE'), 500, currentY + 5);
+				.text(product.name, 120, currentY + 5, { width: 130, ellipsis: true })
+				.text(product.unitCost.toLocaleString('de-DE'), 260, currentY + 5)
+				.text(product.quantity.toString(), 320, currentY + 5)
+				.text(
+					exentas ? exentas.toLocaleString('de-DE') : '-',
+					370,
+					currentY + 5,
+				)
+				.text(iva5 ? iva5.toLocaleString('de-DE') : '-', 440, currentY + 5)
+				.text(iva10 ? iva10.toLocaleString('de-DE') : '-', 510, currentY + 5);
+
 			currentY += 20;
 		});
 
 		currentY += 10;
+
+		// Totales
 		doc
 			.fontSize(10)
 			.text(
@@ -111,9 +140,9 @@ export class PdfService {
 				currentY + 12,
 			)
 			.font('Helvetica');
+
 		doc.end();
 	};
-
 	generateCompactTablePDF(reportConfig: ReportPdfConfig, response: Response) {
 		const { title, rowConfig, madeBy, summary, charts } = reportConfig;
 		const mainHeader = rowConfig.header;
