@@ -87,9 +87,17 @@ export class NotificationService {
 			if (!isAppExists) throw new NotFoundException('Cita no encontrada');
 		}
 
-		if (dto.vaccineRegistryId) {
+		if (userId) {
 			const isUserExists = await this.db.user.isExists({ id: userId });
 			if (!isUserExists) throw new NotFoundException('Usuario no encontrado');
+		}
+
+		if (dto.vaccineRegistryId) {
+			const isVaccExists = await this.db.vaccineRegistry.isExists({
+				id: dto.vaccineRegistryId,
+			});
+			if (!isVaccExists)
+				throw new NotFoundException('Registro de vacuna no encontrado');
 		}
 	}
 }
