@@ -17,6 +17,8 @@ import { NotificationQueryDto } from './dto/notification-query.dto';
 import { RolesGuard } from '@lib/guard/role.guard';
 import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { Role } from '@lib/constants/role.enum';
+import { ApiPaginatedResponse } from '@lib/decorators/documentation/api-pagination-response.decorator';
+import { NotificationDto } from './dto/notification.dto';
 
 @UseGuards(RolesGuard)
 @AppController({ name: 'notification', tag: 'Notification' })
@@ -24,6 +26,7 @@ export class NotificationController {
 	constructor(private readonly notificationService: NotificationService) {}
 
 	@Get()
+	@ApiPaginatedResponse(NotificationDto)
 	getAll(
 		@Query() query: NotificationQueryDto,
 		@CurrentUser() user: TokenPayload,
