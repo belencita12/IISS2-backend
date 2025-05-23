@@ -41,6 +41,8 @@ import { ScheduleService } from './appointment-module/schedule/schedule.service'
 import { AppointmentDetailModule } from './appointment-module/appointment-detail/appointment-detail.module';
 import { ChartModule } from './global-module/chart/chart.module';
 import { PdfModule } from './global-module/pdf/pdf.module';
+import { NotificationModule } from './notification/notification.module';
+import { DateModule } from './global-module/date/date.module';
 
 @Module({
 	imports: [
@@ -83,6 +85,8 @@ import { PdfModule } from './global-module/pdf/pdf.module';
 		AppointmentModule,
 		ChartModule,
 		PdfModule,
+		NotificationModule,
+		DateModule,
 		AppointmentDetailModule,
 	],
 	providers: [ScheduleService],

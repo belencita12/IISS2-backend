@@ -17,6 +17,8 @@ model Appointment {
     status             AppointmentStatus       @default(PENDING)
     pet                Pet                     @relation(fields: [petId], references: [id])
     employee           Employee                @relation(fields: [employeeId], references: [id])
+
+    notifications Notification[]
 }
 
 model AppointmentDetail {
