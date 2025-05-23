@@ -28,6 +28,7 @@ import { AppointmentCancelDto } from './dto/appointment-cancel.dto';
 import { AppointmentReport } from './appointment.report';
 import { ApiPdfResponse } from '@lib/decorators/documentation/api-pdf-response.decorator';
 import { AppointmentReportQueryDto } from './dto/appointment-report-query.dto';
+import { IsAppointmentOwnerGuard } from './guards/is-appointment-owner.guard';
 
 @AppController({ name: 'appointment', tag: 'Appointment' })
 @UseGuards(RolesGuard)
@@ -96,6 +97,7 @@ export class AppointmentController {
 	}
 
 	@Get(':id')
+	@UseGuards(IsAppointmentOwnerGuard)
 	@ApiResponse({ type: AppointmentDto })
 	findOne(@Param('id') id: string) {
 		return this.appointmentService.findOne(+id);
