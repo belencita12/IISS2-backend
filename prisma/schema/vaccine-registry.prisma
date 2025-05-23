@@ -10,6 +10,7 @@ model VaccineRegistry {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  vaccine           Vaccine           @relation(fields: [vaccineId], references: [id])
-  pet               Pet               @relation(fields: [petId], references: [id])
+  notifications Notification[]
+  vaccine       Vaccine        @relation(fields: [vaccineId], references: [id])
+  pet           Pet            @relation(fields: [petId], references: [id])
 }
