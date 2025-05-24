@@ -1,6 +1,6 @@
 export interface ProductDetail {
-	iva: any;
-	totalIva: any;
+	iva: number;
+	totalIva: number;
 	code: string;
 	name: string;
 	unitCost: number;
