@@ -63,8 +63,8 @@ export class InvoiceService {
 				quantity: item.quantity,
 				subtotal: item.unitCost.toNumber() * item.quantity,
 				iva: item.product.iva,
+				totalIva: item.partialAmountVAT,
 			})),
-
 			totalIVA: invoice.totalVat.toNumber(),
 			totalToPay: invoice.totalPayed.toNumber(),
 		};

@@ -92,6 +92,13 @@ export class PdfService {
 
 		currentY += 20;
 
+		let exentasSubtotal = 0;
+		let iva5Subtotal = 0;
+		let iva10Subtotal = 0;
+
+		let iva5TotalIva = 0;
+		let iva10totalIva = 0;
+
 		// Cuerpo de la tabla
 		invoice.products.forEach((product) => {
 			const subtotal = product.unitCost * product.quantity;
@@ -101,9 +108,18 @@ export class PdfService {
 				iva5 = 0,
 				iva10 = 0;
 
-			if (iva >= 0 && iva < 4) exentas = subtotal;
-			else if (iva >= 4 && iva < 7) iva5 = subtotal;
-			else iva10 = subtotal;
+			if (iva >= 0 && iva < 4) {
+				exentas = subtotal;
+				exentasSubtotal += subtotal;
+			} else if (iva >= 4 && iva < 7) {
+				iva5 = subtotal;
+				iva5Subtotal += subtotal;
+				iva5TotalIva += product.totalIva;
+			} else {
+				iva10 = subtotal;
+				iva10Subtotal += subtotal;
+				iva10totalIva += product.totalIva;
+			}
 
 			doc
 				.rect(20, currentY, 570, 20)
@@ -111,38 +127,61 @@ export class PdfService {
 				.fontSize(9)
 				.text(product.code, 30, currentY + 5)
 				.text(product.name, 120, currentY + 5, { width: 130, ellipsis: true })
-				.text(product.unitCost.toLocaleString('de-DE'), 260, currentY + 5)
+				.text(product.unitCost.toLocaleString('py-PY'), 260, currentY + 5)
 				.text(product.quantity.toString(), 320, currentY + 5)
 				.text(
-					exentas ? exentas.toLocaleString('de-DE') : '-',
+					exentas ? exentas.toLocaleString('py-PY') : '-',
 					370,
 					currentY + 5,
 				)
-				.text(iva5 ? iva5.toLocaleString('de-DE') : '-', 440, currentY + 5)
-				.text(iva10 ? iva10.toLocaleString('de-DE') : '-', 510, currentY + 5);
+				.text(iva5 ? iva5.toLocaleString('py-PY') : '-', 440, currentY + 5)
+				.text(iva10 ? iva10.toLocaleString('py-PY') : '-', 510, currentY + 5);
 
 			currentY += 20;
 		});
 
 		currentY += 10;
 
+		// Subtotales por tipo de IVA
+		doc
+			.fontSize(9)
+			.font('Helvetica-Bold')
+			.text('Subtotales:', 260, currentY)
+			.font('Helvetica')
+			.text(exentasSubtotal.toLocaleString('py-PY'), 370, currentY)
+			.text(iva5Subtotal.toLocaleString('py-PY'), 440, currentY)
+			.text(iva10Subtotal.toLocaleString('py-PY'), 510, currentY);
+
+		currentY += 12;
+
 		// Totales
 		doc
-			.fontSize(10)
+			.fontSize(9)
+			.font('Helvetica-Bold')
+			.text('Total IVA:', 260, currentY)
+			.font('Helvetica')
+			.text(`${invoice.totalIVA.toLocaleString('py-PY')}`, 510, currentY)
+			.font('Helvetica-Bold')
+			.text('Total a pagar:', 260, currentY + 12)
+			.font('Helvetica')
+			.text(`${invoice.totalToPay.toLocaleString('py-PY')}`, 510, currentY + 12)
+
+			.font('Helvetica-Bold')
+			.text('Iva parcial(5%): ', 30, currentY)
+			.font('Helvetica')
+			.text(`${Number(iva5TotalIva).toLocaleString('py-PY')}`, 120, currentY)
+			.font('Helvetica-Bold')
+			.text('Iva parcial(10%): ', 30, currentY + 12)
+			.font('Helvetica')
 			.text(
-				`Total IVA: ${invoice.totalIVA.toLocaleString('de-DE')}`,
-				450,
-				currentY,
-			)
-			.text(
-				`Total a Pagar: ${invoice.totalToPay.toLocaleString('de-DE')}`,
-				450,
+				`${Number(iva10totalIva).toLocaleString('py-PY')}`,
+				120,
 				currentY + 12,
-			)
-			.font('Helvetica');
+			);
 
 		doc.end();
 	};
+
 	generateCompactTablePDF(reportConfig: ReportPdfConfig, response: Response) {
 		const { title, rowConfig, madeBy, summary, charts } = reportConfig;
 		const mainHeader = rowConfig.header;
