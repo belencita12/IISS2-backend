@@ -62,6 +62,8 @@ export class InvoiceService {
 				unitCost: item.unitCost.toNumber(),
 				quantity: item.quantity,
 				subtotal: item.unitCost.toNumber() * item.quantity,
+				iva: item.product.iva,
+				totalIva: item.partialAmountVAT.toNumber(),
 			})),
 			totalIVA: invoice.totalVat.toNumber(),
 			totalToPay: invoice.totalPayed.toNumber(),
