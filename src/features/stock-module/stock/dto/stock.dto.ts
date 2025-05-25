@@ -19,7 +19,7 @@ export class StockDto {
 	stockNum: string;
 
 	@ApiProperty({ example: '12345678' })
-	stamped: string;
+	stamped?: string;
 
 	@ApiProperty()
 	createdAt: Date;
@@ -35,7 +35,8 @@ export class StockDto {
 		this.name = data.name;
 		this.address = data.address;
 		this.stockNum = data.stockNum.toString().padStart(3, '0');
-		this.stamped = data.stamped[0].stampedNum;
+		this.stamped =
+			data.stamped.length > 0 ? data.stamped[0].stampedNum : undefined;
 		this.createdAt = data.createdAt;
 		this.updatedAt = data.updatedAt;
 		this.deletedAt = data.deletedAt || undefined;
