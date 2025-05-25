@@ -38,6 +38,28 @@ export class NotificationService {
 		});
 	}
 
+	async markAsReadOne(id: number, user: TokenPayload) {
+		console.log(id, user);
+		const isNotificationExists = await this.db.userNotification.isExists({
+			userId_notificationId: { userId: user.id, notificationId: id },
+			readAt: null,
+		});
+		if (!isNotificationExists) {
+			throw new NotFoundException('Notificacion no encontrada o ya fue leida');
+		}
+		await this.db.userNotification.update({
+			where: { userId_notificationId: { userId: user.id, notificationId: id } },
+			data: { readAt: this.dateService.getToday(true), isRead: true },
+		});
+	}
+
+	async markAsReadAll(user: TokenPayload) {
+		await this.db.userNotification.updateMany({
+			where: { userId: user.id, readAt: null },
+			data: { readAt: this.dateService.getToday(true), isRead: true },
+		});
+	}
+
 	async createToUser(userId: number, dto: CreateNotificationToUserDto) {
 		await this.validateExtraFields(userId, dto);
 		const notification = await this.db.userNotification.create({

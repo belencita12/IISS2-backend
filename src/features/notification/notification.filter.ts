@@ -23,7 +23,7 @@ export class NotificationFilter {
 			},
 		};
 
-		if (query.isRead) where.isRead = query.isRead;
+		if (query.isRead !== undefined) where.isRead = query.isRead;
 		if (query.userId) where.userId = query.userId;
 		if (query.searchSubject) {
 			where.user = {
