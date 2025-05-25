@@ -11,6 +11,7 @@ import {
 	SummaryItem,
 	ReportChartConfig,
 } from '@features/global-module/pdf/pdf.types';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PurchaseReport implements IReport<PurchaseReportQueryDto> {
@@ -33,6 +34,9 @@ export class PurchaseReport implements IReport<PurchaseReportQueryDto> {
 			include: {
 				provider: true,
 				stock: true,
+			},
+			orderBy: {
+				date: 'desc',
 			},
 		});
 
@@ -69,16 +73,76 @@ export class PurchaseReport implements IReport<PurchaseReportQueryDto> {
 		);
 		const coloresDepositos = ColorUtils.getManyRanHexColor(depositos.length);
 
+		const topProduct = await this.db.$queryRaw<
+			{ name: string; totalQuantity: number }[]
+		>(Prisma.sql`
+	SELECT 
+		p."name", 
+		SUM(pd."quantity") AS "totalQuantity"
+	FROM "PurchaseDetail" pd
+	JOIN "Product" p ON p.id = pd."productId"
+	JOIN "Purchase" pu ON pu.id = pd."purchaseId"
+	WHERE pu."date" BETWEEN ${fromDate} AND ${toDate}
+	GROUP BY p."name"
+	ORDER BY "totalQuantity" DESC
+	LIMIT 1
+`);
+
+		const purchasesByTags = await this.db.$queryRaw<
+			{ tag: string; total: number }[]
+		>(Prisma.sql`
+  SELECT 
+    t."name" AS tag,
+    SUM(pd."partialAmount")::numeric AS total
+  FROM "PurchaseDetail" pd
+  JOIN "Product" p ON p.id = pd."productId"
+  JOIN "ProductTag" pt ON pt."productId" = p.id
+  JOIN "Tag" t ON t.id = pt."tagId"
+  JOIN "Purchase" pu ON pu.id = pd."purchaseId"
+  WHERE pu."date" BETWEEN ${fromDate} AND ${toDate}
+  GROUP BY t."name"
+  ORDER BY total DESC
+`);
+
+		const tags = purchasesByTags.map((t) => t.tag);
+		const coloresTags = ColorUtils.getManyRanHexColor(tags.length);
+
+		const totalTagsAmount = purchasesByTags.reduce(
+			(acc, tagData) => acc + Number(tagData.total),
+			0,
+		);
+
+		const umbralPorcentaje = 5;
+		let otrosTotal = 0;
+
+		const tagsWithColors = purchasesByTags
+			.map((tagData, i) => {
+				const value = Number(tagData.total);
+				const percentage = (value / totalTagsAmount) * 100;
+
+				if (percentage < umbralPorcentaje) {
+					otrosTotal += value;
+					return null;
+				}
+
+				return {
+					label: tagData.tag,
+					value,
+					color: coloresTags[i],
+				};
+			})
+			.filter((item): item is Exclude<typeof item, null> => item !== null);
+
+		// Agregar "Otros" si corresponde
+		if (otrosTotal > 0) {
+			tagsWithColors.push({
+				label: 'Otros',
+				value: otrosTotal,
+				color: '#CCCCCC',
+			});
+		}
+
 		const charts: ReportChartConfig[] = [
-			{
-				title: 'Distribución de compras por proveedor',
-				type: 'pie',
-				components: proveedores.map((label, i) => ({
-					label,
-					value: comprasPorProveedor[label],
-					color: coloresProveedores[i],
-				})),
-			},
 			{
 				title: 'Distribución de compras por depósito',
 				type: 'pie',
@@ -86,6 +150,25 @@ export class PurchaseReport implements IReport<PurchaseReportQueryDto> {
 					label,
 					value: comprasPorDeposito[label],
 					color: coloresDepositos[i],
+				})),
+			},
+			{
+				title: 'Distribucion de compras por Tags',
+				type: 'pie',
+				components: tagsWithColors,
+			},
+			{
+				type: 'pie',
+				title: '',
+				components: [],
+			},
+			{
+				title: 'Distribución de compras por proveedor',
+				type: 'pie',
+				components: proveedores.map((label, i) => ({
+					label,
+					value: comprasPorProveedor[label],
+					color: coloresProveedores[i],
 				})),
 			},
 		];
@@ -106,6 +189,10 @@ export class PurchaseReport implements IReport<PurchaseReportQueryDto> {
 			{
 				key: 'Suma total de IVA',
 				value: Number(sumaIva).toLocaleString(),
+			},
+			{
+				key: 'Producto más comprado',
+				value: `${topProduct[0].name} (${topProduct[0].totalQuantity} unidades)`,
 			},
 		];
 
@@ -129,7 +216,7 @@ export class PurchaseReport implements IReport<PurchaseReportQueryDto> {
 					parentRowSpacing: 10,
 					alwaysShowHeader: false,
 					header: ['Fecha', 'Proveedor', 'Depósito', 'Total (Gs)', 'IVA (Gs)'],
-					widths: [25, 25, 10, 10, 10, 10],
+					widths: [15, 20, 20, 20, 10],
 					data: rows,
 				},
 			},
