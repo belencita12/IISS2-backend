@@ -1,0 +1,49 @@
+model Notification {
+    id          Int               @id @default(autoincrement())
+    title       String
+    description String
+    type        NotificationType
+    scope       NotificationScope
+
+    appointmentId     Int?
+    vaccineRegistryId Int?
+
+    userNotifications UserNotification[]
+
+    appointment  Appointment?     @relation(fields: [appointmentId], references: [id])
+    vaccRegistry VaccineRegistry? @relation(fields: [vaccineRegistryId], references: [id])
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+}
+
+model UserNotification {
+    id             Int       @id @default(autoincrement())
+    userId         Int
+    notificationId Int
+    isRead         Boolean   @default(false)
+    readAt         DateTime?
+    arrivalDate    DateTime? @default(now())
+
+    user         User         @relation(fields: [userId], references: [id])
+    notification Notification @relation(fields: [notificationId], references: [id])
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+
+    @@unique([userId, notificationId])
+}
+
+enum NotificationScope {
+    BROADCAST
+    TO_USER
+}
+
+enum NotificationType {
+    INFO
+    ALERT
+    APPOINTMENT_REMINDER
+    VACCINE_REMAINDER
+}
