@@ -1,5 +1,4 @@
 import { Notification, UserNotification } from '@prisma/client';
-import { NotificationDto } from './dto/notification.dto';
 import { INotificationMessage } from './notification.types';
 
 export interface NotificationEntity extends UserNotification {
@@ -7,7 +6,7 @@ export interface NotificationEntity extends UserNotification {
 }
 
 export class NotificationMapper {
-	static toDto(data: NotificationEntity): NotificationDto {
+	static toDto(data: NotificationEntity): INotificationMessage {
 		return {
 			id: data.notification.id,
 			title: data.notification.title,
@@ -17,8 +16,7 @@ export class NotificationMapper {
 			scope: data.notification.scope,
 			appointmentId: data.notification.appointmentId ?? undefined,
 			vaccineRegistryId: data.notification.vaccineRegistryId ?? undefined,
-			userId: data.userId ?? undefined,
-			arrivalDate: data.arrivalDate ?? undefined,
+			arrivalDate: data.arrivalDate ?? new Date(),
 		};
 	}
 
@@ -30,6 +28,8 @@ export class NotificationMapper {
 			title: data.notification.title,
 			description: data.notification.description,
 			isRead: data.isRead,
+			appointmentId: data.notification.appointmentId ?? undefined,
+			vaccineRegistryId: data.notification.vaccineRegistryId ?? undefined,
 			type: data.notification.type,
 		};
 	}
@@ -41,6 +41,8 @@ export class NotificationMapper {
 			arrivalDate: new Date(),
 			title: data.title,
 			description: data.description,
+			appointmentId: data.appointmentId ?? undefined,
+			vaccineRegistryId: data.vaccineRegistryId ?? undefined,
 			isRead: false,
 			type: data.type,
 		};
