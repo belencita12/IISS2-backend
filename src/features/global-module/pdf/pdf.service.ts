@@ -10,7 +10,7 @@ import {
 } from './pdf.types';
 import { getToday, toDateFormat } from '@lib/utils/date';
 import { ChartService } from '../chart/chart.service';
-import { InvoiceData } from '@lib/types/invoice-pdf';
+import { InvoiceData, ReceiptData } from '@lib/types/invoice-pdf';
 
 @Injectable()
 export class PdfService {
@@ -179,6 +179,139 @@ export class PdfService {
 				currentY + 12,
 			);
 
+		doc.end();
+	};
+
+	generateReceiptPDF = (receipt: ReceiptData, res: Response) => {
+		const doc = new PDFDocument({ margin: 0, size: 'A4' });
+		res.setHeader('Content-Type', 'application/pdf');
+		res.setHeader(
+			'Content-Disposition',
+			`attachment; filename="recibo_${receipt.receiptNumber}.pdf"`,
+		);
+		doc.pipe(res);
+		const fechaLarga = `${receipt.issueDate.getDate()} de ${this.meses[receipt.issueDate.getMonth()]} de ${receipt.issueDate.getFullYear()}`;
+		const formatoGs = (n: number) => n.toLocaleString('de-DE') + ' Gs.';
+		doc.rect(20, 20, 350, 65).stroke();
+		doc
+			.fontSize(12)
+			.font('Helvetica-Bold')
+			.text('NICOPETS - Clínica Veterinaria', 30, 28, { width: 330 });
+		doc
+			.fontSize(8)
+			.font('Helvetica')
+			.text('Dirección: Calle Ficticia N° 123 - Ciudad Mascota', 30, 43)
+			.text('Teléfono: (0981) 123-456    Email: contacto@nicopet.com', 30, 53);
+		doc.rect(380, 20, 190, 65).stroke();
+		doc.fontSize(11).font('Helvetica-Bold').text('RECIBO DE PAGO', 390, 28);
+		doc
+			.fontSize(9)
+			.font('Helvetica')
+			.text(`Nº ${receipt.receiptNumber}`, 390, 42);
+		doc.rect(20, 95, 550, 560).stroke();
+		doc
+			.rect(430, 110, 120, 35)
+			.stroke()
+			.fontSize(13)
+			.font('Helvetica-Bold')
+			.text(`Gs. ${receipt.amount.toLocaleString('de-DE')}`, 435, 122, {
+				width: 110,
+				align: 'center',
+			});
+		const leftX = 30;
+		let y = 150;
+		doc
+			.fontSize(10)
+			.font('Helvetica-Bold')
+			.text('Fecha de emisión:', leftX, y)
+			.font('Helvetica')
+			.text(fechaLarga, leftX + 105, y);
+		y += 18;
+		doc
+			.font('Helvetica-Bold')
+			.text('Recibí de:', leftX, y)
+			.font('Helvetica')
+			.text(receipt.client.fullName, leftX + 65, y);
+		y += 18;
+		doc
+			.font('Helvetica-Bold')
+			.text('RUC:', leftX, y)
+			.font('Helvetica')
+			.text(receipt.client.ruc, leftX + 50, y);
+		y += 18;
+		doc
+			.font('Helvetica-Bold')
+			.text('La cantidad de:', leftX, y)
+			.font('Helvetica')
+			.text(`${formatoGs(receipt.amount)}`, leftX + 85, y);
+		y += 18;
+		doc
+			.font('Helvetica-Bold')
+			.text('Concepto:', leftX, y)
+			.font('Helvetica')
+			.text(
+				`Pago total correspondiente a la Factura Nº ${receipt.invoice.invoiceNumber}.`,
+				leftX + 60,
+				y,
+				{ width: 450, align: 'justify' },
+			);
+		y += 30;
+		doc.fontSize(10).font('Helvetica-Bold').text('Factura Asociada:', leftX, y);
+		y += 15;
+		const fechaFactura = `${receipt.invoice.issueDate.getDate()} de ${this.meses[receipt.invoice.issueDate.getMonth()]} de ${receipt.invoice.issueDate.getFullYear()}`;
+		doc
+			.fontSize(9)
+			.font('Helvetica')
+			.text(`Nº: ${receipt.invoice.invoiceNumber}`, leftX + 10, y)
+			.text(`Fecha: ${fechaFactura}`, 250, y);
+		y += 15;
+		doc
+			.text(`Timbrado: ${receipt.invoice.stamped}`, leftX + 10, y)
+			.text(
+				`Tipo: ${receipt.invoice.type === 'CASH' ? 'Contado' : 'Crédito'}`,
+				250,
+				y,
+			);
+		y += 15;
+		doc
+			.text(
+				`Total Facturado: ${formatoGs(receipt.invoice.totalToPay)}`,
+				leftX + 10,
+				y,
+			)
+			.text(`IVA Total: ${formatoGs(receipt.invoice.totalIVA)}`, 250, y);
+		y += 30;
+		doc.fontSize(10).font('Helvetica-Bold').text('Métodos de Pago:', leftX, y);
+		y += 18;
+		receipt.paymentMethods.forEach((pm) => {
+			doc
+				.fontSize(9)
+				.font('Helvetica')
+				.text(`• ${pm.method.name}: ${formatoGs(pm.amount)}`, leftX + 10, y);
+			y += 15;
+		});
+		y += 40;
+		doc
+			.fontSize(8)
+			.font('Helvetica')
+			.text('_____________________________', leftX + 360, y)
+			.text('Firma y Sello', leftX + 400, y + 12);
+		const pageHeight = doc.page.height;
+		doc
+			.fontSize(7)
+			.font('Helvetica-Oblique')
+			.text(
+				'Este documento es un comprobante válido de pago',
+				20,
+				pageHeight - 45,
+				{ align: 'center', width: 550 },
+			)
+			.text(
+				`Generado el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`,
+				20,
+				pageHeight - 32,
+				{ align: 'center', width: 550 },
+			);
 		doc.end();
 	};
 
