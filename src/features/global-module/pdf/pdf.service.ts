@@ -113,6 +113,7 @@ export class PdfService {
 			.font('Helvetica');
 		doc.end();
 	};
+
 	generateReceiptPDF = (receipt: ReceiptData, res: Response) => {
 		const doc = new PDFDocument({ margin: 0, size: 'A4' });
 		res.setHeader('Content-Type', 'application/pdf');
@@ -138,7 +139,7 @@ export class PdfService {
 		doc
 			.fontSize(9)
 			.font('Helvetica')
-			.text(`Nº ${receipt.receiptNumber}`, 390, 58);
+			.text(`Nº ${receipt.receiptNumber}`, 390, 42);
 		doc.rect(20, 95, 550, 560).stroke();
 		doc
 			.rect(430, 110, 120, 35)
@@ -150,13 +151,14 @@ export class PdfService {
 				align: 'center',
 			});
 		const leftX = 30;
-		let y = 115;
+		let y = 150;
 		doc
 			.fontSize(10)
 			.font('Helvetica-Bold')
 			.text('Fecha de emisión:', leftX, y)
+			.font('Helvetica')
 			.text(fechaLarga, leftX + 105, y);
-		y += 22;
+		y += 18;
 		doc
 			.font('Helvetica-Bold')
 			.text('Recibí de:', leftX, y)
@@ -174,7 +176,7 @@ export class PdfService {
 			.text('La cantidad de:', leftX, y)
 			.font('Helvetica')
 			.text(`${formatoGs(receipt.amount)}`, leftX + 85, y);
-		y += 25;
+		y += 18;
 		doc
 			.font('Helvetica-Bold')
 			.text('Concepto:', leftX, y)
@@ -197,7 +199,11 @@ export class PdfService {
 		y += 15;
 		doc
 			.text(`Timbrado: ${receipt.invoice.stamped}`, leftX + 10, y)
-			.text(`Tipo: ${receipt.invoice.type}`, 250, y);
+			.text(
+				`Tipo: ${receipt.invoice.type === 'CASH' ? 'Contado' : 'Crédito'}`,
+				250,
+				y,
+			);
 		y += 15;
 		doc
 			.text(
