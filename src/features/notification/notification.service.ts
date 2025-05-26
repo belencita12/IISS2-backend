@@ -39,7 +39,6 @@ export class NotificationService {
 	}
 
 	async markAsReadOne(id: number, user: TokenPayload) {
-		console.log(id, user);
 		const isNotificationExists = await this.db.userNotification.isExists({
 			userId_notificationId: { userId: user.id, notificationId: id },
 			readAt: null,
