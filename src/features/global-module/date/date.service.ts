@@ -21,6 +21,24 @@ export class DateService {
 		return builder.toISO()!;
 	}
 
+	getRangePlusDays(daysAhead: number): { gte: string; lte: string } {
+		const date = DateTime.now()
+			.setZone(this.timeZone)
+			.plus({ days: daysAhead });
+
+		const start = date.startOf('day');
+		const end = date.endOf('day');
+
+		if (!start.isValid || !end.isValid) {
+			throw new Error('Invalid calculated date');
+		}
+
+		return {
+			gte: start.toISO(),
+			lte: end.toISO(),
+		};
+	}
+
 	getRangeForPrisma(
 		from?: string,
 		to?: string,
