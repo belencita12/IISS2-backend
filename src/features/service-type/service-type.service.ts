@@ -9,6 +9,7 @@ import { genRandomCode } from '@lib/utils/encrypt';
 import { ProductPricingService } from '@features/product-module/product/product-pricing.service';
 import { ServiceTypeMapper } from './service-type.mapper';
 import { ServiceTypeFilter } from './service-type.filter';
+import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
 
 @Injectable()
 export class ServiceTypeService {
@@ -43,7 +44,8 @@ export class ServiceTypeService {
 		return ServiceTypeMapper.toDto(serviceType);
 	}
 
-	async findAll(dto: ServiceTypeQueryDto) {
+	async findAll(dto: ServiceTypeQueryDto, user?: TokenPayload) {
+		const isPublic = !user || user.clientId !== undefined;
 		const { baseWhere } = this.db.getBaseWhere(dto);
 		const where = ServiceTypeFilter.getWhere(baseWhere, dto);
 		const [data, count] = await Promise.all([
@@ -58,17 +60,18 @@ export class ServiceTypeService {
 			total: count,
 			page: dto.page,
 			size: dto.size,
-			data: data.map((s) => ServiceTypeMapper.toDto(s)),
+			data: data.map((s) => ServiceTypeMapper.toDto(s, isPublic)),
 		});
 	}
 
-	async findOne(id: number) {
+	async findOne(id: number, user?: TokenPayload) {
+		const isPublic = !user || user.clientId !== undefined;
 		const service = await this.db.serviceType.findUnique({
 			where: { id },
 			...this.getInclude(),
 		});
 		if (!service) throw new NotFoundException('Servicio no encontrado');
-		return ServiceTypeMapper.toDto(service);
+		return ServiceTypeMapper.toDto(service, isPublic);
 	}
 
 	async update(id: number, dto: CreateServiceTypeDto) {
