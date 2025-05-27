@@ -28,6 +28,8 @@ export class NotificationMapper {
 			title: data.notification.title,
 			description: data.notification.description,
 			isRead: data.isRead,
+			appointmentId: data.notification.appointmentId ?? undefined,
+			vaccineRegistryId: data.notification.vaccineRegistryId ?? undefined,
 			type: data.notification.type,
 		};
 	}
@@ -39,6 +41,8 @@ export class NotificationMapper {
 			arrivalDate: new Date(),
 			title: data.title,
 			description: data.description,
+			appointmentId: data.appointmentId ?? undefined,
+			vaccineRegistryId: data.vaccineRegistryId ?? undefined,
 			isRead: false,
 			type: data.type,
 		};
