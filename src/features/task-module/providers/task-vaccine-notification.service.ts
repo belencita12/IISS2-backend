@@ -21,7 +21,7 @@ export class TaskVaccineNotificationService {
 			const description = this.generateDescription(
 				vaccReg.pet.client.user.fullName,
 				vaccReg.pet.name,
-				vaccReg.expectedDate.toISOString().split('T')[0],
+				vaccReg.expectedDate.toLocaleDateString('es-Py'),
 			);
 			userNotData.push({
 				data: {
@@ -43,8 +43,8 @@ export class TaskVaccineNotificationService {
 	}
 
 	private async findVaccineRegistries() {
-		const rangeThreeDaysAhead = this.dateService.getRangePlusDays(3);
-		const rangeOneDayAhead = this.dateService.getRangePlusDays(1);
+		const firstRange = this.dateService.getRangeFromTodayTo(3);
+		const secondRange = this.dateService.getRangeFromTodayTo(1);
 		return await this.db.vaccineRegistry.findMany({
 			select: {
 				id: true,
@@ -59,10 +59,7 @@ export class TaskVaccineNotificationService {
 				},
 			},
 			where: {
-				OR: [
-					{ expectedDate: rangeThreeDaysAhead },
-					{ expectedDate: rangeOneDayAhead },
-				],
+				OR: [{ expectedDate: firstRange }, { expectedDate: secondRange }],
 				pet: { deletedAt: null, client: { deletedAt: null } },
 				applicationDate: null,
 				deletedAt: null,

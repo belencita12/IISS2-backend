@@ -11,8 +11,8 @@ export class TaskAppointmentNotificationService {
 	) {}
 
 	async execute() {
-		const rangeThreeDaysAhead = this.dateService.getRangePlusDays(3);
-		const rangeOneDayAhead = this.dateService.getRangePlusDays(1);
+		const firstRange = this.dateService.getRangeFromTodayTo(3);
+		const secondRange = this.dateService.getRangeFromTodayTo(1);
 		const appointments = await this.db.appointment.findMany({
 			select: {
 				id: true,
@@ -27,10 +27,7 @@ export class TaskAppointmentNotificationService {
 				},
 			},
 			where: {
-				OR: [
-					{ designatedDate: rangeThreeDaysAhead },
-					{ designatedDate: rangeOneDayAhead },
-				],
+				OR: [{ designatedDate: firstRange }, { designatedDate: secondRange }],
 				pet: { deletedAt: null, client: { deletedAt: null } },
 				deletedAt: null,
 			},
@@ -41,7 +38,7 @@ export class TaskAppointmentNotificationService {
 		}[] = [];
 		const title = 'Recordatorio de vacunas';
 		appointments.forEach((appointment) => {
-			const description = `Estimado/a ${appointment.pet.client.user.fullName}, recuerde la cita de su mascota ${appointment.pet.name} la fecha ${appointment.designatedDate.toLocaleString('py-Py')}.`;
+			const description = `Estimado/a ${appointment.pet.client.user.fullName}, recuerde la cita de su mascota ${appointment.pet.name} la fecha ${appointment.designatedDate.toLocaleDateString('es-Py')}.`;
 			appNotData.push({
 				data: {
 					user: { connect: { id: appointment.pet.client.userId } },
