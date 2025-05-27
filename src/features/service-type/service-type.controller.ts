@@ -22,6 +22,9 @@ import { ImgValidator } from '@lib/pipes/file-validator.pipe';
 import { RolesGuard } from '@lib/guard/role.guard';
 import { Roles } from '@lib/decorators/auth/roles.decorators';
 import { Role } from '@lib/constants/role.enum';
+import { CurrentUser } from '@lib/decorators/auth/current-user.decoratot';
+import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
+import { Public } from '@lib/decorators/auth/public.decorator';
 
 @AppController({ name: 'service-type', tag: 'Service Type' })
 @UseGuards(RolesGuard)
@@ -42,16 +45,21 @@ export class ServiceTypeController {
 		return this.serviceTypeService.create(dto);
 	}
 
+	@Public()
 	@Get()
 	@ApiPaginatedResponse(ServiceTypeDto)
-	findAll(@Query() query: ServiceTypeQueryDto) {
-		return this.serviceTypeService.findAll(query);
+	findAll(
+		@Query() query: ServiceTypeQueryDto,
+		@CurrentUser() user?: TokenPayload,
+	) {
+		return this.serviceTypeService.findAll(query, user);
 	}
 
+	@Public()
 	@Get(':id')
 	@ApiResponse({ type: ServiceTypeDto })
-	findOne(@Param('id') id: string) {
-		return this.serviceTypeService.findOne(+id);
+	findOne(@Param('id') id: string, @CurrentUser() user?: TokenPayload) {
+		return this.serviceTypeService.findOne(+id, user);
 	}
 
 	@Patch(':id')
