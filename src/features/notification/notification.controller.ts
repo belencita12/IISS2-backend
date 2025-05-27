@@ -7,6 +7,7 @@ import {
 	Get,
 	Query,
 	UseGuards,
+	Patch,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationToUserDto } from './dto/create-notification-to-user.dto';
@@ -32,6 +33,19 @@ export class NotificationController {
 		@CurrentUser() user: TokenPayload,
 	) {
 		return this.notificationService.getAll(query, user);
+	}
+
+	@Patch('/read/all')
+	markAsReadAll(@CurrentUser() user: TokenPayload) {
+		return this.notificationService.markAsReadAll(user);
+	}
+
+	@Patch('/read/:id')
+	markAsReadOne(
+		@Param('id', ParseIntPipe) id: number,
+		@CurrentUser() user: TokenPayload,
+	) {
+		return this.notificationService.markAsReadOne(id, user);
 	}
 
 	@Roles(Role.Admin)

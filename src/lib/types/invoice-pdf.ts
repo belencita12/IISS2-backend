@@ -24,3 +24,25 @@ export interface InvoiceData {
 	totalIVA: number;
 	totalToPay: number;
 }
+
+export interface ReceiptData {
+	receiptNumber: string;
+	issueDate: Date;
+	amount: number;
+	client: {
+		fullName: string;
+		ruc: string;
+	};
+	paymentMethods: {
+		method: { name: string };
+		amount: number;
+	}[];
+	invoice: {
+		invoiceNumber: string;
+		issueDate: Date;
+		stamped: string;
+		type: string;
+		totalIVA: number;
+		totalToPay: number;
+	};
+}
