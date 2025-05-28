@@ -10,7 +10,7 @@ export class VaccineRegistryService {
 	constructor(private readonly db: PrismaService) {}
 
 	async create(dto: CreateVaccineRegistryDto) {
-		const { vaccineId, petId, applicationDate, ...data } = dto;
+		const { vaccineId, petId, appointmentId, applicationDate, ...data } = dto;
 		const currentDate = applicationDate || new Date().toISOString();
 
 		const isVaccExists = await this.db.vaccine.isExists({ id: vaccineId });
@@ -19,10 +19,20 @@ export class VaccineRegistryService {
 		const isPetExists = await this.db.pet.isExists({ id: petId });
 		if (!isPetExists) throw new NotFoundException('La mascota no existe');
 
+		if (appointmentId) {
+			const isAppointmentExists = await this.db.appointment.isExists({
+				id: appointmentId,
+			});
+			if (!isAppointmentExists)
+				throw new NotFoundException('La cita no existe');
+		}
 		const dataToCreate: Prisma.VaccineRegistryCreateInput = {
 			...data,
 			vaccine: { connect: { id: vaccineId } },
 			pet: { connect: { id: petId } },
+			appointment: appointmentId
+				? { connect: { id: appointmentId } }
+				: undefined,
 			applicationDate: currentDate,
 		};
 		return this.db.vaccineRegistry.create({
@@ -118,6 +128,7 @@ export class VaccineRegistryService {
 				vaccineId: true,
 				dose: true,
 				petId: true,
+				appointmentId: true,
 				applicationDate: true,
 				expectedDate: true,
 				deletedAt: true,

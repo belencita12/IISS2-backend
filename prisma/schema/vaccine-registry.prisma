@@ -4,6 +4,7 @@ model VaccineRegistry {
   petId           Int
   dose            Float
   applicationDate DateTime?
+  appointmentId   Int?  
   expectedDate    DateTime
 
   deletedAt DateTime?
@@ -13,4 +14,5 @@ model VaccineRegistry {
   notifications Notification[]
   vaccine       Vaccine        @relation(fields: [vaccineId], references: [id])
   pet           Pet            @relation(fields: [petId], references: [id])
+  appointment   Appointment?    @relation(fields: [appointmentId], references: [id])
 }

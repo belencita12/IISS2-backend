@@ -13,6 +13,9 @@ export class CreateVaccineRegistryDto {
 	@ApiPropertyOptional()
 	@IsNumber()
 	dose: number;
+	@ApiPropertyOptional()
+	@IsOptional()
+	appointmentId?: number;
 
 	@ApiPropertyOptional()
 	@IsOptional()
