@@ -13,7 +13,6 @@ import {
 } from '@features/prisma/prisma.service';
 
 @Injectable()
-@Injectable()
 export class TaskService implements OnModuleInit {
 	private readonly logger = new Logger(TaskService.name);
 

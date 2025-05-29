@@ -36,9 +36,13 @@ export class TaskAppointmentNotificationService {
 			data: Prisma.UserNotificationCreateInput;
 			userId: number;
 		}[] = [];
-		const title = 'Recordatorio de vacunas';
+		const title = 'Recordatorio de cita';
 		appointments.forEach((appointment) => {
-			const description = `Estimado/a ${appointment.pet.client.user.fullName}, recuerde la cita de su mascota ${appointment.pet.name} la fecha ${appointment.designatedDate.toLocaleDateString('es-Py')}.`;
+			const description = this.generateDescription(
+				appointment.pet.client.user.fullName,
+				appointment.pet.name,
+				appointment.designatedDate.toLocaleDateString('es-Py'),
+			);
 			appNotData.push({
 				data: {
 					user: { connect: { id: appointment.pet.client.userId } },
@@ -48,7 +52,7 @@ export class TaskAppointmentNotificationService {
 							description,
 							appointmentId: appointment.id,
 							scope: NotificationScope.TO_USER,
-							type: NotificationType.VACCINE_REMAINDER,
+							type: NotificationType.APPOINTMENT_REMINDER,
 						},
 					},
 				},
@@ -56,5 +60,13 @@ export class TaskAppointmentNotificationService {
 			});
 		});
 		return appNotData;
+	}
+
+	private generateDescription(
+		clientFullName: string,
+		petName: string,
+		dateStr: string,
+	) {
+		return `Estimado/a ${clientFullName}, recuerde la cita de su mascota ${petName} la fecha ${dateStr}.`;
 	}
 }
