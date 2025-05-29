@@ -2,7 +2,7 @@ export type NotificationTemplateParams = {
 	title: string;
 	description: string;
 	type: string;
-	appointmentDate: string;
+	appointmentDate?: string;
 	action_url?: string;
 	action_label?: string;
 	logo_url?: string;
@@ -50,9 +50,13 @@ export const getNotificationTemplate = ({
         <strong>Tipo:</strong> ${type}
       </p>
 
-      <p style="color:#555555;font-size:16px;line-height:1.5;margin-bottom:10px;">
+      ${
+				appointmentDate
+					? `<p style="color:#555555;font-size:16px;line-height:1.5;margin-bottom:10px;">
         <strong>Fecha/Hora:</strong> ${appointmentDate}
-      </p>
+      </p>`
+					: ''
+			}
 
       ${
 				action_url

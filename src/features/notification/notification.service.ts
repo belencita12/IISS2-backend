@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DateService } from '@features/global-module/date/date.service';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
@@ -9,11 +9,17 @@ import { NotificationScope } from '@prisma/client';
 import { CreateNotificationBroadcastDto } from './dto/create-notification-broadcast.dto';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { NotificationFilter } from './notification.filter';
+import { EmailService } from '@features/global-module/email/email.service';
+import {
+	getNotificationTemplate,
+	NotificationTemplateParams,
+} from '@features/global-module/email/templates/email-notification';
 
 @Injectable()
 export class NotificationService {
 	constructor(
 		private readonly db: PrismaService,
+		private readonly email: EmailService,
 		private readonly dateService: DateService,
 		private readonly gateway: NotificationGateway,
 		private readonly notificationFilter: NotificationFilter,
@@ -60,13 +66,17 @@ export class NotificationService {
 	}
 
 	async createToUser(userId: number, dto: CreateNotificationToUserDto) {
-		await this.validateExtraFields(userId, dto);
+		const { userEmail, vaccineRegistryDate, appointmentDate } =
+			await this.validateExtraFields(userId, dto);
 		const notification = await this.db.userNotification.create({
 			include: { notification: true },
 			data: {
 				user: { connect: { id: userId } },
 				notification: { create: { ...dto, scope: NotificationScope.TO_USER } },
 			},
+		});
+		await this.sendNotificationEmail(userEmail, {
+			...dto,
 		});
 		const message = NotificationMapper.toMessageFromEntity(notification);
 		const userIdStr = userId.toString();
@@ -79,7 +89,7 @@ export class NotificationService {
 		});
 
 		const users = await this.db.user.findMany({
-			select: { id: true },
+			select: { id: true, email: true },
 			where: { deletedAt: null },
 		});
 
@@ -94,31 +104,67 @@ export class NotificationService {
 		});
 
 		const message = NotificationMapper.toMessageFromNotification(notification);
+		for (const user of users) await this.sendNotificationEmail(user.email, dto);
+
 		this.gateway.sendBroadcast(message);
 		return notification;
 	}
+
+	async sendNotificationEmail(to: string, params: NotificationTemplateParams) {
+		await this.email.sendEmail({
+			to,
+			subject: params.title,
+			content: getNotificationTemplate(params),
+			type: 'html',
+		});
+	}
+
 	private async validateExtraFields(
 		userId: number,
 		dto: CreateNotificationToUserDto,
 	) {
-		if (dto.appointmentId) {
-			const isAppExists = await this.db.appointment.isExists({
-				id: dto.appointmentId,
-			});
-			if (!isAppExists) throw new NotFoundException('Cita no encontrada');
+		if (dto.vaccineRegistryId && dto.appointmentId) {
+			throw new BadRequestException(
+				'No se puede enviar notificaciones con cita y registro de vacuna',
+			);
 		}
 
-		if (userId) {
-			const isUserExists = await this.db.user.isExists({ id: userId });
-			if (!isUserExists) throw new NotFoundException('Usuario no encontrado');
+		let vaccineRegistryDate: string | undefined = undefined;
+		let appointmentDate: string | undefined = undefined;
+
+		const user = await this.db.user.findUnique({
+			where: { id: userId },
+			select: { email: true },
+		});
+		if (!user) throw new NotFoundException('Usuario no encontrado');
+		const userEmail = user.email;
+
+		if (dto.appointmentId) {
+			const appointment = await this.db.appointment.findUnique({
+				where: { id: dto.appointmentId, pet: { client: { userId } } },
+				select: { designatedDate: true },
+			});
+			if (!appointment) throw new NotFoundException('Cita no encontrada');
+			appointmentDate = appointment.designatedDate.toLocaleDateString('es-Py');
 		}
 
 		if (dto.vaccineRegistryId) {
-			const isVaccExists = await this.db.vaccineRegistry.isExists({
-				id: dto.vaccineRegistryId,
+			const isVaccExists = await this.db.vaccineRegistry.findUnique({
+				where: {
+					id: dto.vaccineRegistryId,
+					applicationDate: null,
+					pet: { client: { userId } },
+				},
+				select: { expectedDate: true },
 			});
 			if (!isVaccExists)
-				throw new NotFoundException('Registro de vacuna no encontrado');
+				throw new NotFoundException(
+					'Registro de vacuna no encontrado o ya fue aplicado',
+				);
+			vaccineRegistryDate =
+				isVaccExists.expectedDate.toLocaleDateString('es-Py');
 		}
+
+		return { userEmail, vaccineRegistryDate, appointmentDate };
 	}
 }
