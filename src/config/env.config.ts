@@ -100,10 +100,13 @@ class EnvironmentVariables {
 	CLIENT_EXPRESS_RUC: string = 'XXX';
 
 	@IsOptional()
-	@IsOptional()
 	@IsString()
 	@IsTimeZone()
 	SYS_TIME_ZONE: string = 'America/Asuncion';
+
+	@IsString()
+	@IsOptional()
+	CRON_NOTIFICATION_TIME?: string;
 }
 
 export type EnvType = InstanceType<typeof EnvironmentVariables>;

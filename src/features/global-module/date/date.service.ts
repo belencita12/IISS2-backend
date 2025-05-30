@@ -21,6 +21,15 @@ export class DateService {
 		return builder.toISO()!;
 	}
 
+	getRangeFromTodayTo(days: number): { gte?: string; lte?: string } {
+		const today = DateTime.now().setZone(this.timeZone).startOf('day');
+		const day = today.plus({ days });
+		const start = day.startOf('day').toUTC().toISO();
+		const end = day.endOf('day').toUTC().toISO();
+		if (!start || !end) throw new Error('Invalid date range');
+		return { gte: start, lte: end };
+	}
+
 	getRangeForPrisma(
 		from?: string,
 		to?: string,

@@ -144,7 +144,7 @@ export class PurchaseReport implements IReport<PurchaseReportQueryDto> {
 
 		const charts: ReportChartConfig[] = [
 			{
-				title: 'Distribución de compras por depósito',
+				title: ' ¿Dónde invertiste más? - Distribución por depósitos',
 				type: 'pie',
 				components: depositos.map((label, i) => ({
 					label,
@@ -153,7 +153,7 @@ export class PurchaseReport implements IReport<PurchaseReportQueryDto> {
 				})),
 			},
 			{
-				title: 'Distribucion de compras por Tags',
+				title: ' ¿Qué comprás según etiquetas? - Top etiquetas por monto',
 				type: 'pie',
 				components: tagsWithColors,
 			},
@@ -163,7 +163,7 @@ export class PurchaseReport implements IReport<PurchaseReportQueryDto> {
 				components: [],
 			},
 			{
-				title: 'Distribución de compras por proveedor',
+				title: 'Tus mejores aliados: Proveedores que más te vendieron',
 				type: 'pie',
 				components: proveedores.map((label, i) => ({
 					label,
@@ -208,7 +208,7 @@ export class PurchaseReport implements IReport<PurchaseReportQueryDto> {
 
 		return this.pdfService.generateCompactTablePDF(
 			{
-				title: 'Reporte de Compras',
+				title: 'Reporte de Compras - Tu inversión en productos',
 				madeBy: `${user.fullName} con RUC: ${user.ruc}`,
 				summary: summaryItems,
 				charts,
