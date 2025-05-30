@@ -593,11 +593,13 @@ export class PdfService {
 
 	private renderTitle(doc: PDFKit.PDFDocument, title: string, madeBy?: string) {
 		const today = getToday();
-		doc
-			.font('Helvetica-Bold', 10)
-			.text(
-				`${title} ${madeBy ? `generado por ${madeBy}` : ''} el día ${toDateFormat(today)}`,
-			);
+		doc.font('Helvetica-Bold', 12).text(title);
+		doc.moveDown(0.5);
+		doc.font('Helvetica').fontSize(7);
+		if (madeBy) {
+			doc.text(`generado por ${madeBy}`);
+		}
+		doc.text(`el día ${toDateFormat(today)}`);
 		doc.moveDown();
 		return doc.y;
 	}

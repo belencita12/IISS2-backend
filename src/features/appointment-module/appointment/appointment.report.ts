@@ -82,7 +82,7 @@ export class AppointmentReport implements IReport<AppointmentReportQueryDto> {
 		);
 		return this.pdfService.generateCompactTablePDF(
 			{
-				title: 'Reporte de Citas',
+				title: 'Reporte de citas  - Así fue el ritmo de tu veterinaria',
 				madeBy: `${user.fullName} con RUC: ${user.ruc}`,
 				charts: chartConfigs,
 				summary: summaryItems,

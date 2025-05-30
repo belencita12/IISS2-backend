@@ -6,13 +6,13 @@ import {
 import { DateService } from '@features/global-module/date/date.service';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
-import { NotificationGateway } from './notification.gateway';
 import { NotificationMapper } from './notification.mapper';
 import { CreateNotificationToUserDto } from './dto/create-notification-to-user.dto';
 import { NotificationScope } from '@prisma/client';
 import { CreateNotificationBroadcastDto } from './dto/create-notification-broadcast.dto';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { NotificationFilter } from './notification.filter';
+import { NotificationGateway } from './notification.gateway';
 import { NotificationEmailService } from './notification-email.service';
 
 @Injectable()
