@@ -3,9 +3,9 @@ model VaccineRegistry {
   vaccineId       Int
   petId           Int
   dose            Float
-  applicationDate DateTime?
+  applicationDate DateTime? @db.Date
   appointmentId   Int?  
-  expectedDate    DateTime
+  expectedDate    DateTime  @db.Date
 
   deletedAt DateTime?
   createdAt DateTime  @default(now())
