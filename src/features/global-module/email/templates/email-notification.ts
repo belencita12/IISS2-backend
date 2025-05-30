@@ -49,7 +49,7 @@ export const getNotificationTemplate = ({
 			}
 
       <h1 style="font-size:22px;color:#333333;margin-bottom:10px;text-align:center;">
-        Recordatorio de: ${title}
+        ${title}
       </h1>
 
       <p style="color:#555555;font-size:16px;line-height:1.5;margin-bottom:20px;">

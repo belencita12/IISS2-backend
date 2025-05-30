@@ -6,6 +6,7 @@ import { PrismaModule } from '@features/prisma/prisma.module';
 import { NotificationController } from './notification.controller';
 import { NotificationFilter } from './notification.filter';
 import { NotificationGateway } from './notification.gateway';
+import { NotificationEmailService } from './notification-email.service';
 
 @Module({
 	imports: [
@@ -16,7 +17,12 @@ import { NotificationGateway } from './notification.gateway';
 		}),
 	],
 	controllers: [NotificationController],
-	providers: [NotificationGateway, NotificationService, NotificationFilter],
-	exports: [NotificationGateway, NotificationService],
+	providers: [
+		NotificationFilter,
+		NotificationService,
+		NotificationGateway,
+		NotificationEmailService,
+	],
+	exports: [NotificationGateway, NotificationService, NotificationEmailService],
 })
 export class NotificationModule {}

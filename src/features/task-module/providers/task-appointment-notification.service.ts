@@ -21,7 +21,10 @@ export class TaskAppointmentNotificationService {
 					select: {
 						name: true,
 						client: {
-							select: { userId: true, user: { select: { fullName: true } } },
+							select: {
+								userId: true,
+								user: { select: { roles: true, email: true, fullName: true } },
+							},
 						},
 					},
 				},
@@ -35,6 +38,9 @@ export class TaskAppointmentNotificationService {
 		const appNotData: {
 			data: Prisma.UserNotificationCreateInput;
 			userId: number;
+			userEmail: string;
+			userRoles: { name: string }[];
+			date: string;
 		}[] = [];
 		const title = 'Recordatorio de cita';
 		appointments.forEach((appointment) => {
@@ -57,6 +63,9 @@ export class TaskAppointmentNotificationService {
 					},
 				},
 				userId: appointment.pet.client.userId,
+				userEmail: appointment.pet.client.user.email,
+				userRoles: appointment.pet.client.user.roles,
+				date: appointment.designatedDate.toLocaleDateString('es-Py'),
 			});
 		});
 		return appNotData;

@@ -15,6 +15,9 @@ export class TaskVaccineNotificationService {
 		const userNotData: {
 			data: Prisma.UserNotificationCreateInput;
 			userId: number;
+			userEmail: string;
+			userRoles: { name: string }[];
+			date: string;
 		}[] = [];
 		const title = 'Recordatorio de vacunas';
 		vaccineRegistries.forEach((vaccReg) => {
@@ -36,6 +39,9 @@ export class TaskVaccineNotificationService {
 						},
 					},
 				},
+				date: vaccReg.expectedDate.toLocaleDateString('es-Py'),
+				userEmail: vaccReg.pet.client.user.email,
+				userRoles: vaccReg.pet.client.user.roles,
 				userId: vaccReg.pet.client.userId,
 			});
 		});
@@ -53,7 +59,10 @@ export class TaskVaccineNotificationService {
 					select: {
 						name: true,
 						client: {
-							select: { userId: true, user: { select: { fullName: true } } },
+							select: {
+								userId: true,
+								user: { select: { email: true, roles: true, fullName: true } },
+							},
 						},
 					},
 				},
