@@ -1,40 +1,12 @@
 import { Notification, UserNotification } from '@prisma/client';
 import { INotificationMessage } from './notification.types';
 
-export interface NotificationEntity extends UserNotification {
-	notification: Notification;
+export interface NotificationEntity extends Notification {
+	userNotifications?: UserNotification[];
 }
 
 export class NotificationMapper {
 	static toDto(data: NotificationEntity): INotificationMessage {
-		return {
-			id: data.notification.id,
-			title: data.notification.title,
-			description: data.notification.description,
-			isRead: data.isRead,
-			type: data.notification.type,
-			scope: data.notification.scope,
-			appointmentId: data.notification.appointmentId ?? undefined,
-			vaccineRegistryId: data.notification.vaccineRegistryId ?? undefined,
-			arrivalDate: data.arrivalDate ?? new Date(),
-		};
-	}
-
-	static toMessageFromEntity(data: NotificationEntity): INotificationMessage {
-		return {
-			id: data.notification.id,
-			scope: data.notification.scope,
-			arrivalDate: data.arrivalDate!,
-			title: data.notification.title,
-			description: data.notification.description,
-			isRead: data.isRead,
-			appointmentId: data.notification.appointmentId ?? undefined,
-			vaccineRegistryId: data.notification.vaccineRegistryId ?? undefined,
-			type: data.notification.type,
-		};
-	}
-
-	static toMessageFromNotification(data: Notification): INotificationMessage {
 		return {
 			id: data.id,
 			scope: data.scope,
@@ -43,7 +15,9 @@ export class NotificationMapper {
 			description: data.description,
 			appointmentId: data.appointmentId ?? undefined,
 			vaccineRegistryId: data.vaccineRegistryId ?? undefined,
-			isRead: false,
+			isRead: data.userNotifications
+				? data.userNotifications.length > 0 && data.userNotifications[0].isRead
+				: false,
 			type: data.type,
 		};
 	}

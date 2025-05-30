@@ -22,6 +22,19 @@ export interface INotificationMessage {
 	arrivalDate: Date;
 }
 
+export interface ICreateNotificationEmail {
+	userRoles: { name: string }[];
+	userEmail: string;
+	clientId?: number;
+	petId?: number;
+	date?: string;
+	title: string;
+	description: string;
+	type: NotificationType;
+	appointmentId?: number;
+	vaccineRegistryId?: number;
+}
+
 export enum NotificationEvents {
 	NOTIFICATION = 'notification',
 }

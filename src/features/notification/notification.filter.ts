@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { DateService } from '@features/global-module/date/date.service';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
@@ -9,47 +9,64 @@ export class NotificationFilter {
 	constructor(private readonly dateService: DateService) {}
 
 	getWhere(
-		base: Prisma.UserNotificationWhereInput,
+		base: Prisma.NotificationWhereInput,
 		query: NotificationQueryDto,
 		user: TokenPayload,
-	): Prisma.UserNotificationWhereInput {
+	): Prisma.NotificationWhereInput {
 		this.validateFiltersByUser(query, user);
-
-		const where: Prisma.UserNotificationWhereInput = {
-			...base,
-			notification: {
-				scope: query.scope,
-				type: query.type,
+		this.validateFiltersByUser(query, user);
+		const filterByUser: Prisma.NotificationWhereInput = {
+			userNotifications: {
+				some: {
+					userId: query.userId,
+					isRead: query.isRead,
+					user: query.searchSubject
+						? {
+								OR: [
+									{
+										fullName: {
+											contains: query.searchSubject,
+											mode: 'insensitive',
+										},
+									},
+									{
+										ruc: { contains: query.searchSubject, mode: 'insensitive' },
+									},
+									{
+										email: {
+											contains: query.searchSubject,
+											mode: 'insensitive',
+										},
+									},
+								],
+							}
+						: undefined,
+				},
 			},
 		};
 
-		if (query.isRead !== undefined) where.isRead = query.isRead;
-		if (query.userId) where.userId = query.userId;
-		if (query.searchSubject) {
-			where.user = {
-				OR: [
-					{ fullName: { contains: query.searchSubject, mode: 'insensitive' } },
-					{ ruc: { contains: query.searchSubject, mode: 'insensitive' } },
-					{ email: { contains: query.searchSubject, mode: 'insensitive' } },
-				],
-			};
-		}
-		if (query.searchContent) {
-			where.notification = {
-				OR: [
-					{ title: { contains: query.searchContent, mode: 'insensitive' } },
-					{
-						description: { contains: query.searchContent, mode: 'insensitive' },
-					},
-				],
-			};
-		}
-		if (query.fromArrivalDate || query.toArrivalDate) {
-			where.arrivalDate = this.dateService.getRangeForPrisma(
-				query.fromArrivalDate,
-				query.toArrivalDate,
-			);
-		}
+		const filterBroadcast: Prisma.NotificationWhereInput = {
+			scope: 'BROADCAST',
+			userNotifications: { none: { userId: query.userId } },
+		};
+
+		const where: Prisma.NotificationWhereInput = {
+			...base,
+			type: query.type,
+			scope: query.scope,
+			description: query.searchContent
+				? { contains: query.searchContent, mode: 'insensitive' }
+				: undefined,
+			createdAt:
+				query.fromArrivalDate || query.toArrivalDate
+					? this.dateService.getRangeForPrisma(
+							query.fromArrivalDate,
+							query.toArrivalDate,
+						)
+					: undefined,
+			OR: [filterByUser, filterBroadcast],
+		};
+
 		return where;
 	}
 
@@ -61,7 +78,11 @@ export class NotificationFilter {
 		if (!isAdmin) {
 			query.searchSubject = undefined;
 			query.userId = user.id;
-			return query;
+		}
+		if (isAdmin && !query.userId) {
+			throw new BadRequestException(
+				'Se deben filtrar las notificaciones por usuario',
+			);
 		}
 	}
 }
