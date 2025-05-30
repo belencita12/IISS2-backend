@@ -73,6 +73,7 @@ export class TaskService implements OnModuleInit {
 			for (const {
 				data,
 				userId,
+				petId,
 				userEmail,
 				userRoles,
 				date,
@@ -80,6 +81,7 @@ export class TaskService implements OnModuleInit {
 				await this.createAndEmitNotification(
 					tx,
 					data,
+					petId,
 					userId,
 					date,
 					userEmail,
@@ -94,25 +96,24 @@ export class TaskService implements OnModuleInit {
 	private async createAndEmitNotification(
 		tx: ExtendedTransaction,
 		data: Prisma.UserNotificationCreateInput,
+		petId: number,
 		userId: number,
 		date: string,
 		userEmail: string,
 		userRoles: { name: string }[],
 	) {
-		const notification = await tx.userNotification.create({
+		const userNotif = await tx.userNotification.create({
 			include: { notification: true },
 			data,
 		});
-		const message = NotificationMapper.toMessageFromEntity(notification);
+		const message = NotificationMapper.toDto(userNotif.notification);
+		this.gateway.sendToUser(userId.toString(), message);
 		this.notificationEmailService.sendEmail({
 			...message,
+			petId,
 			userEmail,
 			userRoles,
 			date,
 		});
-		this.gateway.sendToUser(
-			userId.toString(),
-			NotificationMapper.toDto(notification),
-		);
 	}
 }

@@ -16,6 +16,7 @@ export class TaskAppointmentNotificationService {
 		const appointments = await this.db.appointment.findMany({
 			select: {
 				id: true,
+				petId: true,
 				designatedDate: true,
 				pet: {
 					select: {
@@ -38,6 +39,7 @@ export class TaskAppointmentNotificationService {
 		const appNotData: {
 			data: Prisma.UserNotificationCreateInput;
 			userId: number;
+			petId: number;
 			userEmail: string;
 			userRoles: { name: string }[];
 			date: string;
@@ -65,6 +67,7 @@ export class TaskAppointmentNotificationService {
 				userId: appointment.pet.client.userId,
 				userEmail: appointment.pet.client.user.email,
 				userRoles: appointment.pet.client.user.roles,
+				petId: appointment.petId,
 				date: appointment.designatedDate.toLocaleDateString('es-Py'),
 			});
 		});

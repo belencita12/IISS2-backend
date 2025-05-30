@@ -19,7 +19,7 @@ import { NotificationEmailService } from './notification-email.service';
 export class NotificationService {
 	constructor(
 		private readonly db: PrismaService,
-		private readonly dateService: DateService,
+		private readonly date: DateService,
 		private readonly gateway: NotificationGateway,
 		private readonly notificationFilter: NotificationFilter,
 		private readonly notificationEmailService: NotificationEmailService,
@@ -27,54 +27,89 @@ export class NotificationService {
 
 	async getAll(query: NotificationQueryDto, user: TokenPayload) {
 		const { baseWhere } = this.db.getBaseWhere(query);
+		const isAdmin = user.roles.includes('ADMIN');
 		const where = this.notificationFilter.getWhere(baseWhere, query, user);
 		const [data, count] = await Promise.all([
-			this.db.userNotification.findMany({
+			this.db.notification.findMany({
 				where,
-				include: { notification: true },
+				include: {
+					userNotifications: {
+						where: { userId: isAdmin ? query.userId : user.id },
+					},
+				},
 				...this.db.paginate(query),
 			}),
-			this.db.userNotification.count({ where }),
+			this.db.notification.count({ where }),
 		]);
 		return this.db.getPagOutput({
 			page: query.page,
 			size: query.size,
 			total: count,
-			data: data.map((un) => NotificationMapper.toDto(un)),
+			data: data.map((n) => NotificationMapper.toDto(n)),
 		});
 	}
 
 	async markAsReadOne(id: number, user: TokenPayload) {
-		const isNotificationExists = await this.db.userNotification.isExists({
-			userId_notificationId: { userId: user.id, notificationId: id },
-			readAt: null,
-		});
-		if (!isNotificationExists) {
-			throw new NotFoundException('Notificacion no encontrada o ya fue leida');
+		const isNotifiExists = await this.db.notification.isExists({ id });
+		if (!isNotifiExists) {
+			throw new NotFoundException('La notificacion no existe');
 		}
-		await this.db.userNotification.update({
+		await this.db.userNotification.upsert({
 			where: { userId_notificationId: { userId: user.id, notificationId: id } },
-			data: { readAt: this.dateService.getToday(true), isRead: true },
+			update: { readAt: this.date.getToday(true), isRead: true },
+			create: {
+				userId: user.id,
+				notificationId: id,
+				readAt: this.date.getToday(true),
+				isRead: true,
+			},
 		});
 	}
 
 	async markAsReadAll(user: TokenPayload) {
 		await this.db.userNotification.updateMany({
 			where: { userId: user.id, readAt: null },
-			data: { readAt: this.dateService.getToday(true), isRead: true },
+			data: {
+				readAt: this.date.getToday(true),
+				isRead: true,
+			},
 		});
+
+		const unreadBroadcasts = await this.db.notification.findMany({
+			where: {
+				scope: 'BROADCAST',
+				deletedAt: null,
+				userNotifications: {
+					none: { userId: user.id },
+				},
+			},
+			select: { id: true },
+		});
+
+		if (unreadBroadcasts.length > 0) {
+			await this.db.userNotification.createMany({
+				data: unreadBroadcasts.map((notification) => ({
+					userId: user.id,
+					notificationId: notification.id,
+					isRead: true,
+					readAt: this.date.getToday(true),
+					arrivalDate: new Date(),
+				})),
+				skipDuplicates: true,
+			});
+		}
 	}
 
 	async createToUser(userId: number, dto: CreateNotificationToUserDto) {
 		const extraFields = await this.validateExtraFields(userId, dto);
-		const notification = await this.db.userNotification.create({
+		const userNotif = await this.db.userNotification.create({
 			include: { notification: true },
 			data: {
 				user: { connect: { id: userId } },
 				notification: { create: { ...dto, scope: NotificationScope.TO_USER } },
 			},
 		});
-		const message = NotificationMapper.toMessageFromEntity(notification);
+		const message = NotificationMapper.toDto(userNotif.notification);
 		this.notificationEmailService.sendEmail({
 			...message,
 			...extraFields,
@@ -91,16 +126,7 @@ export class NotificationService {
 			select: { id: true, email: true, roles: { select: { name: true } } },
 			where: { deletedAt: null },
 		});
-		const userNotifications = users.map((user) => ({
-			userId: user.id,
-			notificationId: notification.id,
-		}));
-		await this.db.userNotification.createMany({
-			data: userNotifications,
-			skipDuplicates: true,
-		});
-		const message = NotificationMapper.toMessageFromNotification(notification);
-
+		const message = NotificationMapper.toDto(notification);
 		for (const user of users) {
 			this.notificationEmailService.sendEmail({
 				...message,
@@ -108,7 +134,6 @@ export class NotificationService {
 				userRoles: user.roles,
 			});
 		}
-
 		this.gateway.sendBroadcast(message);
 		return notification;
 	}

@@ -15,6 +15,7 @@ export class TaskVaccineNotificationService {
 		const userNotData: {
 			data: Prisma.UserNotificationCreateInput;
 			userId: number;
+			petId: number;
 			userEmail: string;
 			userRoles: { name: string }[];
 			date: string;
@@ -43,6 +44,7 @@ export class TaskVaccineNotificationService {
 				userEmail: vaccReg.pet.client.user.email,
 				userRoles: vaccReg.pet.client.user.roles,
 				userId: vaccReg.pet.client.userId,
+				petId: vaccReg.petId,
 			});
 		});
 		return userNotData;
@@ -55,6 +57,7 @@ export class TaskVaccineNotificationService {
 			select: {
 				id: true,
 				expectedDate: true,
+				petId: true,
 				pet: {
 					select: {
 						name: true,
