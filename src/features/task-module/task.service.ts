@@ -29,6 +29,13 @@ export class TaskService implements OnModuleInit {
 		const cronTime = this.env.get('CRON_NOTIFICATION_TIME');
 		const timeZone = this.env.get('SYS_TIME_ZONE');
 
+		if (!cronTime) {
+			this.logger.warn(
+				'Notification cron job not scheduled by lack of CRON_NOTIFICATION_TIME.',
+			);
+			return;
+		}
+
 		const job = new CronJob(
 			cronTime,
 			() => this.notificationCron(),

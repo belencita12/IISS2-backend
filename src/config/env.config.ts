@@ -105,7 +105,8 @@ class EnvironmentVariables {
 	SYS_TIME_ZONE: string = 'America/Asuncion';
 
 	@IsString()
-	CRON_NOTIFICATION_TIME: string;
+	@IsOptional()
+	CRON_NOTIFICATION_TIME?: string;
 }
 
 export type EnvType = InstanceType<typeof EnvironmentVariables>;
