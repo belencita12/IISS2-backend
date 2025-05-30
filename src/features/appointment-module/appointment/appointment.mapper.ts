@@ -7,6 +7,8 @@ import {
 	Race,
 	ServiceType,
 	User,
+	VaccineRegistry,
+	Vaccine,
 } from '@prisma/client';
 import { AppointmentDto } from './dto/appointment.dto';
 
@@ -14,6 +16,7 @@ export interface AppointmentEntity extends Appointment {
 	pet: Pet & { race: Race } & { client: Client & { user: User } };
 	employee: Employee & { user: User };
 	appointmentDetails: (AppointmentDetail & { service: ServiceType })[];
+	vaccineRegistry?: (VaccineRegistry & { vaccine: Vaccine })[];
 }
 
 export class AppointmentMapper {
@@ -41,6 +44,18 @@ export class AppointmentMapper {
 					name: data.pet.client.user.fullName,
 				},
 			},
+			vaccineRegistry:
+				data.vaccineRegistry?.map((reg) => ({
+					id: reg.id,
+					petId: reg.petId,
+					dose: reg.dose,
+					applicationDate: reg.applicationDate ?? undefined,
+					expectedDate: reg.expectedDate,
+					vaccine: {
+						id: reg.vaccine.id,
+						name: reg.vaccine.name,
+					},
+				})) ?? [],
 		};
 	}
 }

@@ -19,6 +19,7 @@ model Appointment {
     employee           Employee                @relation(fields: [employeeId], references: [id])
 
     notifications Notification[]
+    vaccineRegistry VaccineRegistry[]
 }
 
 model AppointmentDetail {

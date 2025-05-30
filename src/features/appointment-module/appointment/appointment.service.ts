@@ -52,6 +52,9 @@ export class AppointmentService {
 	async completeAppointment(appId: number) {
 		const appointment = await this.db.appointment.findUnique({
 			where: { id: appId, status: AppointmentStatus.PENDING },
+			include: {
+				vaccineRegistry: true,
+			},
 		});
 		if (!appointment) {
 			throw new NotFoundException('La cita no existe o no esta pendiente');
@@ -61,10 +64,20 @@ export class AppointmentService {
 				'No se puede finalizar una cita antes de la fecha designada',
 			);
 		}
-		await this.db.appointment.update({
-			where: { id: appId },
-			data: { status: AppointmentStatus.COMPLETED },
-		});
+
+		// Ejecutar ambas operaciones en transacción
+		await this.db.$transaction([
+			this.db.appointment.update({
+				where: { id: appId },
+				data: { status: AppointmentStatus.COMPLETED },
+			}),
+			...appointment.vaccineRegistry.map((vaccine) =>
+				this.db.vaccineRegistry.update({
+					where: { id: vaccine.id },
+					data: { applicationDate: appointment.designatedDate },
+				}),
+			),
+		]);
 	}
 
 	async findAll(query: AppointmentQueryDto, user: TokenPayload) {
@@ -116,6 +129,7 @@ export class AppointmentService {
 				pet: { include: { race: true, client: { include: { user: true } } } },
 				appointmentDetails: { include: { service: true } },
 				employee: { include: { user: true } },
+				vaccineRegistry: { include: { vaccine: true } },
 			},
 		};
 	}
