@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 import { DateService } from '@features/global-module/date/date.service';
 import { PrismaService } from '@features/prisma/prisma.service';
 import { TokenPayload } from '@features/auth-module/auth/types/auth.types';
@@ -9,20 +13,16 @@ import { NotificationScope } from '@prisma/client';
 import { CreateNotificationBroadcastDto } from './dto/create-notification-broadcast.dto';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { NotificationFilter } from './notification.filter';
-import { EmailService } from '@features/global-module/email/email.service';
-import {
-	getNotificationTemplate,
-	NotificationTemplateParams,
-} from '@features/global-module/email/templates/email-notification';
+import { NotificationEmailService } from './notification-email.service';
 
 @Injectable()
 export class NotificationService {
 	constructor(
 		private readonly db: PrismaService,
-		private readonly email: EmailService,
 		private readonly dateService: DateService,
 		private readonly gateway: NotificationGateway,
 		private readonly notificationFilter: NotificationFilter,
+		private readonly notificationEmailService: NotificationEmailService,
 	) {}
 
 	async getAll(query: NotificationQueryDto, user: TokenPayload) {
@@ -66,8 +66,7 @@ export class NotificationService {
 	}
 
 	async createToUser(userId: number, dto: CreateNotificationToUserDto) {
-		const { userEmail, vaccineRegistryDate, appointmentDate } =
-			await this.validateExtraFields(userId, dto);
+		const extraFields = await this.validateExtraFields(userId, dto);
 		const notification = await this.db.userNotification.create({
 			include: { notification: true },
 			data: {
@@ -75,10 +74,11 @@ export class NotificationService {
 				notification: { create: { ...dto, scope: NotificationScope.TO_USER } },
 			},
 		});
-		await this.sendNotificationEmail(userEmail, {
-			...dto,
-		});
 		const message = NotificationMapper.toMessageFromEntity(notification);
+		this.notificationEmailService.sendEmail({
+			...message,
+			...extraFields,
+		});
 		const userIdStr = userId.toString();
 		this.gateway.sendToUser(userIdStr, message);
 	}
@@ -87,36 +87,30 @@ export class NotificationService {
 		const notification = await this.db.notification.create({
 			data: { ...dto, scope: NotificationScope.BROADCAST },
 		});
-
 		const users = await this.db.user.findMany({
-			select: { id: true, email: true },
+			select: { id: true, email: true, roles: { select: { name: true } } },
 			where: { deletedAt: null },
 		});
-
 		const userNotifications = users.map((user) => ({
 			userId: user.id,
 			notificationId: notification.id,
 		}));
-
 		await this.db.userNotification.createMany({
 			data: userNotifications,
 			skipDuplicates: true,
 		});
-
 		const message = NotificationMapper.toMessageFromNotification(notification);
-		for (const user of users) await this.sendNotificationEmail(user.email, dto);
+
+		for (const user of users) {
+			this.notificationEmailService.sendEmail({
+				...message,
+				userEmail: user.email,
+				userRoles: user.roles,
+			});
+		}
 
 		this.gateway.sendBroadcast(message);
 		return notification;
-	}
-
-	async sendNotificationEmail(to: string, params: NotificationTemplateParams) {
-		await this.email.sendEmail({
-			to,
-			subject: params.title,
-			content: getNotificationTemplate(params),
-			type: 'html',
-		});
 	}
 
 	private async validateExtraFields(
@@ -131,13 +125,16 @@ export class NotificationService {
 
 		let vaccineRegistryDate: string | undefined = undefined;
 		let appointmentDate: string | undefined = undefined;
+		let clientId: number | undefined = undefined;
+		let petId: number | undefined = undefined;
 
 		const user = await this.db.user.findUnique({
 			where: { id: userId },
-			select: { email: true },
+			select: { email: true, roles: { select: { name: true } } },
 		});
 		if (!user) throw new NotFoundException('Usuario no encontrado');
 		const userEmail = user.email;
+		const userRoles = user.roles;
 
 		if (dto.appointmentId) {
 			const appointment = await this.db.appointment.findUnique({
@@ -155,7 +152,11 @@ export class NotificationService {
 					applicationDate: null,
 					pet: { client: { userId } },
 				},
-				select: { expectedDate: true },
+				select: {
+					expectedDate: true,
+					petId: true,
+					pet: { select: { clientId: true } },
+				},
 			});
 			if (!isVaccExists)
 				throw new NotFoundException(
@@ -163,8 +164,16 @@ export class NotificationService {
 				);
 			vaccineRegistryDate =
 				isVaccExists.expectedDate.toLocaleDateString('es-Py');
+			clientId = isVaccExists.pet.clientId;
+			petId = isVaccExists.petId;
 		}
 
-		return { userEmail, vaccineRegistryDate, appointmentDate };
+		return {
+			userEmail,
+			userRoles,
+			clientId,
+			petId,
+			date: vaccineRegistryDate || appointmentDate,
+		};
 	}
 }
