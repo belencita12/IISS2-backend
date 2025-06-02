@@ -31,7 +31,7 @@ export class PetReport implements IReport<PetReportQueryDto> {
 		const [summaryItems, chartConfigs] = await this.generateSummaryData(query);
 		return this.pdfService.generateCompactTablePDF(
 			{
-				title: 'Reporte de Mascotas - Mascotas Registradas y sus Vacunas',
+				title: 'Reporte de Mascotas y Registro de Vacunación',
 				madeBy: `${user.fullName} con RUC: ${user.ruc}`,
 				summary: summaryItems,
 				charts: chartConfigs,

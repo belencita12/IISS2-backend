@@ -208,10 +208,11 @@ export class PurchaseReport implements IReport<PurchaseReportQueryDto> {
 
 		return this.pdfService.generateCompactTablePDF(
 			{
-				title: 'Reporte de Compras - Tu inversión en productos',
+				title: 'Reporte de Compras',
 				madeBy: `${user.fullName} con RUC: ${user.ruc}`,
 				summary: summaryItems,
 				charts,
+				subtitle: 'Tu inversión en productos',
 				rowConfig: {
 					parentRowSpacing: 10,
 					alwaysShowHeader: false,

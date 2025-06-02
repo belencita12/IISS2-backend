@@ -22,6 +22,7 @@ export interface ReportPdfConfig {
 	rowConfig: ReportRowConfig;
 	summary?: SummaryItem[];
 	charts?: ReportChartConfig[];
+	subtitle?: string;
 }
 
 export interface ReportRowConfig {

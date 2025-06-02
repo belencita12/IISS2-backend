@@ -122,6 +122,7 @@ LIMIT 10;
 				madeBy: `${user.fullName} con RUC: ${user.ruc}`,
 				summary: summaryItems,
 				charts,
+				subtitle: 'Clientes que mas compraron',
 				rowConfig: {
 					parentRowSpacing: 5,
 					alwaysShowHeader: false,
