@@ -20,7 +20,7 @@ export class NotificationQueryDto extends PaginationQueryDto {
 	@IsId('El identificador del usuario no es valido')
 	userId?: number;
 
-	@IsEnum(NotificationType)
+	@IsEnum(NotificationScope)
 	@QueryParam({ enum: NotificationScope })
 	scope: NotificationScope;
 
