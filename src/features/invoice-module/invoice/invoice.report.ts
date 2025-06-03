@@ -51,10 +51,11 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 
 		return this.pdfService.generateCompactTablePDF(
 			{
-				title: 'Reporte de Facturación - Tus 10 clientes más valiosos',
+				title: 'Reporte de Facturación',
 				madeBy: `${user.fullName} con RUC: ${user.ruc}`,
 				summary: summaryItems,
 				charts: chartConfigs,
+				subtitle: 'Tus 10 clientes más valiosos',
 				rowConfig: {
 					parentRowSpacing: 2,
 					alwaysShowHeader: false,

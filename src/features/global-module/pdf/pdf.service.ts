@@ -316,7 +316,8 @@ export class PdfService {
 	};
 
 	generateCompactTablePDF(reportConfig: ReportPdfConfig, response: Response) {
-		const { title, rowConfig, madeBy, summary, charts } = reportConfig;
+		const { title, rowConfig, madeBy, summary, charts, subtitle } =
+			reportConfig;
 		const mainHeader = rowConfig.header;
 		const doc = new PDFDocument({
 			margin: this.margin,
@@ -334,6 +335,9 @@ export class PdfService {
 		}
 		if (charts && charts.length > 0) {
 			currentY = this.renderChartsAsColumns(doc, charts, currentY);
+		}
+		if (subtitle) {
+			currentY = this.renderSubtitle(doc, subtitle, currentY);
 		}
 		this.renderTableRecursive(
 			doc,
@@ -602,6 +606,18 @@ export class PdfService {
 		doc.text(`el día ${toDateFormat(today)}`);
 		doc.moveDown();
 		return doc.y;
+	}
+
+	private renderSubtitle(
+		doc: PDFKit.PDFDocument,
+		subtitle: string,
+		startY: number,
+	): number {
+		let y = startY;
+		y += this.rowHeight;
+		doc.font('Helvetica-Bold', 10).text(subtitle, this.getXOffset(), y);
+		y += this.rowHeight * 1.5;
+		return y;
 	}
 
 	private getXOffset(space: number = 0): number {

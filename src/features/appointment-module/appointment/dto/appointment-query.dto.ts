@@ -13,7 +13,7 @@ export class AppointmentQueryDto extends PaginationQueryDto {
 
 	@QueryParam()
 	@IsString()
-	employeeRuc?: string;
+	searchEmployee?: string;
 
 	@Type(() => Number)
 	@QueryParam()

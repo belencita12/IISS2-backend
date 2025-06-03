@@ -11,6 +11,7 @@ import {
 	ExtendedTransaction,
 	PrismaService,
 } from '@features/prisma/prisma.service';
+import { NotificationEmailService } from '@features/notification/notification-email.service';
 
 @Injectable()
 export class TaskService implements OnModuleInit {
@@ -21,6 +22,7 @@ export class TaskService implements OnModuleInit {
 		private readonly db: PrismaService,
 		private readonly gateway: NotificationGateway,
 		private readonly schedulerRegistry: SchedulerRegistry,
+		private readonly notificationEmailService: NotificationEmailService,
 		private readonly taskVaccNotification: TaskVaccineNotificationService,
 		private readonly taskAppNotification: TaskAppointmentNotificationService,
 	) {}
@@ -68,8 +70,23 @@ export class TaskService implements OnModuleInit {
 
 		this.logger.debug('Creating and emitting notifications...');
 		await this.db.$transaction(async (tx) => {
-			for (const { data, userId } of notifications) {
-				await this.createAndEmitNotification(tx, data, userId);
+			for (const {
+				data,
+				userId,
+				petId,
+				userEmail,
+				userRoles,
+				date,
+			} of notifications) {
+				await this.createAndEmitNotification(
+					tx,
+					data,
+					petId,
+					userId,
+					date,
+					userEmail,
+					userRoles,
+				);
 			}
 		});
 
@@ -79,15 +96,24 @@ export class TaskService implements OnModuleInit {
 	private async createAndEmitNotification(
 		tx: ExtendedTransaction,
 		data: Prisma.UserNotificationCreateInput,
+		petId: number,
 		userId: number,
+		date: string,
+		userEmail: string,
+		userRoles: { name: string }[],
 	) {
-		const notification = await tx.userNotification.create({
+		const userNotif = await tx.userNotification.create({
 			include: { notification: true },
 			data,
 		});
-		this.gateway.sendToUser(
-			userId.toString(),
-			NotificationMapper.toDto(notification),
-		);
+		const message = NotificationMapper.toDto(userNotif.notification);
+		this.gateway.sendToUser(userId.toString(), message);
+		this.notificationEmailService.sendEmail({
+			...message,
+			petId,
+			userEmail,
+			userRoles,
+			date,
+		});
 	}
 }

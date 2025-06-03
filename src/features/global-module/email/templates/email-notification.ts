@@ -1,8 +1,10 @@
+import { NotificationType } from '@prisma/client';
+
 export type NotificationTemplateParams = {
 	title: string;
 	description: string;
-	type: string;
-	appointmentDate: string;
+	type: NotificationType;
+	appointmentDate?: string;
 	action_url?: string;
 	action_label?: string;
 	logo_url?: string;
@@ -12,17 +14,25 @@ export const getNotificationTemplate = ({
 	title,
 	description,
 	type,
-	appointmentDate,
+	appointmentDate: date,
 	action_url,
 	action_label,
 	logo_url,
-}: NotificationTemplateParams) => `
+}: NotificationTemplateParams) => {
+	const typeNormalized =
+		type === NotificationType.ALERT
+			? 'Alerta'
+			: type === NotificationType.INFO
+				? 'Información'
+				: 'Recordatorio';
+
+	return `
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Recordatorio de cita: ${title}</title>
+  <title>${title}</title>
 </head>
 
 <body style="margin:0;padding:0;background-color:#ffffff;font-family:Arial,sans-serif;">
@@ -39,7 +49,7 @@ export const getNotificationTemplate = ({
 			}
 
       <h1 style="font-size:22px;color:#333333;margin-bottom:10px;text-align:center;">
-        Recordatorio de: ${title}
+        ${title}
       </h1>
 
       <p style="color:#555555;font-size:16px;line-height:1.5;margin-bottom:20px;">
@@ -47,12 +57,16 @@ export const getNotificationTemplate = ({
       </p>
 
       <p style="color:#555555;font-size:16px;line-height:1.5;margin-bottom:10px;">
-        <strong>Tipo:</strong> ${type}
+        <strong>Tipo:</strong> ${typeNormalized}
       </p>
 
-      <p style="color:#555555;font-size:16px;line-height:1.5;margin-bottom:10px;">
-        <strong>Fecha/Hora:</strong> ${appointmentDate}
-      </p>
+      ${
+				date
+					? `<p style="color:#555555;font-size:16px;line-height:1.5;margin-bottom:10px;">
+        <strong>Fecha/Hora:</strong> ${date}
+      </p>`
+					: ''
+			}
 
       ${
 				action_url
@@ -76,3 +90,4 @@ export const getNotificationTemplate = ({
 </body>
 </html>
 `;
+};
