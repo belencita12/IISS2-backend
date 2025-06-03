@@ -13,14 +13,13 @@ export class StampedFilter {
 			where.stampedNum = { contains: query.stamped, mode: 'insensitive' };
 		}
 
-		if (query.fromDate) {
-			where.fromDate = { gte: new Date(query.fromDate) };
-		}
-
-		if (query.toDate) {
-			const toDate = new Date(query.toDate);
-			toDate.setDate(toDate.getDate() + 1);
-			where.toDate = { lte: toDate };
+		if (query.fromDate || query.toDate) {
+			const toDate = query.toDate ? new Date(query.toDate) : undefined;
+			if (toDate) toDate.setDate(toDate.getDate() + 1);
+			where.fromDate = {
+				gte: query.fromDate ? new Date(query.fromDate) : undefined,
+				lte: toDate,
+			};
 		}
 
 		return where;
