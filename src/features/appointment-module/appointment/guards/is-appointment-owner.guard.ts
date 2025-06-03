@@ -21,7 +21,14 @@ export class IsAppointmentOwnerGuard implements CanActivate {
 
 		if (isFromStaff) return true;
 
-		const { id: clientId } = user;
+		const { clientId } = user;
+
+		if (!clientId) {
+			throw new ForbiddenException(
+				'No tiene permiso para acceder a este recurso',
+			);
+		}
+
 		const isAppExists = await this.db.appointment.isExists({
 			id: Number(request.params.id),
 			pet: { clientId },
