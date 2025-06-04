@@ -31,7 +31,7 @@ export class NotificationEmailService {
 			actionUrl =
 				feHost +
 				(isEmployee ? '/dashboard' : '/user-profile') +
-				`/appointments/${appointmentId}`;
+				`/appointment/${appointmentId}`;
 		}
 
 		if (vaccineRegistryId) {
