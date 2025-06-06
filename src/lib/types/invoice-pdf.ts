@@ -1,4 +1,6 @@
 export interface ProductDetail {
+	iva: number;
+	totalIva: number;
 	code: string;
 	name: string;
 	unitCost: number;
@@ -21,4 +23,26 @@ export interface InvoiceData {
 	products: ProductDetail[];
 	totalIVA: number;
 	totalToPay: number;
+}
+
+export interface ReceiptData {
+	receiptNumber: string;
+	issueDate: Date;
+	amount: number;
+	client: {
+		fullName: string;
+		ruc: string;
+	};
+	paymentMethods: {
+		method: { name: string };
+		amount: number;
+	}[];
+	invoice: {
+		invoiceNumber: string;
+		issueDate: Date;
+		stamped: string;
+		type: string;
+		totalIVA: number;
+		totalToPay: number;
+	};
 }

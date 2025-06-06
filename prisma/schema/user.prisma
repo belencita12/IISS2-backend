@@ -1,11 +1,11 @@
 model User {
-  id          Int    @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   adress      String? @db.VarChar(100)
-  phoneNumber String @db.VarChar(20) @unique
+  phoneNumber String  @unique @db.VarChar(20)
   fullName    String
-  username    String @unique
-  email       String @unique
-  ruc         String @unique
+  username    String  @unique
+  email       String  @unique
+  ruc         String  @unique
   password    String
 
   imageId Int?
@@ -14,8 +14,10 @@ model User {
   employee Employee?
   client   Client?
 
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
   roles     Role[]    @relation("UserRoles")
+
+  notificationReads UserNotification[]
 }

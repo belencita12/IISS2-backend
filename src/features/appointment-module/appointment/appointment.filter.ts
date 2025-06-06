@@ -39,12 +39,14 @@ export class AppointmentFilter {
 			};
 		}
 
-		if (query.employeeRuc) {
+		if (query.searchEmployee) {
 			newWhere.employee = {
 				user: {
 					OR: [
-						{ ruc: { contains: query.employeeRuc, mode: 'insensitive' } },
-						{ fullName: { contains: query.employeeRuc, mode: 'insensitive' } },
+						{ ruc: { contains: query.searchEmployee, mode: 'insensitive' } },
+						{
+							fullName: { contains: query.searchEmployee, mode: 'insensitive' },
+						},
 					],
 				},
 			};

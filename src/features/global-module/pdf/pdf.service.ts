@@ -10,7 +10,7 @@ import {
 } from './pdf.types';
 import { getToday, toDateFormat } from '@lib/utils/date';
 import { ChartService } from '../chart/chart.service';
-import { InvoiceData } from '@lib/types/invoice-pdf';
+import { InvoiceData, ReceiptData } from '@lib/types/invoice-pdf';
 
 @Injectable()
 export class PdfService {
@@ -47,9 +47,11 @@ export class PdfService {
 		doc.pipe(res);
 
 		const fecha = `${invoice.issueDate.getDate()} de ${this.meses[invoice.issueDate.getMonth()]} de ${invoice.issueDate.getFullYear()}`;
+
+		// Encabezado
 		doc
 			.fontSize(12)
-			.text('NICOPETS - Clinica Veterinaria', 30, 30, { align: 'left' })
+			.text('NICOPETS - Clinica Veterinaria', 30, 30)
 			.fontSize(9)
 			.text('Dirección: Calle Ficticia N° 123 - Ciudad Mascota', 30, 45)
 			.text('Teléfono: (0981) 123-456 / Email: contacto@nicopet.com', 30, 57)
@@ -62,6 +64,7 @@ export class PdfService {
 			)
 			.text(`N°: ${invoice.invoiceNumber}`, 450, 45);
 
+		// Datos del cliente
 		doc
 			.moveDown()
 			.rect(20, 90, 570, 50)
@@ -69,53 +72,252 @@ export class PdfService {
 			.fontSize(9)
 			.text(`Razón Social: ${invoice.client.fullName}`, 30, 100)
 			.text(`Dirección: ${invoice.client.address}`, 30, 115)
-			.text(`Fecha: ${fecha}`, 450, 115)
-			.text(`RUC/CI: ${invoice.client.ruc}`, 450, 100);
+			.text(`RUC/CI: ${invoice.client.ruc}`, 450, 100)
+			.text(`Fecha: ${fecha}`, 450, 115);
 
 		let currentY = 150;
+
+		// Encabezado tabla
 		doc
 			.rect(20, currentY, 570, 20)
 			.stroke()
 			.fontSize(9)
 			.text('Código', 30, currentY + 5)
-			.text('Descripción', 130, currentY + 5)
-			.text('Precio Vta.', 320, currentY + 5)
-			.text('Cant.', 420, currentY + 5)
-			.text('Subtotal', 500, currentY + 5);
+			.text('Descripción', 120, currentY + 5)
+			.text('Precio Vta.', 260, currentY + 5)
+			.text('Cant.', 320, currentY + 5)
+			.text('Exentas', 370, currentY + 5)
+			.text('Grab. 5%', 440, currentY + 5)
+			.text('Grab. 10%', 510, currentY + 5);
 
 		currentY += 20;
+
+		let exentasSubtotal = 0;
+		let iva5Subtotal = 0;
+		let iva10Subtotal = 0;
+
+		let iva5TotalIva = 0;
+		let iva10totalIva = 0;
+
+		// Cuerpo de la tabla
 		invoice.products.forEach((product) => {
+			const subtotal = product.unitCost * product.quantity;
+			const iva = product.iva;
+
+			let exentas = 0,
+				iva5 = 0,
+				iva10 = 0;
+
+			if (iva >= 0 && iva < 4) {
+				exentas = subtotal;
+				exentasSubtotal += subtotal;
+			} else if (iva >= 4 && iva < 7) {
+				iva5 = subtotal;
+				iva5Subtotal += subtotal;
+				iva5TotalIva += product.totalIva;
+			} else {
+				iva10 = subtotal;
+				iva10Subtotal += subtotal;
+				iva10totalIva += product.totalIva;
+			}
+
 			doc
 				.rect(20, currentY, 570, 20)
 				.stroke()
 				.fontSize(9)
 				.text(product.code, 30, currentY + 5)
-				.text(product.name, 130, currentY + 5)
-				.text(product.unitCost.toLocaleString('de-DE'), 320, currentY + 5)
-				.text(product.quantity.toString(), 420, currentY + 5)
-				.text(product.subtotal.toLocaleString('de-DE'), 500, currentY + 5);
+				.text(product.name, 120, currentY + 5, { width: 130, ellipsis: true })
+				.text(product.unitCost.toLocaleString('py-PY'), 260, currentY + 5)
+				.text(product.quantity.toString(), 320, currentY + 5)
+				.text(
+					exentas ? exentas.toLocaleString('py-PY') : '-',
+					370,
+					currentY + 5,
+				)
+				.text(iva5 ? iva5.toLocaleString('py-PY') : '-', 440, currentY + 5)
+				.text(iva10 ? iva10.toLocaleString('py-PY') : '-', 510, currentY + 5);
+
 			currentY += 20;
 		});
 
 		currentY += 10;
+
+		// Subtotales por tipo de IVA
+		doc
+			.fontSize(9)
+			.font('Helvetica-Bold')
+			.text('Subtotales:', 260, currentY)
+			.font('Helvetica')
+			.text(exentasSubtotal.toLocaleString('py-PY'), 370, currentY)
+			.text(iva5Subtotal.toLocaleString('py-PY'), 440, currentY)
+			.text(iva10Subtotal.toLocaleString('py-PY'), 510, currentY);
+
+		currentY += 12;
+
+		// Totales
+		doc
+			.fontSize(9)
+			.font('Helvetica-Bold')
+			.text('Total IVA:', 260, currentY)
+			.font('Helvetica')
+			.text(`${invoice.totalIVA.toLocaleString('py-PY')}`, 510, currentY)
+			.font('Helvetica-Bold')
+			.text('Total a pagar:', 260, currentY + 12)
+			.font('Helvetica')
+			.text(`${invoice.totalToPay.toLocaleString('py-PY')}`, 510, currentY + 12)
+
+			.font('Helvetica-Bold')
+			.text('Iva parcial(5%): ', 30, currentY)
+			.font('Helvetica')
+			.text(`${Number(iva5TotalIva).toLocaleString('py-PY')}`, 120, currentY)
+			.font('Helvetica-Bold')
+			.text('Iva parcial(10%): ', 30, currentY + 12)
+			.font('Helvetica')
+			.text(
+				`${Number(iva10totalIva).toLocaleString('py-PY')}`,
+				120,
+				currentY + 12,
+			);
+
+		doc.end();
+	};
+
+	generateReceiptPDF = (receipt: ReceiptData, res: Response) => {
+		const doc = new PDFDocument({ margin: 0, size: 'A4' });
+		res.setHeader('Content-Type', 'application/pdf');
+		res.setHeader(
+			'Content-Disposition',
+			`attachment; filename="recibo_${receipt.receiptNumber}.pdf"`,
+		);
+		doc.pipe(res);
+		const fechaLarga = `${receipt.issueDate.getDate()} de ${this.meses[receipt.issueDate.getMonth()]} de ${receipt.issueDate.getFullYear()}`;
+		const formatoGs = (n: number) => n.toLocaleString('de-DE') + ' Gs.';
+		doc.rect(20, 20, 350, 65).stroke();
+		doc
+			.fontSize(12)
+			.font('Helvetica-Bold')
+			.text('NICOPETS - Clínica Veterinaria', 30, 28, { width: 330 });
+		doc
+			.fontSize(8)
+			.font('Helvetica')
+			.text('Dirección: Calle Ficticia N° 123 - Ciudad Mascota', 30, 43)
+			.text('Teléfono: (0981) 123-456    Email: contacto@nicopet.com', 30, 53);
+		doc.rect(380, 20, 190, 65).stroke();
+		doc.fontSize(11).font('Helvetica-Bold').text('RECIBO DE PAGO', 390, 28);
+		doc
+			.fontSize(9)
+			.font('Helvetica')
+			.text(`Nº ${receipt.receiptNumber}`, 390, 42);
+		doc.rect(20, 95, 550, 560).stroke();
+		doc
+			.rect(430, 110, 120, 35)
+			.stroke()
+			.fontSize(13)
+			.font('Helvetica-Bold')
+			.text(`Gs. ${receipt.amount.toLocaleString('de-DE')}`, 435, 122, {
+				width: 110,
+				align: 'center',
+			});
+		const leftX = 30;
+		let y = 150;
 		doc
 			.fontSize(10)
+			.font('Helvetica-Bold')
+			.text('Fecha de emisión:', leftX, y)
+			.font('Helvetica')
+			.text(fechaLarga, leftX + 105, y);
+		y += 18;
+		doc
+			.font('Helvetica-Bold')
+			.text('Recibí de:', leftX, y)
+			.font('Helvetica')
+			.text(receipt.client.fullName, leftX + 65, y);
+		y += 18;
+		doc
+			.font('Helvetica-Bold')
+			.text('RUC:', leftX, y)
+			.font('Helvetica')
+			.text(receipt.client.ruc, leftX + 50, y);
+		y += 18;
+		doc
+			.font('Helvetica-Bold')
+			.text('La cantidad de:', leftX, y)
+			.font('Helvetica')
+			.text(`${formatoGs(receipt.amount)}`, leftX + 85, y);
+		y += 18;
+		doc
+			.font('Helvetica-Bold')
+			.text('Concepto:', leftX, y)
+			.font('Helvetica')
 			.text(
-				`Total IVA: ${invoice.totalIVA.toLocaleString('de-DE')}`,
-				450,
-				currentY,
+				`Pago total correspondiente a la Factura Nº ${receipt.invoice.invoiceNumber}.`,
+				leftX + 60,
+				y,
+				{ width: 450, align: 'justify' },
+			);
+		y += 30;
+		doc.fontSize(10).font('Helvetica-Bold').text('Factura Asociada:', leftX, y);
+		y += 15;
+		const fechaFactura = `${receipt.invoice.issueDate.getDate()} de ${this.meses[receipt.invoice.issueDate.getMonth()]} de ${receipt.invoice.issueDate.getFullYear()}`;
+		doc
+			.fontSize(9)
+			.font('Helvetica')
+			.text(`Nº: ${receipt.invoice.invoiceNumber}`, leftX + 10, y)
+			.text(`Fecha: ${fechaFactura}`, 250, y);
+		y += 15;
+		doc
+			.text(`Timbrado: ${receipt.invoice.stamped}`, leftX + 10, y)
+			.text(
+				`Tipo: ${receipt.invoice.type === 'CASH' ? 'Contado' : 'Crédito'}`,
+				250,
+				y,
+			);
+		y += 15;
+		doc
+			.text(
+				`Total Facturado: ${formatoGs(receipt.invoice.totalToPay)}`,
+				leftX + 10,
+				y,
+			)
+			.text(`IVA Total: ${formatoGs(receipt.invoice.totalIVA)}`, 250, y);
+		y += 30;
+		doc.fontSize(10).font('Helvetica-Bold').text('Métodos de Pago:', leftX, y);
+		y += 18;
+		receipt.paymentMethods.forEach((pm) => {
+			doc
+				.fontSize(9)
+				.font('Helvetica')
+				.text(`• ${pm.method.name}: ${formatoGs(pm.amount)}`, leftX + 10, y);
+			y += 15;
+		});
+		y += 40;
+		doc
+			.fontSize(8)
+			.font('Helvetica')
+			.text('_____________________________', leftX + 360, y)
+			.text('Firma y Sello', leftX + 400, y + 12);
+		const pageHeight = doc.page.height;
+		doc
+			.fontSize(7)
+			.font('Helvetica-Oblique')
+			.text(
+				'Este documento es un comprobante válido de pago',
+				20,
+				pageHeight - 45,
+				{ align: 'center', width: 550 },
 			)
 			.text(
-				`Total a Pagar: ${invoice.totalToPay.toLocaleString('de-DE')}`,
-				450,
-				currentY + 12,
-			)
-			.font('Helvetica');
+				`Generado el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`,
+				20,
+				pageHeight - 32,
+				{ align: 'center', width: 550 },
+			);
 		doc.end();
 	};
 
 	generateCompactTablePDF(reportConfig: ReportPdfConfig, response: Response) {
-		const { title, rowConfig, madeBy, summary, charts } = reportConfig;
+		const { title, rowConfig, madeBy, summary, charts, subtitle } =
+			reportConfig;
 		const mainHeader = rowConfig.header;
 		const doc = new PDFDocument({
 			margin: this.margin,
@@ -133,6 +335,9 @@ export class PdfService {
 		}
 		if (charts && charts.length > 0) {
 			currentY = this.renderChartsAsColumns(doc, charts, currentY);
+		}
+		if (subtitle) {
+			currentY = this.renderSubtitle(doc, subtitle, currentY);
 		}
 		this.renderTableRecursive(
 			doc,
@@ -392,13 +597,27 @@ export class PdfService {
 
 	private renderTitle(doc: PDFKit.PDFDocument, title: string, madeBy?: string) {
 		const today = getToday();
-		doc
-			.font('Helvetica-Bold', 10)
-			.text(
-				`${title} ${madeBy ? `generado por ${madeBy}` : ''} el día ${toDateFormat(today)}`,
-			);
+		doc.font('Helvetica-Bold', 12).text(title);
+		doc.moveDown(0.5);
+		doc.font('Helvetica').fontSize(7);
+		if (madeBy) {
+			doc.text(`generado por ${madeBy}`);
+		}
+		doc.text(`el día ${toDateFormat(today)}`);
 		doc.moveDown();
 		return doc.y;
+	}
+
+	private renderSubtitle(
+		doc: PDFKit.PDFDocument,
+		subtitle: string,
+		startY: number,
+	): number {
+		let y = startY;
+		y += this.rowHeight;
+		doc.font('Helvetica-Bold', 10).text(subtitle, this.getXOffset(), y);
+		y += this.rowHeight * 1.5;
+		return y;
 	}
 
 	private getXOffset(space: number = 0): number {

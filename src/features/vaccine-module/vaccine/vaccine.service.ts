@@ -56,11 +56,7 @@ export class VaccineService {
 		const [data, total] = await Promise.all([
 			this.db.vaccine.findMany({
 				...this.db.paginate(dto),
-				include: {
-					species: true,
-					manufacturer: true,
-					product: true,
-				},
+				...this.getInclude(),
 				where,
 			}),
 			this.db.vaccine.count({ where }),
@@ -70,7 +66,7 @@ export class VaccineService {
 			page: dto.page,
 			size: dto.size,
 			total,
-			data,
+			data: data.map((v) => new VaccineDto(v)),
 		});
 	}
 

@@ -51,10 +51,11 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 
 		return this.pdfService.generateCompactTablePDF(
 			{
-				title: 'Reporte de Facturas - Top 10 Clientes',
+				title: 'Reporte de Facturación',
 				madeBy: `${user.fullName} con RUC: ${user.ruc}`,
 				summary: summaryItems,
 				charts: chartConfigs,
+				subtitle: 'Tus 10 clientes más valiosos',
 				rowConfig: {
 					parentRowSpacing: 2,
 					alwaysShowHeader: false,
@@ -175,7 +176,7 @@ export class InvoiceReport implements IReport<InvoiceReportQueryDto> {
 		}
 
 		return {
-			title: 'Facturas Pagadas / Pendientes',
+			title: 'Estado de las facturas:',
 			type: 'pie',
 			components: [
 				{ label: 'Pagadas', value: paidCount, color: colors[0] },

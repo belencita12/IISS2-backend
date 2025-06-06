@@ -82,10 +82,11 @@ export class AppointmentReport implements IReport<AppointmentReportQueryDto> {
 		);
 		return this.pdfService.generateCompactTablePDF(
 			{
-				title: 'Reporte de Citas',
+				title: 'Reporte de citas',
 				madeBy: `${user.fullName} con RUC: ${user.ruc}`,
 				charts: chartConfigs,
 				summary: summaryItems,
+				subtitle: 'Así fue el ritmo de tu veterinaria',
 				rowConfig: {
 					header: [
 						'Fecha',
@@ -158,74 +159,88 @@ export class AppointmentReport implements IReport<AppointmentReportQueryDto> {
 			.sort((a, b) => b[1] - a[1])
 			.slice(0, 5);
 
-		const dayCounts: { [key: string]: number } = {};
+		const weekDayCounts: { [key: string]: number } = {
+			Lunes: 0,
+			Martes: 0,
+			Miércoles: 0,
+			Jueves: 0,
+			Viernes: 0,
+			Sábado: 0,
+			Domingo: 0,
+		};
+
+		const weekDays = Object.keys(weekDayCounts);
+		const weekDayMap = [
+			'Domingo',
+			'Lunes',
+			'Martes',
+			'Miércoles',
+			'Jueves',
+			'Viernes',
+			'Sábado',
+		];
+
 		appointments.forEach((a) => {
-			const dateStr = toDateFormat(a.designatedDate);
-			dayCounts[dateStr] = (dayCounts[dateStr] || 0) + 1;
+			const weekDayName = weekDayMap[a.designatedDate.getDay()];
+			weekDayCounts[weekDayName] += 1;
 		});
 
-		const avgPerDay = (
-			totalAppointments / Object.keys(dayCounts).length
-		).toFixed(2);
+		const avgPerDay = (totalAppointments / 7).toFixed(2);
 
 		const canceled = statusCounts['CANCELLED'] || 0;
 		const cancelRate = ((canceled / totalAppointments) * 100).toFixed(2) + '%';
 
-		const topDays = Object.entries(dayCounts)
-			.sort((a, b) => b[1] - a[1])
-			.slice(0, 3);
-
 		const summaryItems: SummaryItem[] = [
 			{
-				key: 'Rango de fechas',
+				key: 'Rango de fechas analizado',
 				value: `${toDateFormat(query.from)} a ${toDateFormat(query.to)}`,
 			},
 			{
-				key: 'Total de citas',
+				key: 'Total de citas agendadas',
 				value: totalAppointments.toString(),
-				desc: 'Cantidad de citas totales',
+				desc: 'Cantidad total de citas registradas durante el período seleccionado.',
 			},
 			{
-				key: 'Promedio por día',
+				key: 'Promedio de citas por día de la semana',
 				value: avgPerDay,
-				desc: 'Promedio de citas realizadas por día',
+				desc: 'Promedio de citas registradas considerando los 7 días de la semana.',
 			},
 			{
-				key: 'Tasa de cancelación',
+				key: 'Porcentaje de citas canceladas',
 				value: cancelRate,
-				desc: 'Porcentaje de citas canceladas',
+				desc: 'Proporción de citas canceladas con respecto al total de citas.',
 			},
 			{
-				key: 'Top 5 Veterinarios',
+				key: 'Veterinarios con más citas registradas',
 				value: '',
-				desc: 'Ranking de veterinarios con más citas',
+				desc: 'Estos son los veterinarios que atendieron la mayor cantidad de citas en el período seleccionado.',
 			},
 			...topVets.map(([name, count]) => ({
 				key: `\u00A0\u00A0${name}`,
 				value: count.toString(),
 			})),
 			{
-				key: 'Top 5 Clientes',
+				key: 'Clientes que agendaron más citas',
 				value: '',
-				desc: 'Ranking de clientes con más citas solicitadas',
+				desc: 'Clientes que más veces agendaron citas para sus mascotas.',
 			},
 			...topClients.map(([name, count]) => ({
 				key: `\u00A0\u00A0${name}`,
 				value: count.toString(),
 			})),
 			{
-				key: 'Días con más citas',
+				key: 'Cantidad de citas por día de la semana',
 				value: '',
-				desc: 'Ranking de fechas en las que se registraron mayor cantidad de citas',
+				desc: 'Distribución total de las citas según el día en que fueron agendadas. Incluye todos los días, incluso si no hubo citas en alguno.',
 			},
-			...topDays.map(([date, count]) => ({
-				key: `\u00A0\u00A0${date}`,
-				value: count.toString(),
+			...weekDays.map((day) => ({
+				key: `\u00A0\u00A0${day}`,
+				value: weekDayCounts[day].toString(),
 			})),
 		];
 
 		const statusChart: ReportChartConfig = {
-			title: 'Distribución de citas por estado',
+			title: 'Citas agrupadas por estado',
 			type: 'pie',
 			components: Object.entries(statusCounts).map(
 				([status, count], index) => ({
@@ -236,16 +251,16 @@ export class AppointmentReport implements IReport<AppointmentReportQueryDto> {
 			),
 		};
 
-		const topDaysChart: ReportChartConfig = {
-			title: 'Top 3 días con más citas',
+		const weekDayChart: ReportChartConfig = {
+			title: 'Distribución de citas por día de la semana',
 			type: 'bar',
-			components: topDays.map(([date, count], index) => ({
-				label: date,
-				value: count,
+			components: weekDays.map((day, index) => ({
+				label: day,
+				value: weekDayCounts[day],
 				color: colors[index % colors.length],
 			})),
 		};
 
-		return [summaryItems, [statusChart, topDaysChart]];
+		return [summaryItems, [statusChart, weekDayChart]];
 	}
 }
